@@ -37,7 +37,7 @@ public:
             //rewards[0] = -1.0f; rewards[1] = -1.0f;
             auto new_state_length = state_length_ + 1;
 
-            //rewards = std::vector<Reward>{1, 1};
+            rewards = std::vector<Reward>{1, 1};
 
             if(new_state_length >= winning_state_length_) {
                 rewards = std::vector<Reward>{5, 10};

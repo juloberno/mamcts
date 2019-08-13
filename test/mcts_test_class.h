@@ -101,7 +101,7 @@ private:
         for(auto it = node->children_.begin(); it != node->children_.end(); ++it) {
             auto& joint_action = it->second->joint_action_;
             if (joint_action[agent_idx] == action_idx) {
-                if (count = -1) {
+                if (count == -1) {
                     count = 1;
                 }
                 else {
@@ -134,7 +134,7 @@ private:
     std::vector<UctStatistic> expected_action_value(const UctStatistic& child_stat,
              const UctStatistic& parent_stat, const AgentIdx& agent_idx, const JointAction& joint_action, std::vector<Reward> rewards,
              std::vector<UctStatistic> expected_statistics, int action_occurence) {
-        expected_statistics[agent_idx].ucb_statistics_[joint_action[agent_idx]].action_value_ += rewards[agent_idx] + 1/action_occurence * parent_stat.k_discount_factor*child_stat.value_;
+        expected_statistics[agent_idx].ucb_statistics_[joint_action[agent_idx]].action_value_ += 1/float(action_occurence) * ( rewards[agent_idx] +  parent_stat.k_discount_factor*child_stat.value_);
 
         return expected_statistics;
     }
