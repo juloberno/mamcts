@@ -105,8 +105,7 @@ struct container_hash {
         // Initialize the intermediate nodes of other agents
         InterNodeVector vec;
         // vec.resize(state_.get_agent_idx().size()-1);
-        for (AgentIdx ai = S::ego_agent_idx+1; ai < state_->get_agent_idx().size(); ++ai )
-        {
+        for (AgentIdx ai = S::ego_agent_idx+1; ai < state_->get_agent_idx().size(); ++ai ) {
             vec.emplace_back(*state_,ai,state_->get_num_actions(ai));
         }
         return vec;
@@ -114,8 +113,7 @@ struct container_hash {
     joint_action_(joint_action),
     max_num_joint_actions_([this]()-> unsigned int{
         ActionIdx num_actions(state_->get_num_actions(S::ego_agent_idx));
-        for(auto ai = S::ego_agent_idx+1; ai < state_->get_agent_idx().size(); ++ai )
-        {
+        for(auto ai = S::ego_agent_idx+1; ai < state_->get_agent_idx().size(); ++ai ) {
             num_actions *=state_->get_num_actions(ai);
         }
         return num_actions; }() ),
@@ -231,7 +229,7 @@ struct container_hash {
         ego_int_node_.update_statistic(changed_child_node->ego_int_node_);
         for (auto it = other_int_nodes_.begin(); it != other_int_nodes_.end(); ++it)
         {
-            it->update_statistic(changed_child_node->other_int_nodes_[it->get_agent_idx()]);
+            it->update_statistic(changed_child_node->other_int_nodes_[it->get_agent_idx()-1]); // -1: Ego Agent is at zero, but not contained in other int nodes
         }
     }
 
@@ -291,16 +289,33 @@ struct container_hash {
     void StageNode<S,SE, SO, H>::printLayer(std::string filename) {
         std::ofstream logging;
         logging.open(filename+".gv",std::ios::app);
-        if(!this->children_.empty()){
-            for (auto it = this->children_.begin(); it != this->children_.end(); ++it){
-                //label for first node
-                logging << "node" << this->id_ << "[label=\""<< ego_int_node_.print_node_information()  << " \n Id:" << this->id_ << "\"]" <<";" << std::endl;
-                //label for child node
-                logging << "node" << it->second->id_ << "[label=\"" << it->second->ego_int_node_.print_node_information() << " \n Id:" << it->second->id_  <<"\"]" <<";" << std::endl;
-                logging << "node" << this->id_ <<" -> "<< "node" << it->second->id_<< "[label=\""<< ego_int_node_.print_edge_information(ActionIdx(it->first[0])) <<"\"]" <<";" << std::endl;
-                it->second->printLayer(filename);
+        // DRAW SUBGRAPH FOR THIS STAGE
+        logging << "subgraph cluster_node_" << this->id_<< "{" << std::endl;
+        logging << "node" << this->id_ << "_" << int(ego_int_node_.get_agent_idx()) << "[label=\""<< ego_int_node_.print_node_information()
+                                                            << " \n Ag." << int(ego_int_node_.get_agent_idx()) << "\"]" <<";" << std::endl;
+        for (auto other_agent_it = other_int_nodes_.begin(); other_agent_it != other_int_nodes_.end(); ++other_agent_it) {
+            logging << "node" << this->id_ << "_" << int(other_agent_it->get_agent_idx())  << "[label=\""<< other_agent_it->print_node_information()
+                                                        << " \n Ag." << int(other_agent_it->get_agent_idx()) << "\"]" <<";" << std::endl;
+        }
+        logging << "label= \"ID " << this->id_ << "\";" << std::endl;
+        logging << "graph[style=dotted]; }" << std::endl;
+
+        // DRAW ARROWS FOR EACH CHILD
+        for (auto child_it = this->children_.begin(); child_it != this->children_.end(); ++child_it){
+            child_it->second->printLayer(filename);
+            
+            // ego intermediate node
+            logging << "node" << this->id_ << "_" << int(ego_int_node_.get_agent_idx()) <<" -> "
+                    << "node" << child_it->second->id_<< "_" << int(ego_int_node_.get_agent_idx()) <<
+                    "[label=\""<< ego_int_node_.print_edge_information(ActionIdx(child_it->first[ego_int_node_.get_agent_idx()])) <<"\"]" <<";" << std::endl;
+            // other intermediate nodes
+            for (auto other_int_it = other_int_nodes_.begin(); other_int_it != other_int_nodes_.end(); ++other_int_it) {
+                logging << "node" << this->id_ << "_" << int(other_int_it->get_agent_idx()) <<" -> "
+                        << "node" << child_it->second->id_<< "_" << int(other_int_it->get_agent_idx()) <<
+                        "[label=\""<< other_int_it->print_edge_information(ActionIdx(child_it->first[other_int_it->get_agent_idx()])) <<"\"]" <<";" << std::endl;
+
             }
-        }   
+        }
     };
 
 } // namespace mcts

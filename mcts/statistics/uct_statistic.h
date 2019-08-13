@@ -19,11 +19,11 @@ public:
 
     friend class MctsTest;
 
-    UctStatistic(ActionIdx num_actions) : NodeStatistic<UctStatistic>(num_actions), value_(0.0f), ucb_statistics_([&]() -> std::map<ActionIdx, UcbPair>{
+    UctStatistic(ActionIdx num_actions) : NodeStatistic<UctStatistic>(num_actions), value_(0.0f), latest_return_(0.0), ucb_statistics_([&]() -> std::map<ActionIdx, UcbPair>{
         std::map<ActionIdx, UcbPair> map;
         for (auto ai = 0; ai < num_actions; ++ai) { map[ai] = UcbPair();}
         return map;
-    }() ),sum_of_rewards_(0), total_node_visits_(0), k_discount_factor(mcts::MctsParameters::DISCOUNT_FACTOR), 
+    }()), total_node_visits_(0), k_discount_factor(mcts::MctsParameters::DISCOUNT_FACTOR), 
                 k_exploration_constant(mcts::MctsParameters::EXPLORATION_CONSTANT), upper_bound(mcts::MctsParameters::UPPER_BOUND),
                  lower_bound(mcts::MctsParameters::LOWER_BOUND) {};
     ~UctStatistic() {};
@@ -57,7 +57,7 @@ public:
         {
             if(it->second.action_value_>temp){
                 temp = it->second.action_value_;
-                best = std::distance( ucb_statistics_.begin(), it );
+                best = it->first;
             }
         }
         return best;
@@ -66,31 +66,24 @@ public:
     void update_from_heuristic(const NodeStatistic<UctStatistic>& heuristic_statistic)
     {
         const UctStatistic& heuristic_statistic_impl = heuristic_statistic.impl();
-        sum_of_rewards_=heuristic_statistic_impl.value_;
+        value_ = heuristic_statistic_impl.value_;
+        latest_return_ = value_;
+        TEST_ASSERT(total_node_visits_ == 0); // This should be the first visit
         total_node_visits_ += 1;
-        //make sure this is the first node visit or node is terminal(heuristic is 0)
-        TEST_ASSERT(sum_of_rewards_== heuristic_statistic_impl.value_);
-        if(!heuristic_statistic_impl.value_==0){
-            TEST_ASSERT(total_node_visits_==1);
-        }
-        latest_reward_ = heuristic_statistic_impl.value_;
-        update_value();
     }
 
     void update_statistic(const NodeStatistic<UctStatistic>& changed_child_statistic) {
         const UctStatistic& changed_uct_statistic = changed_child_statistic.impl();
-        //Node Value update step
-        //reward from heuristic gets discounted by one step
-        latest_reward_ = k_discount_factor * changed_uct_statistic.latest_reward_+collected_reward_.second;
-        sum_of_rewards_ += latest_reward_;
-        total_node_visits_ += 1;
-        update_value();
-        
+
         //Action Value update step
         UcbPair& ucb_pair = ucb_statistics_[collected_reward_.first]; // we remembered for which action we got the reward, must be the same as during backprop, if we linked parents and childs correctly
+        //action value: Q'(s,a) = Q(s,a) + (latest_return - Q'(s,a))/N
+        latest_return_ = collected_reward_.second + k_discount_factor * changed_uct_statistic.latest_return_;
         ucb_pair.action_count_ += 1;
-        //action value is the value of the child node discounted + step reward
-        ucb_pair.action_value_ = collected_reward_.second + k_discount_factor * changed_uct_statistic.value_;      
+        ucb_pair.action_value_ = ucb_pair.action_value_ + (latest_return_ - ucb_pair.action_value_) / ucb_pair.action_count_;
+        
+        total_node_visits_ += 1;
+        value_ = value_ + (latest_return_ - value_) / total_node_visits_;
     }
 
     void set_heuristic_estimate(const Reward& accum_rewards)
@@ -121,15 +114,10 @@ public:
 
     typedef struct UcbPair
     {
-        UcbPair() : action_count_(0), action_value_(MctsParameters::LOWER_BOUND) {};
+        UcbPair() : action_count_(0), action_value_(0.0f) {};
         unsigned action_count_;
         double action_value_;
     } UcbPair;
-
-
-    void update_value() {
-        value_ = sum_of_rewards_/total_node_visits_;
-    }
 
     void calculate_ucb_values(const std::map<ActionIdx, UcbPair>& ucb_statistics, std::vector<double>& values ) const
     {
@@ -145,8 +133,7 @@ public:
     }
 
     double value_;
-    double sum_of_rewards_;
-    double latest_reward_;
+    double latest_return_;   // tracks the return during backpropagation
     std::map<ActionIdx, UcbPair> ucb_statistics_; // first: action selection count, action-value
     unsigned int total_node_visits_;
 
