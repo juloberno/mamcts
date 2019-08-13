@@ -134,7 +134,17 @@ private:
     std::vector<UctStatistic> expected_action_value(const UctStatistic& child_stat,
              const UctStatistic& parent_stat, const AgentIdx& agent_idx, const JointAction& joint_action, std::vector<Reward> rewards,
              std::vector<UctStatistic> expected_statistics, int action_occurence) {
-        expected_statistics[agent_idx].ucb_statistics_[joint_action[agent_idx]].action_value_ += 1/float(action_occurence) * ( rewards[agent_idx] +  parent_stat.k_discount_factor*child_stat.value_);
+        auto action_ucb_parent = parent_stat.ucb_statistics_.find(joint_action[agent_idx]);
+        if(action_ucb_parent ==  parent_stat.ucb_statistics_.end()) {
+            throw;
+        }
+        //todo: Q(s,a) = (sum of rewards + discount*value_child1*n_visits_child1+ discount*value_child1*n_visits_child2)/total_action_count
+        // total_action_count == n_visits_child1 + n_visits_child2
+        const auto& total_action_count = action_ucb_parent->second.action_count_;
+        const auto& child_action_count = child_stat.total_node_visits_;
+        expected_statistics[agent_idx].ucb_statistics_[joint_action[agent_idx]].action_value_ +=
+                         1/float(total_action_count) * rewards[agent_idx]
+                        + 1/float(total_action_count) * child_action_count * parent_stat.k_discount_factor*child_stat.value_;
 
         return expected_statistics;
     }
