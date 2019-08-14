@@ -138,13 +138,12 @@ private:
         if(action_ucb_parent ==  parent_stat.ucb_statistics_.end()) {
             throw;
         }
-        //todo: Q(s,a) = (sum of rewards + discount*value_child1*n_visits_child1+ discount*value_child1*n_visits_child2)/total_action_count
+        //todo: Q(s,a) = ( (reward1+discount*value_child1)*n_visits_child1 + (reward2+discount*value_child1*n_visits_child2)/total_action_count
         // total_action_count == n_visits_child1 + n_visits_child2
         const auto& total_action_count = action_ucb_parent->second.action_count_;
         const auto& child_action_count = child_stat.total_node_visits_;
         expected_statistics[agent_idx].ucb_statistics_[joint_action[agent_idx]].action_value_ +=
-                         1/float(total_action_count) * rewards[agent_idx]
-                        + 1/float(total_action_count) * child_action_count * parent_stat.k_discount_factor*child_stat.value_;
+                         1/float(total_action_count) * child_action_count * (rewards[agent_idx] + parent_stat.k_discount_factor*child_stat.value_);
 
         return expected_statistics;
     }
