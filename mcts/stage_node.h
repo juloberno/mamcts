@@ -216,7 +216,6 @@ struct container_hash {
     template<class S, class SE, class SO, class H>
     void StageNode<S,SE, SO, H>::update_statistics(const std::vector<SE>& heuristic_estimates)
     {
-        // todo only update value
         ego_int_node_.update_from_heuristic(heuristic_estimates[S::ego_agent_idx]);
         for (auto it = other_int_nodes_.begin(); it != other_int_nodes_.end(); ++it)
         {
@@ -242,28 +241,27 @@ struct container_hash {
     template<class S, class SE, class SO, class H>
     std::string StageNode<S,SE, SO, H>::sprintf() const
     {
-        // todo std stringstream segfaults with gcc 7.3
-        auto tabs = [](const unsigned int& depth) -> std::string
-        { return std::string(depth,'\t'); };
+        auto tabs = [](const unsigned int& depth) -> std::string { 
+            return std::string(depth,'\t'); };
 
-            std::stringstream ss;
-        std::cout << tabs(depth_) << "StageNode: ID " << id_ ;
+        std::stringstream ss;
+        ss << tabs(depth_) << "StageNode: ID " << id_ ;
 
         if(!joint_action_.empty())
         {
-            std::cout << ", Joint Action " << joint_action_;
+            ss << ", Joint Action " << joint_action_;
         }
-        std::cout << ", " << state_->sprintf() << ", Stats: { (0) " << ego_int_node_.sprintf();
+        ss << ", " << state_->sprintf() << ", Stats: { (0) " << ego_int_node_.sprintf();
         for (int i = 0; i < other_int_nodes_.size(); ++i)
         {
-            std::cout << ", (" << i+1 << ") " << other_int_nodes_[i].sprintf();
+            ss << ", (" << i+1 << ") " << other_int_nodes_[i].sprintf();
         }
-        std::cout << "}" << std::endl;
+        ss << "}" << std::endl;
 
         if(!children_.empty())
         {
             for (auto it = children_.begin(); it != children_.end(); ++it)
-                std::cout  << it->second->sprintf() ;
+                ss  << it->second->sprintf() ;
 
         }
         return ss.str();

@@ -32,14 +32,13 @@ public:
     using StageNodeSPtr = std::shared_ptr<StageNode<S,SE,SO, H>>;
     using StageNodeWPtr = std::weak_ptr<StageNode<S,SE,SO, H>>;
 
-    Mcts() : root_(), num_iterations(0), heuristic_(),max_search_time_(mcts::MctsParameters::MAX_SEARCH_TIME),
-                        max_iterations(mcts::MctsParameters::MAX_NUMBER_OF_ITERATIONS) {};
+    Mcts() : root_(), num_iterations(0), heuristic_() {};
 
     ~Mcts() {}
 
 
 
-    void search(const S& current_state, int search_time=mcts::MctsParameters::MAX_SEARCH_TIME);
+    void search(const S& current_state, unsigned int max_search_time_ms, unsigned int max_iterations);
     int numIterations();
     std::string nodeInfo();
     ActionIdx returnBestAction();
@@ -51,11 +50,7 @@ private:
 
     void iterate(const StageNodeSPtr& root_node);
 
-    unsigned int max_search_time_; // [ms
-
     unsigned int num_iterations;
-
-    unsigned int max_iterations;
 
     StageNodeSPtr root_;
 
@@ -63,12 +58,11 @@ private:
 
     std::string sprintf(const StageNodeSPtr& root_node) const;
 
-   // std::string run_summary() const;
    MCTS_TEST
 };
 
 template<class S, class SE, class SO, class H>
-void Mcts<S,SE,SO,H>::search(const S& current_state, int search_time)
+void Mcts<S,SE,SO,H>::search(const S& current_state, unsigned int max_search_time_ms, unsigned int max_iterations)
 {
     namespace chr = std::chrono;
     auto start = std::chrono::high_resolution_clock::now();
@@ -76,15 +70,14 @@ void Mcts<S,SE,SO,H>::search(const S& current_state, int search_time)
     StageNode<S,SE, SO, H>::reset_counter();
 
 #ifdef PLAN_DEBUG_INFO
-  //  std::cout << "starting state: " << current_state.sprintf();
+    std::cout << "starting state: " << current_state.sprintf();
 #endif
-    max_iterations = search_time;
-    //max_search_time_ = search_time;
+
     root_ = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
             const unsigned int&> (nullptr, current_state.clone(),JointAction(),0);
    
     num_iterations = 0;
-    while (/*std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ && */num_iterations<max_iterations) {
+    while (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ms && num_iterations<max_iterations) {
         iterate(root_);
         num_iterations += 1;
     }
@@ -134,8 +127,6 @@ template<class S, class SE, class SO, class H>
 std::string Mcts<S,SE,SO,H>::sprintf(const StageNodeSPtr& root_node) const
 {
     std::stringstream ss;
-    //std::cout << "---------- Iteration " << num_iterations << " ----------" << std::endl;
-    //root_node->sprintf();
     return ss.str();
 }
 

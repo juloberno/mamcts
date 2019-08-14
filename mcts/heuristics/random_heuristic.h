@@ -38,8 +38,7 @@ public:
 
         std::vector<Reward> accum_rewards(num_agents);
         std::vector<Reward> step_rewards(state->get_agent_idx().size());
-    //TODO: muss hier gesetzt werden,da über den Konstruktor immer nur als 0 gesetzt wird
-        k_discount_factor = mcts::MctsParameters::DISCOUNT_FACTOR; 
+        const double k_discount_factor = mcts::MctsParameters::DISCOUNT_FACTOR; 
         double modified_discount_factor = k_discount_factor;
         int num_iterations = 0;
         while((!state->is_terminal())&&(num_iterations<max_iterations_random_heuristic)&&(std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_random_heuristic ))
@@ -77,10 +76,9 @@ public:
         std::generate(std::begin(ja), std::end(ja), gen);
         return ja;
     }
-    double k_discount_factor;
     std::mt19937 random_generator = std::mt19937(mcts::MctsParameters::RANDOM_GENERATOR_SEED);
-    double max_search_time_random_heuristic = mcts::MctsParameters::MAX_SEARCH_TIME_RANDOM_HEURISTIC;
-    double max_iterations_random_heuristic = mcts::MctsParameters::MAX_NUMBER_OF_ITERATIONS_RANDOM_HEURISTIC;
+    const double max_search_time_random_heuristic = mcts::MctsParameters::MAX_SEARCH_TIME_RANDOM_HEURISTIC;
+    const double max_iterations_random_heuristic = mcts::MctsParameters::MAX_NUMBER_OF_ITERATIONS_RANDOM_HEURISTIC;
 
 
 };

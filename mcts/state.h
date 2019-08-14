@@ -29,7 +29,6 @@ typedef double Reward;
     std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
     {
         TEST_ASSERT(a.size() == b.size());
-
         std::vector<T> result;
         result.reserve(a.size());
 
@@ -42,14 +41,9 @@ typedef double Reward;
     std::vector<T>& operator+=(std::vector<T>& a, const std::vector<T>& b)
     {
         TEST_ASSERT(a.size() == b.size());
-
         for(int i=0; i<a.size(); i++){
             a[i] = a[i] + b[i];
         }
-        
-        
-        //std::transform(a.begin(), a.end(), b.begin(),
-        //               a.begin(), std::plus<T>());
         return a;
     }
 

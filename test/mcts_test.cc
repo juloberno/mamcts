@@ -30,7 +30,7 @@ TEST(test_mcts, verify_uct )
 
     SimpleState state(4);
     
-    mcts.search(state);
+    mcts.search(state, 50000, 100000);
     mcts.generateTree("test_tree");
     std::cout << "Finished search." << std::endl;
 
