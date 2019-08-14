@@ -60,14 +60,13 @@ public:
 
                 // ---------------------- Expected statistics calculation --------------------------
                 bool is_first_child_and_not_parent_root = (it == start_node->children_.begin()) && (!start_node->is_root());
-                bool is_last_children = (std::next(it) == start_node->children_.end());
                 expected_statistics = expected_total_node_visits(it->second->ego_int_node_, S::ego_agent_idx, is_first_child_and_not_parent_root, expected_statistics);
                 expected_statistics = expected_action_count(it->second->ego_int_node_, S::ego_agent_idx, joint_action, is_first_child_and_not_parent_root, expected_statistics);
                 expected_statistics = expected_action_value(it->second->ego_int_node_, start_node->ego_int_node_,
                                  S::ego_agent_idx, joint_action, rewards, expected_statistics,
                                   action_occurence(start_node,joint_action[S::ego_agent_idx] , S::ego_agent_idx));
 
-                for (int i = 0; i < child->other_int_nodes_.size(); ++i)  {
+                for (uint i = 0; i < child->other_int_nodes_.size(); ++i)  {
                     const auto child_int_node = child->other_int_nodes_[i];
                     const auto parent_int_node = start_node->other_int_nodes_[i];
                     expected_statistics = expected_total_node_visits(child_int_node, child_int_node.get_agent_idx(), is_first_child_and_not_parent_root, expected_statistics);
@@ -153,7 +152,7 @@ private:
         auto existing_node_visit = inter_node.total_node_visits_;
         EXPECT_EQ(existing_node_visit, recursive_node_visit) << "Unexpected recursive node visits for node " << id << " at depth " << depth << " for agent " << (int)agent_idx;
 
-        ASSERT_EQ((int)inter_node.state_.get_num_actions(agent_idx),inter_node.ucb_statistics_.size()) << "Internode state and statistic are of unequal length";
+        ASSERT_EQ(inter_node.state_.get_num_actions(agent_idx),AgentIdx(inter_node.ucb_statistics_.size())) << "Internode state and statistic are of unequal length";
         for (auto action_it = inter_node.ucb_statistics_.begin(); action_it != inter_node.ucb_statistics_.end(); ++action_it)
         {   
             ActionIdx action_idx = action_it->first;

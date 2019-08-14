@@ -58,9 +58,10 @@ struct container_hash {
         InterNodeVector other_int_nodes_;
 
         const JointAction joint_action_; // action_idx leading to this node
+        const unsigned int max_num_joint_actions_;
         const unsigned int id_;
         const unsigned int depth_;
-        const unsigned int max_num_joint_actions_;
+        
         static unsigned int num_nodes_;
 
     public:
@@ -105,7 +106,7 @@ struct container_hash {
         // Initialize the intermediate nodes of other agents
         InterNodeVector vec;
         // vec.resize(state_.get_agent_idx().size()-1);
-        for (AgentIdx ai = S::ego_agent_idx+1; ai < state_->get_agent_idx().size(); ++ai ) {
+        for (AgentIdx ai = S::ego_agent_idx+1; ai < AgentIdx(state_->get_agent_idx().size()); ++ai ) {
             vec.emplace_back(*state_,ai,state_->get_num_actions(ai));
         }
         return vec;
@@ -113,7 +114,7 @@ struct container_hash {
     joint_action_(joint_action),
     max_num_joint_actions_([this]()-> unsigned int{
         ActionIdx num_actions(state_->get_num_actions(S::ego_agent_idx));
-        for(auto ai = S::ego_agent_idx+1; ai < state_->get_agent_idx().size(); ++ai ) {
+        for(auto ai = S::ego_agent_idx+1; ai < AgentIdx(state_->get_agent_idx().size()); ++ai ) {
             num_actions *=state_->get_num_actions(ai);
         }
         return num_actions; }() ),
@@ -287,6 +288,7 @@ struct container_hash {
     void StageNode<S,SE, SO, H>::printLayer(std::string filename) {
         std::ofstream logging;
         logging.open(filename+".gv",std::ios::app);
+        logging << std::setprecision(2) << std::endl;
         // DRAW SUBGRAPH FOR THIS STAGE
         logging << "subgraph cluster_node_" << this->id_<< "{" << std::endl;
         logging << "node" << this->id_ << "_" << int(ego_int_node_.get_agent_idx()) << "[label=\""<< ego_int_node_.print_node_information()

@@ -41,7 +41,7 @@ typedef double Reward;
     std::vector<T>& operator+=(std::vector<T>& a, const std::vector<T>& b)
     {
         TEST_ASSERT(a.size() == b.size());
-        for(int i=0; i<a.size(); i++){
+        for(uint i=0; i<a.size(); i++){
             a[i] = a[i] + b[i];
         }
         return a;

@@ -42,7 +42,7 @@ public:
     int numIterations();
     std::string nodeInfo();
     ActionIdx returnBestAction();
-    void generateTree(std::string filename="tree");
+    void printTreeToDotFile(std::string filename="tree");
 
     void set_heuristic_function(const H& heuristic) {heuristic_ = heuristic;}
 
@@ -50,15 +50,15 @@ private:
 
     void iterate(const StageNodeSPtr& root_node);
 
-    unsigned int num_iterations;
-
     StageNodeSPtr root_;
+
+    unsigned int num_iterations;
 
     H heuristic_;
 
     std::string sprintf(const StageNodeSPtr& root_node) const;
 
-   MCTS_TEST
+    MCTS_TEST
 };
 
 template<class S, class SE, class SO, class H>
@@ -147,7 +147,7 @@ ActionIdx Mcts<S,SE,SO,H>::returnBestAction(){
 }
 
 template<class S, class SE, class SO, class H>
-void Mcts<S,SE,SO,H>::generateTree(std::string filename){ 
+void Mcts<S,SE,SO,H>::printTreeToDotFile(std::string filename){ 
     root_->printTree(filename);
 }
 

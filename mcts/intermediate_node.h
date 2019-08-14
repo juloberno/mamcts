@@ -59,11 +59,10 @@ namespace mcts {
 
     template<class S, class Stats>
     IntermediateNode<S, Stats>::IntermediateNode(const StateInterface<S>& state, AgentIdx agent_idx, ActionIdx num_actions) :
-    agent_idx_(agent_idx),
+    Stats(num_actions),
     unexpanded_actions_(num_actions),
-    state_(state),
-    Stats(num_actions)
-    {
+    agent_idx_(agent_idx),
+    state_(state) {
         // initialize action indexes from 0 to (number of actions -1)
         std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
     }

@@ -47,7 +47,7 @@ public:
              state = new_state->clone();
              num_iterations +=1;
              // discount the rewards of the current step
-             for(int i=0; i<step_rewards.size(); i++){
+             for(uint i=0; i<step_rewards.size(); i++){
                  step_rewards.at(i) = step_rewards.at(i)*modified_discount_factor;
              }
              accum_rewards += step_rewards;
@@ -69,14 +69,13 @@ public:
         std::uniform_int_distribution<ActionIdx> random_action_selection(0,num_actions-1);
 
         auto gen = [&](){
-            return random_action_selection(random_generator);
+            return random_action_selection(random_generator_);
         };
 
         JointAction ja(num_agents);
         std::generate(std::begin(ja), std::end(ja), gen);
         return ja;
     }
-    std::mt19937 random_generator = std::mt19937(mcts::MctsParameters::RANDOM_GENERATOR_SEED);
     const double max_search_time_random_heuristic = mcts::MctsParameters::MAX_SEARCH_TIME_RANDOM_HEURISTIC;
     const double max_iterations_random_heuristic = mcts::MctsParameters::MAX_NUMBER_OF_ITERATIONS_RANDOM_HEURISTIC;
 

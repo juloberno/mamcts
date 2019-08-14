@@ -25,19 +25,25 @@ TEST(test_mcts, verify_uct )
 {
 
     RandomGenerator::random_generator_ = std::mt19937(1000);
-
     Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts;
-
     SimpleState state(4);
     
-    mcts.search(state, 50000, 100000);
-    mcts.generateTree("test_tree");
-    std::cout << "Finished search." << std::endl;
+    mcts.search(state, 50000, 20);
 
     MctsTest test;
-   test.verify_uct(mcts,1);
-    std::cout << "Finished verification." << std::endl;
+    test.verify_uct(mcts,1);
 
+}
+
+TEST(test_mcts, generate_dot_file )
+{
+
+    RandomGenerator::random_generator_ = std::mt19937(1000);
+    Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts;
+    SimpleState state(4);
+    
+    mcts.search(state, 50000, 20);
+    mcts.printTreeToDotFile("test_tree");
 }
 
 

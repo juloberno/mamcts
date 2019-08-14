@@ -17,15 +17,21 @@ class UctStatistic : public mcts::NodeStatistic<UctStatistic>, mcts::RandomGener
 public:
     MCTS_TEST
 
-    friend class MctsTest;
+    UctStatistic(ActionIdx num_actions) :
+             NodeStatistic<UctStatistic>(num_actions),
+             value_(0.0f),
+             latest_return_(0.0),
+             ucb_statistics_([&]() -> std::map<ActionIdx, UcbPair>{
+             std::map<ActionIdx, UcbPair> map;
+             for (auto ai = 0; ai < num_actions; ++ai) { map[ai] = UcbPair();}
+             return map;
+             }()),
+             total_node_visits_(0),
+             upper_bound(mcts::MctsParameters::UPPER_BOUND),
+             lower_bound(mcts::MctsParameters::LOWER_BOUND),
+             k_discount_factor(mcts::MctsParameters::DISCOUNT_FACTOR), 
+             k_exploration_constant(mcts::MctsParameters::EXPLORATION_CONSTANT) {};
 
-    UctStatistic(ActionIdx num_actions) : NodeStatistic<UctStatistic>(num_actions), value_(0.0f), latest_return_(0.0), ucb_statistics_([&]() -> std::map<ActionIdx, UcbPair>{
-        std::map<ActionIdx, UcbPair> map;
-        for (auto ai = 0; ai < num_actions; ++ai) { map[ai] = UcbPair();}
-        return map;
-    }()), total_node_visits_(0), k_discount_factor(mcts::MctsParameters::DISCOUNT_FACTOR), 
-                k_exploration_constant(mcts::MctsParameters::EXPLORATION_CONSTANT), upper_bound(mcts::MctsParameters::UPPER_BOUND),
-                 lower_bound(mcts::MctsParameters::LOWER_BOUND) {};
     ~UctStatistic() {};
 
     template <class S>
@@ -43,7 +49,7 @@ public:
         {
             // Select randomly an unexpanded action
             std::uniform_int_distribution<ActionIdx> random_action_selection(0,unexpanded_actions.size()-1);
-            ActionIdx array_idx = random_action_selection(random_generator);
+            ActionIdx array_idx = random_action_selection(random_generator_);
             ActionIdx selected_action = unexpanded_actions[array_idx];
             unexpanded_actions.erase(unexpanded_actions.begin()+array_idx);
             return selected_action;
@@ -142,7 +148,6 @@ public:
     const double lower_bound;
     const double k_discount_factor;
     const double k_exploration_constant;
-    std::mt19937 random_generator = std::mt19937(mcts::MctsParameters::RANDOM_GENERATOR_SEED);
 
 };
 #endif
