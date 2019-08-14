@@ -103,7 +103,7 @@ public:
     std::string print_node_information() const
     {
         std::stringstream ss;
-        ss << "V=" << value_ << ", N=" << total_node_visits_;
+        ss << std::setprecision(2) << "V=" << value_ << ", N=" << total_node_visits_;
         return ss.str();
     }
 
@@ -112,7 +112,7 @@ public:
         std::stringstream ss;
         auto action_it = ucb_statistics_.find(action);
         if(action_it != ucb_statistics_.end()) {
-            ss <<  "a=" << int(action) << ", N=" << action_it->second.action_count_ << ", V=" << action_it->second.action_value_;
+            ss << std::setprecision(2) <<  "a=" << int(action) << ", N=" << action_it->second.action_count_ << ", V=" << action_it->second.action_value_;
         }
         return ss.str();
     }

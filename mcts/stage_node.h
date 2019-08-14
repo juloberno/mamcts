@@ -288,7 +288,6 @@ struct container_hash {
     void StageNode<S,SE, SO, H>::printLayer(std::string filename) {
         std::ofstream logging;
         logging.open(filename+".gv",std::ios::app);
-        logging << std::setprecision(2) << std::endl;
         // DRAW SUBGRAPH FOR THIS STAGE
         logging << "subgraph cluster_node_" << this->id_<< "{" << std::endl;
         logging << "node" << this->id_ << "_" << int(ego_int_node_.get_agent_idx()) << "[label=\""<< ego_int_node_.print_node_information()
