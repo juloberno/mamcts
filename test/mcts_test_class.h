@@ -77,11 +77,6 @@ public:
                 }
             }
 
-           expected_statistics = expected_value(start_node->ego_int_node_, S::ego_agent_idx, expected_statistics);
-           for (auto it_other_int_nodes_root = start_node->other_int_nodes_.begin(); it_other_int_nodes_root != start_node->other_int_nodes_.end(); ++it_other_int_nodes_root) {
-                expected_statistics = expected_value(*it_other_int_nodes_root, it_other_int_nodes_root->get_agent_idx(), expected_statistics);
-           }
-
             // --------- COMPARE RECURSIVE ESTIMATION AGAINST EXISTING BACKPROPAGATION VALUES  ------------
             compare_expected_existing(expected_statistics,start_node->ego_int_node_,start_node->id_,start_node->depth_);
 
