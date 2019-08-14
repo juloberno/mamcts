@@ -29,11 +29,11 @@ Multi-agent Monte Carlo Tree Search implementation in C++.
 
 SimpleState is a 1D chain environment with two agents.
 The agents move towards the goal state if they select different actions.
-They remain at the current state if the select the same action.
+They remain at the current state if they select the same action.
 
-20 iterations with simple state yield the following search tree with SimpleState.
-Stage nodes are enclosed with dotted boxes and contain the statistic informations for each agent in circles.
-Each edge corresponds to an action of one agent with corresponding action-value V and visit count N.
+20 iterations yield the following search tree with SimpleState.
+Stage nodes are enclosed within dotted boxes and contain the statistic informations for each agent in circles.
+Edges correspond to an action of one agent with action-value V and visit count N indicated.
 
 ![Search tree example](/doc/simple_state_test_tree.svg)
 
