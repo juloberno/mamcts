@@ -17,7 +17,6 @@ namespace mcts{
         static double EXPLORATION_CONSTANT;
 
         static double RANDOM_GENERATOR_SEED;
-        static double MAX_SEARCH_TIME;
         static double MAX_NUMBER_OF_ITERATIONS;
         static double MAX_SEARCH_TIME_RANDOM_HEURISTIC;
         static double MAX_NUMBER_OF_ITERATIONS_RANDOM_HEURISTIC;
