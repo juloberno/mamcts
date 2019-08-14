@@ -77,10 +77,10 @@ public:
                 }
             }
 
-           // expected_statistics = expected_value(start_node->ego_int_node_, S::ego_agent_idx, expected_statistics);
-           // for (auto it_other_int_nodes_root = start_node->other_int_nodes_.begin(); it_other_int_nodes_root != start_node->other_int_nodes_.end(); ++it_other_int_nodes_root) {
-           //     expected_statistics = expected_value(*it_other_int_nodes_root, it_other_int_nodes_root->get_agent_idx(), expected_statistics);
-           // }
+           expected_statistics = expected_value(start_node->ego_int_node_, S::ego_agent_idx, expected_statistics);
+           for (auto it_other_int_nodes_root = start_node->other_int_nodes_.begin(); it_other_int_nodes_root != start_node->other_int_nodes_.end(); ++it_other_int_nodes_root) {
+                expected_statistics = expected_value(*it_other_int_nodes_root, it_other_int_nodes_root->get_agent_idx(), expected_statistics);
+           }
 
             // --------- COMPARE RECURSIVE ESTIMATION AGAINST EXISTING BACKPROPAGATION VALUES  ------------
             compare_expected_existing(expected_statistics,start_node->ego_int_node_,start_node->id_,start_node->depth_);
@@ -138,8 +138,9 @@ private:
         if(action_ucb_parent ==  parent_stat.ucb_statistics_.end()) {
             throw;
         }
-        //todo: Q(s,a) = ( (reward1+discount*value_child1)*n_visits_child1 + (reward2+discount*value_child1*n_visits_child2)/total_action_count
-        // total_action_count == n_visits_child1 + n_visits_child2
+        // Q(s,a) = ( (reward1+discount*value_child1)*n_visits_child1 + (reward2+discount*value_child1*n_visits_child2 +...)/total_action_count
+        // total_action_count == n_visits_child1 + n_visits_child2 + ...
+        // REMARK: This tests also correctness of the value estimates
         const auto& total_action_count = action_ucb_parent->second.action_count_;
         const auto& child_action_count = child_stat.total_node_visits_;
         expected_statistics[agent_idx].ucb_statistics_[joint_action[agent_idx]].action_value_ +=
@@ -147,19 +148,6 @@ private:
 
         return expected_statistics;
     }
-
-    std::vector<UctStatistic> expected_value(const UctStatistic& stat, const AgentIdx& agent_idx, std::vector<UctStatistic> expected_statistics) {
-        // add up all child node counts which may belong to different actions of the other agents
-        expected_statistics[agent_idx].value_ = 0.0f;
-        for (auto ucb_pair_it = stat.ucb_statistics_.begin(); ucb_pair_it != stat.ucb_statistics_.end(); ++ucb_pair_it) {
-            expected_statistics[agent_idx].value_ += ucb_pair_it->second.action_value_;
-        }
-        expected_statistics[agent_idx].value_ /=  stat.ucb_statistics_.size();
-
-        return expected_statistics;
-    }
-    
-
 
     template<class S, class Stats>
     void compare_expected_existing(const std::vector<UctStatistic>& expected_statistics,  const IntermediateNode<S,Stats>& inter_node,
@@ -169,11 +157,6 @@ private:
         auto recursive_node_visit = expected_statistics[agent_idx].total_node_visits_;
         auto existing_node_visit = inter_node.total_node_visits_;
         EXPECT_EQ(existing_node_visit, recursive_node_visit) << "Unexpected recursive node visits for node " << id << " at depth " << depth << " for agent " << (int)agent_idx;
-
-        auto recursively_expected_value = expected_statistics[agent_idx].value_;
-        double existing_value = inter_node.value_;
-      //  EXPECT_EQ(existing_value, recursively_expected_value) << "Unexpected recursive value for node " << id << " at depth " << depth << " for agent " << (int)agent_idx;
-
 
         ASSERT_EQ((int)inter_node.state_.get_num_actions(agent_idx),inter_node.ucb_statistics_.size()) << "Internode state and statistic are of unequal length";
         for (auto action_it = inter_node.ucb_statistics_.begin(); action_it != inter_node.ucb_statistics_.end(); ++action_it)
