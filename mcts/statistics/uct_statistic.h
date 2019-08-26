@@ -10,6 +10,7 @@
 #include "mcts/mcts.h"
 #include <iostream>
 
+namespace mcts {
 
 // A upper confidence bound implementation
 class UctStatistic : public mcts::NodeStatistic<UctStatistic>, mcts::RandomGenerator
@@ -150,4 +151,7 @@ public:
     const double k_exploration_constant;
 
 };
+
+} // namespace mcts
+
 #endif

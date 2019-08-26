@@ -7,7 +7,6 @@
 #ifndef MCTS_STATE_H
 #define MCTS_STATE_H
 
-#include "boost/polymorphic_cast.hpp"
 #include <memory>
 #include <vector>
 #include <algorithm>
@@ -19,7 +18,7 @@
 namespace mcts {
 
 
-typedef unsigned char ActionIdx;
+typedef std::size_t ActionIdx;
 typedef unsigned char AgentIdx;
 typedef std::vector<ActionIdx> JointAction;
 

@@ -12,7 +12,7 @@
 #include <iostream>
 #include <chrono>
 
-using namespace mcts;
+ namespace mcts {
 // assumes all agents have equal number of actions and the same node statistic
 class RandomHeuristic :  public mcts::Heuristic<RandomHeuristic>, mcts::RandomGenerator
 {
@@ -81,5 +81,7 @@ public:
 
 
 };
+
+ } // namespace mcts
 
 #endif

@@ -24,7 +24,7 @@
 namespace mcts {
 
 // hash function to use JoinAction as std::unordered map key
-template <typename Container> // we can make this generic for any container [1]
+template <typename Container> 
 struct container_hash {
     std::size_t operator()(Container const& c) const {
         return boost::hash_range(c.begin(), c.end());
@@ -44,6 +44,8 @@ struct container_hash {
         using StageNodeSPtr = std::shared_ptr<StageNode<S,SE,SO, H>>;
         using StageNodeWPtr = std::weak_ptr<StageNode<S,SE,SO, H>>;
         typedef std::unordered_map<JointAction,StageNodeSPtr,container_hash<JointAction>> StageChildMap;
+        typedef std::unordered_map<JointAction,std::vector<Reward>,container_hash<JointAction>> StageRewardMap; //< remembers joint rewards 
+        //of state execute to avoid rerunning execute during node selection
 
         // Environment State
         std::shared_ptr<S> state_;
@@ -51,6 +53,7 @@ struct container_hash {
         // Parents and children
         StageNodeWPtr parent_;
         StageChildMap children_;
+        StageRewardMap joint_rewards_;
 
         // Intermediate decision nodes
         IntermediateNode<S, SE> ego_int_node_;
@@ -101,6 +104,7 @@ struct container_hash {
     state_(state),
     parent_(parent),
     children_(),
+    joint_rewards_(),
     ego_int_node_(*state_,S::ego_agent_idx,state_->get_num_actions(S::ego_agent_idx)),
     other_int_nodes_([this]()-> InterNodeVector {
         // Initialize the intermediate nodes of other agents
@@ -163,12 +167,7 @@ struct container_hash {
         {
             // SELECT EXISTING NODE
             next_node = it->second;
-            std::vector<Reward> rewards;
-            //recalculate the rewards
-            state_->execute(joint_action, rewards);
-            // set selected action indexes, reward = 0
-            //todo: no not overwrite here, only for distributional rewards, another execute may be needed 
-            fill_rewards(rewards, joint_action);
+            fill_rewards(joint_rewards_[joint_action], joint_action);
             return true;
         }
         else
@@ -182,6 +181,7 @@ struct container_hash {
             #endif
             // collect intermediate rewards and selected action indexes
             fill_rewards(rewards, joint_action);
+            joint_rewards_[joint_action] = rewards;
 
             return false;
         }

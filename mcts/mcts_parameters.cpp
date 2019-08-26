@@ -13,9 +13,8 @@ namespace mcts {
     double MctsParameters::EXPLORATION_CONSTANT = 0.7;
 
     double MctsParameters::RANDOM_GENERATOR_SEED = 1000;
-    double MctsParameters::MAX_NUMBER_OF_ITERATIONS = 1000;
-    double MctsParameters::MAX_SEARCH_TIME_RANDOM_HEURISTIC = 50;
-    double MctsParameters::MAX_NUMBER_OF_ITERATIONS_RANDOM_HEURISTIC = 100;
+    double MctsParameters::MAX_SEARCH_TIME_RANDOM_HEURISTIC = 1;
+    double MctsParameters::MAX_NUMBER_OF_ITERATIONS_RANDOM_HEURISTIC = 1;
 
     double MctsParameters::LOWER_BOUND = -1010;
     double MctsParameters::UPPER_BOUND = 95;
