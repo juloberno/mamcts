@@ -36,8 +36,6 @@ public:
 
     ~Mcts() {}
 
-
-
     void search(const S& current_state, unsigned int max_search_time_ms, unsigned int max_iterations);
     int numIterations();
     std::string nodeInfo();

@@ -25,7 +25,7 @@ typedef std::vector<ActionIdx> JointAction;
 typedef double Reward;
 
     template <typename T>
-    std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
+inline std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
     {
         TEST_ASSERT(a.size() == b.size());
         std::vector<T> result;
@@ -37,7 +37,7 @@ typedef double Reward;
     }
 
     template <typename T>
-    std::vector<T>& operator+=(std::vector<T>& a, const std::vector<T>& b)
+inline std::vector<T>& operator+=(std::vector<T>& a, const std::vector<T>& b)
     {
         TEST_ASSERT(a.size() == b.size());
         for(uint i=0; i<a.size(); i++){
@@ -46,7 +46,7 @@ typedef double Reward;
         return a;
     }
 
-    std::ostream& operator<<(std::ostream& os, const JointAction& a)
+inline std::ostream& operator<<(std::ostream& os, const JointAction& a)
     {
         os << "[";
         for (auto it = a.begin(); it != a.end(); ++it)
@@ -56,7 +56,7 @@ typedef double Reward;
     }
 
 
-    template<typename Implementation>
+template<typename Implementation>
 class StateInterface {
 public:
 
