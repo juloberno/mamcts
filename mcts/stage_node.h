@@ -82,8 +82,8 @@ struct container_hash {
         ActionIdx get_best_action();
 
         std::string sprintf() const;
-        void printTree(std::string filename);
-        void printLayer(std::string filename);
+        void printTree(std::string filename, const unsigned int& max_depth = 5);
+        void printLayer(std::string filename, const unsigned int& max_depth);
         double getEgoAgentValue();
         int getEgoNodeVisits();
         double getActionValue(int action);
@@ -269,7 +269,7 @@ struct container_hash {
     };
 
     template<class S, class SE, class SO, class H>
-    void StageNode<S,SE, SO, H>::printTree(std::string filename) 
+    void StageNode<S,SE, SO, H>::printTree(std::string filename, const unsigned int& max_depth) 
     {      
         std::ofstream outfile (filename+".gv");
         outfile << "digraph G {" << std::endl;
@@ -277,7 +277,7 @@ struct container_hash {
         outfile << "labelloc = \"t\";" << std::endl;
         outfile.close();
 
-        this->printLayer(filename);
+        this->printLayer(filename, max_depth);
                         
         outfile.open(filename+".gv",std::ios::app);
         outfile << "}" << std::endl;
@@ -285,7 +285,11 @@ struct container_hash {
     };
 
     template<class S, class SE, class SO, class H>
-    void StageNode<S,SE, SO, H>::printLayer(std::string filename) {
+    void StageNode<S,SE, SO, H>::printLayer(std::string filename, const unsigned int& max_depth) {
+        if(depth_ > max_depth) {
+            return;
+        }
+
         std::ofstream logging;
         logging.open(filename+".gv",std::ios::app);
         // DRAW SUBGRAPH FOR THIS STAGE
@@ -301,7 +305,7 @@ struct container_hash {
 
         // DRAW ARROWS FOR EACH CHILD
         for (auto child_it = this->children_.begin(); child_it != this->children_.end(); ++child_it){
-            child_it->second->printLayer(filename);
+            child_it->second->printLayer(filename, max_depth);
             
             // ego intermediate node
             logging << "node" << this->id_ << "_" << int(ego_int_node_.get_agent_idx()) <<" -> "
