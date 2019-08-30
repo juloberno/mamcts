@@ -9,6 +9,7 @@
 
 #include "mcts/mcts.h"
 #include <iostream>
+#include <iomanip>
 
 namespace mcts {
 
@@ -75,7 +76,7 @@ public:
         const UctStatistic& heuristic_statistic_impl = heuristic_statistic.impl();
         value_ = heuristic_statistic_impl.value_;
         latest_return_ = value_;
-        TEST_ASSERT(total_node_visits_ == 0); // This should be the first visit
+        MCTS_EXPECT_TRUE(total_node_visits_ == 0); // This should be the first visit
         total_node_visits_ += 1;
     }
 
@@ -133,8 +134,8 @@ public:
         for (size_t idx = 0; idx < ucb_statistics.size(); ++idx)
         {
             double action_value_normalized = (ucb_statistics.at(idx).action_value_-lower_bound)/(upper_bound-lower_bound); 
-            TEST_ASSERT(action_value_normalized>=0);
-            TEST_ASSERT(action_value_normalized<=1);
+            MCTS_EXPECT_TRUE(action_value_normalized>=0);
+            MCTS_EXPECT_TRUE(action_value_normalized<=1);
             values[idx] = action_value_normalized + 2 * k_exploration_constant * sqrt( (2* log(total_node_visits_)) / ( ucb_statistics.at(idx).action_count_)  );
         }
     }

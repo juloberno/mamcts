@@ -22,7 +22,7 @@ class MctsTest;
 #ifdef CRTP_DYNAMIC_INTERFACE
 #define CRTP_INTERFACE(type) inline Implementation& impl()  { \
         auto derivedptr = dynamic_cast<type*>(this); \
-        TEST_ASSERT(derivedptr!=nullptr); \
+        MCTS_EXPECT_TRUE(derivedptr!=nullptr); \
         return *derivedptr; \
         }
 #else
@@ -34,7 +34,7 @@ class MctsTest;
 #ifdef CRTP_DYNAMIC_INTERFACE
 #define CRTP_CONST_INTERFACE(type) inline const Implementation& impl() const { \
         auto const derivedptr = dynamic_cast<const type*>(this); \
-        TEST_ASSERT(derivedptr!=nullptr); \
+        MCTS_EXPECT_TRUE(derivedptr!=nullptr); \
         return *derivedptr; \
     }
 #else
@@ -43,7 +43,7 @@ class MctsTest;
         }
 #endif
 
-#define TEST_ASSERT(cond) assert(#cond)
+#define MCTS_EXPECT_TRUE(cond)
 
 } // namespace mcts
 #endif

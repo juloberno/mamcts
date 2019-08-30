@@ -27,7 +27,7 @@ typedef double Reward;
     template <typename T>
 inline std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
     {
-        TEST_ASSERT(a.size() == b.size());
+        MCTS_EXPECT_TRUE(a.size() == b.size());
         std::vector<T> result;
         result.reserve(a.size());
 
@@ -39,7 +39,7 @@ inline std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b
     template <typename T>
 inline std::vector<T>& operator+=(std::vector<T>& a, const std::vector<T>& b)
     {
-        TEST_ASSERT(a.size() == b.size());
+        MCTS_EXPECT_TRUE(a.size() == b.size());
         for(uint i=0; i<a.size(); i++){
             a[i] = a[i] + b[i];
         }
