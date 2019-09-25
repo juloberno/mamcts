@@ -74,7 +74,7 @@ public:
 
     std::string sprintf() const;
 
-    virtual ~StateInterface() {};
+    virtual ~StateInterface() {}; // todo: why is this virtual? do we need it
 
 private:
     CRTP_INTERFACE(Implementation)

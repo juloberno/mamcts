@@ -99,9 +99,6 @@ public:
        value_ = accum_rewards;
     }
 
-
-public:
-
     std::string print_node_information() const
     {
         std::stringstream ss;
@@ -139,6 +136,7 @@ public:
             values[idx] = action_value_normalized + 2 * k_exploration_constant * sqrt( (2* log(total_node_visits_)) / ( ucb_statistics.at(idx).action_count_)  );
         }
     }
+private:
 
     double value_;
     double latest_return_;   // tracks the return during backpropagation
