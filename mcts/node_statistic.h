@@ -21,7 +21,7 @@ class NodeStatistic
 public:
     MCTS_TEST;
 
-    NodeStatistic(ActionIdx num_actions) : num_actions_(num_actions) {}
+    NodeStatistic(ActionIdx num_actions, AgentIdx agent_idx) : num_actions_(num_actions), agent_idx_(agent_idx) {}
     template <class S>
     ActionIdx choose_next_action(const StateInterface<S>& state, std::vector<int>& unexpanded_actions);
     void update_statistic(const NodeStatistic<Implementation>& changed_child_statistic); // update statistic during backpropagation from child node
@@ -41,6 +41,7 @@ public:
 protected:
     std::pair<ActionIdx, Reward> collected_reward_;
     ActionIdx num_actions_;
+    AgentIdx agent_idx_;
 
 };
 

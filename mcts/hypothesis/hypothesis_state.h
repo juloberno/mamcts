@@ -12,18 +12,26 @@
 
 namespace mcts {
 
-template<typename Implementation>
-class HypothesisState  {
-public:
-    HypothesisState(const std::vector<const Hypothesis>& hypothesis_available) : hypothesis_available_(hypothesis_available) {}
-    void sample_hypothesis_each_agent(); // samples from the probability distribution of hypothesis a new hypothesis for each agent
-                                         // and assigns it to the current_agent_hypothesis
+typedef unsigned int HypothesisId;
 
-    static std::vector<const Hypothesis> define_hypothesis(); // define the hypothesis used for one search, call before search starts
+template<typename Implementation, typename ActionType = ActionIdx>
+class HypothesisState : StateInterface<Implementation>  {
+public:
+    HypothesisState(const std::vector<const Hypothesis>& hypothesis_available,
+                    const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis) 
+                    : hypothesis_available_(hypothesis_available),
+                      current_agents_hypothesis_(current_agents_hypothesis) {}
+
+    ActionIdx plan_action_current_hypothesis(const AgentIdx& agent_idx) const;
+
+    Probability get_probability(const HypothesisId& hypothesis, const ActionType& action) const;
+
+    Probability get_prior(const HypothesisId& hypothesis) const;
+
+    HypothesisId get_num_hypothesis() const;
+
 private:
-    const std::unordered_map<AgentIdx, const Hypothesis* const> current_agent_hypothesis_; // shared across all states
-    const& std::vector<const Hypothesis> hypothesis_available_;
-    const std::vector<float> hypothesis_probabilities_;
+    const std::unordered_map<AgentIdx, HypothesisId>& current_agent_hypothesis_; // shared across all states
 };
 
 } // namespace mcts

@@ -25,11 +25,9 @@ namespace mcts {
     template<class S, class Stats>
     class IntermediateNode : public Stats{
     private:
-
         std::vector<int> unexpanded_actions_; // contains all action indexes which have not been expanded yet
         AgentIdx agent_idx_;
         const StateInterface<S>& state_;
-
 
     public:
         IntermediateNode(const StateInterface<S>& state, AgentIdx agent_idx, ActionIdx num_actions);
@@ -44,12 +42,6 @@ namespace mcts {
 
         AgentIdx get_agent_idx() const;
 
-        double get_value();
-
-        int get_node_visits();
-
-        double get_action_value(int action);
-
         MCTS_TEST
 
     };
@@ -59,7 +51,7 @@ namespace mcts {
 
     template<class S, class Stats>
     IntermediateNode<S, Stats>::IntermediateNode(const StateInterface<S>& state, AgentIdx agent_idx, ActionIdx num_actions) :
-    Stats(num_actions),
+    Stats(num_actions, agent_idx),
     unexpanded_actions_(num_actions),
     agent_idx_(agent_idx),
     state_(state) {
@@ -83,21 +75,6 @@ namespace mcts {
     template<class S, class Stats>
     bool IntermediateNode<S, Stats>::all_actions_expanded() {
         return unexpanded_actions_.empty();
-    }
-
-    template<class S, class Stats>
-    double IntermediateNode<S, Stats>::get_value() {
-        return NodeStatistic<Stats>::get_value();
-    }
-
-    template<class S, class Stats>
-    int IntermediateNode<S, Stats>::get_node_visits() {
-        return NodeStatistic<Stats>::get_node_visits();
-    }
-
-    template<class S, class Stats>
-    double IntermediateNode<S, Stats>::get_action_value(int action) {
-        return NodeStatistic<Stats>::get_action_value(action);
     }
 
     template<class S, class Stats>

@@ -25,7 +25,7 @@ public:
 
     template <class S>
     ActionIdx choose_next_action(const StateInterface<S>& state, std::vector<int>& unexpanded_actions) 
-            {return hypothesis_current_iteration_->get_action(state);}
+            {return state_->plan_action_current_hypothesis(agent_idx_);}
 
     void update_statistic(const NodeStatistic<HypothesisStatistic>& changed_child_statistic); 
     
@@ -42,7 +42,7 @@ public:
     std::string print_edge_information(const ActionIdx& action) const;
 
 private:
-   Hypothesis* const current_hypothesis_ptr_;
+   
 
 };
 
