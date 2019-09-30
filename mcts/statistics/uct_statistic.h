@@ -25,7 +25,7 @@ public:
              latest_return_(0.0),
              ucb_statistics_([&]() -> std::map<ActionIdx, UcbPair>{
              std::map<ActionIdx, UcbPair> map;
-             for (auto ai = 0; ai < num_actions; ++ai) { map[ai] = UcbPair();}
+             for (ActionIdx ai = 0; ai < num_actions; ++ai) { map[ai] = UcbPair();}
              return map;
              }()),
              total_node_visits_(0),

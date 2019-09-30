@@ -13,6 +13,7 @@
 #include "mcts/hypothesis/hypothesis_statistic.h"
 #include "mcts/statistics/uct_statistic.h"
 #include "test/hypothesis/hypothesis_simple_state.h"
+#include "mcts/hypothesis/hypothesis_belief_tracker.h"
 #include <cstdio>
 
 using namespace std;
@@ -21,14 +22,27 @@ using namespace mcts;
 
 std::mt19937  mcts::RandomGenerator::random_generator_;
 
-TEST(test_mcts, verify_uct )
+TEST(test_hypothesis, interfaces)
 {
 
     RandomGenerator::random_generator_ = std::mt19937(1000);
     Mcts<HypothesisSimpleState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
     HypothesisSimpleState state(4);
     
-    mcts.search(state, 50000, 2000);
+    mcts.search(state, 100000, 200);
+
+}
+
+TEST(test_hypothesis, belief_tracking)
+{
+
+    RandomGenerator::random_generator_ = std::mt19937(1000);
+    HypothesisSimpleState state(4);
+    HypothesisBeliefTracker<HypothesisSimpleState> tracker;
+
+    tracker.belief_update(state);
+
+    //const auto& sampled_hypothesis = tracker.sample_current_hypothesis();
 
 }
 

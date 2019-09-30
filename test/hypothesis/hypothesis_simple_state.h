@@ -29,6 +29,18 @@ public:
         return 0;
     };
 
+    template<typename ActionType = int>
+    Probability get_probability(const HypothesisId& hypothesis, const ActionType& action) const {return 0.2f;}
+
+    template<typename ActionType = int>
+    ActionType get_last_action(const AgentIdx& agent_idx) const {return 5;}
+
+    Probability get_prior(const HypothesisId& hypothesis, const AgentIdx& agent_idx) const { return 0.5f;}
+
+    HypothesisId get_num_hypothesis(const AgentIdx& agent_idx) const {return 2;}
+
+
+
     std::shared_ptr<HypothesisSimpleState> execute(const JointAction& joint_action, std::vector<Reward>& rewards ) const {
         // normally we map each single action value in joint action with a map to the floating point action. Here, not required
         rewards.resize(2);
