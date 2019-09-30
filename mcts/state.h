@@ -76,12 +76,13 @@ public:
 
     virtual ~StateInterface() {}; // todo: why is this virtual? do we need it
 
-private:
+    static const Implementation& cast();
+
     CRTP_INTERFACE(Implementation)
     CRTP_CONST_INTERFACE(Implementation)
 
-
 };
+
 
 template<typename Implementation>
 inline std::shared_ptr<Implementation> StateInterface<Implementation>::execute(const JointAction &joint_action, std::vector<Reward>& rewards) const {

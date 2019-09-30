@@ -95,8 +95,8 @@ void Mcts<S,SE,SO,H>::iterate(const StageNodeSPtr& root_node)
 
     // -------------- Heuristic Update ----------------
     // Heuristic until terminal node
-    std::vector<SE> calculated_heuristic = heuristic_.get_heuristic_values(node);
-    node->update_statistics(calculated_heuristic);
+    const auto& heuristics = heuristic_.calculate_heuristic_values(node);
+    node->update_statistics(heuristics.first, heuristics.second);
     
     // --------------- Backpropagation ----------------
     // Backpropagate starting from parent node of newly expanded node

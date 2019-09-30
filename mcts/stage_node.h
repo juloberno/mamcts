@@ -71,7 +71,7 @@ struct container_hash {
         StageNode(const StageNodeSPtr& parent, std::shared_ptr<S> state,  const JointAction& joint_action, const unsigned int& depth);
         ~StageNode();
         bool select_or_expand(StageNodeSPtr& next_node);
-        void update_statistics(const std::vector<SE>& heuristic_estimates);
+        void update_statistics(const SE& ego_heuristic_estimate, const std::unordered_map<AgentIdx, SO>& other_heuristic_estimates);
         void update_statistics(const StageNodeSPtr& changed_child_node);
         bool each_agents_actions_expanded();
         bool each_joint_action_expanded();
@@ -215,12 +215,12 @@ struct container_hash {
     }
 
     template<class S, class SE, class SO, class H>
-    void StageNode<S,SE, SO, H>::update_statistics(const std::vector<SE>& heuristic_estimates)
+    void StageNode<S,SE, SO, H>::update_statistics(const SE& ego_heuristic_estimate, const std::unordered_map<AgentIdx, SO>& other_heuristic_estimates)
     {
-        ego_int_node_.update_from_heuristic(heuristic_estimates[S::ego_agent_idx]);
+        ego_int_node_.update_from_heuristic(ego_heuristic_estimate);
         for (auto it = other_int_nodes_.begin(); it != other_int_nodes_.end(); ++it)
         {
-            it->update_from_heuristic(heuristic_estimates[it->get_agent_idx()]);
+            it->update_from_heuristic(other_heuristic_estimates.at(it->get_agent_idx()));
         }
     }
 

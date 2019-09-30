@@ -18,19 +18,21 @@ class RandomHeuristic :  public mcts::Heuristic<RandomHeuristic>, mcts::RandomGe
 {
 public:
     template<class S, class SE, class SO, class H>
-    std::vector<SE> get_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node) {
+    std::pair<SE, std::unordered_map<AgentIdx, SO>> calculate_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node) {
         //catch case where newly expanded state is terminal
         if(node->get_state()->is_terminal()){
             const AgentIdx num_agents = node->get_state()->get_agent_idx().size();
             const ActionIdx num_actions = node->get_state()->get_num_actions(S::ego_agent_idx); 
-            std::vector<SE> statistics;
-            for (AgentIdx ai = 0; ai < num_agents; ++ai)
+            SE ego_heuristic(0, S::ego_agent_idx);
+            ego_heuristic.set_heuristic_estimate(0.0f);
+            std::unordered_map<AgentIdx, SO> other_heuristic_estimates;
+            for (AgentIdx ai = S::ego_agent_idx+1; ai < num_agents; ++ai)
             {   
-                SE statistic(num_actions, ai);
+                SO statistic(num_actions, ai);
                 statistic.set_heuristic_estimate(0);
-                statistics.push_back(statistic);
-                }
-            return  statistics;
+                other_heuristic_estimates.insert(std::pair<AgentIdx, SO>(ai, statistic));
+            }
+            return std::pair<SE, std::unordered_map<AgentIdx, SO>>(ego_heuristic, other_heuristic_estimates) ;
         }
         
         namespace chr = std::chrono;
@@ -58,15 +60,16 @@ public:
 
          };
         // generate an extra node statistic for each agent
-        std::vector<SE> statistics;
-        for (AgentIdx ai = 0; ai < num_agents; ++ai)
+        SE ego_heuristic(0, S::ego_agent_idx);
+        ego_heuristic.set_heuristic_estimate(accum_rewards[S::ego_agent_idx]);
+        std::unordered_map<AgentIdx, SO> other_heuristic_estimates;
+        for (AgentIdx ai = S::ego_agent_idx+1; ai < num_agents; ++ai)
         {   
-            SE statistic(num_actions, ai);
-            statistic.set_heuristic_estimate(accum_rewards.at(ai));
-            statistics.push_back(statistic);
-         }
-
-        return  statistics;
+            SO statistic(num_actions, ai);
+            statistic.set_heuristic_estimate(accum_rewards[ai]);
+            other_heuristic_estimates.insert(std::pair<AgentIdx, SO>(ai, statistic));
+        }
+        return std::pair<SE, std::unordered_map<AgentIdx, SO>>(ego_heuristic, other_heuristic_estimates);
     }
 
     JointAction random_joint_action(ActionIdx num_actions, AgentIdx num_agents)

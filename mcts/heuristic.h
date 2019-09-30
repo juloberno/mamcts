@@ -9,6 +9,7 @@
 
 
 #include <memory>
+#include <unordered_map>
 #include "state.h"
 #include "node_statistic.h"
 
@@ -23,9 +24,8 @@ namespace mcts {
     class Heuristic
     {
     public:
-
         template<class S, class SE, class SO, class H>
-        std::vector<SE> get_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node);
+        std::pair<SE, std::unordered_map<AgentIdx, SO>> calculate_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node);
 
         std::string sprintf() const;
 
@@ -36,21 +36,21 @@ namespace mcts {
 
 
 template <class Implementation>
-Implementation& Heuristic<Implementation>::impl() {
+inline Implementation& Heuristic<Implementation>::impl() {
     return *static_cast<Implementation*>(this);
 }
 
 
 template <class Implementation>
-Implementation& Heuristic<Implementation>::impl() const {
+inline Implementation& Heuristic<Implementation>::impl() const {
     return *static_cast<const Implementation*>(this);
 }
 
 template <class Implementation>
 template<class S, class SE, class SO, class H>
-std::vector<SE> Heuristic<Implementation>::get_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node)
+inline std::pair<SE, std::unordered_map<AgentIdx, SO>> Heuristic<Implementation>::calculate_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node)
 {
-    return impl().get_heuristic_values(node);
+    return impl().calculate_heuristic_values(node);
 }
 
 template <class Implementation>

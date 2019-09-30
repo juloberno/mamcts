@@ -9,10 +9,10 @@
 #define UNIT_TESTING
 #define DEBUG
 #define PLAN_DEBUG_INFO
-#include "test/mcts_test_class.h"
 #include "mcts/heuristics/random_heuristic.h"
+#include "mcts/hypothesis/hypothesis_statistic.h"
 #include "mcts/statistics/uct_statistic.h"
-#include "test/simple_state.h"
+#include "test/hypothesis/hypothesis_simple_state.h"
 #include <cstdio>
 
 using namespace std;
@@ -25,28 +25,12 @@ TEST(test_mcts, verify_uct )
 {
 
     RandomGenerator::random_generator_ = std::mt19937(1000);
-    Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts;
-    SimpleState state(4);
+    Mcts<HypothesisSimpleState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
+    HypothesisSimpleState state(4);
     
     mcts.search(state, 50000, 2000);
 
-    UctTest test;
-    test.verify_uct(mcts,1);
-
 }
-
-TEST(test_mcts, generate_dot_file )
-{
-
-    RandomGenerator::random_generator_ = std::mt19937(1000);
-    Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts;
-    SimpleState state(4);
-    
-    mcts.search(state, 50000, 20);
-    mcts.printTreeToDotFile("test_tree");
-}
-
-
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
