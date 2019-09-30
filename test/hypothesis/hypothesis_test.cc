@@ -43,9 +43,15 @@ TEST(test_hypothesis, belief_tracking)
     // Inits reference to current sampled hypothesis
     BeliefTrackerTestState state(tracker.sample_current_hypothesis()); 
     tracker.belief_update(state);
+    auto beliefs = tracker.get_beliefs();
+    EXPECT_NEAR(beliefs[0][0], 0.5*0.3, 0.001); // prior x prob(last_action)
+    EXPECT_NEAR(beliefs[1][0], 0.6*0.2, 0.001); //  -- "" --
+    EXPECT_NEAR(beliefs[0][1], 0.7*0.7, 0.001); //  -- "" --
+    EXPECT_NEAR(beliefs[1][1], 0.4*0.4, 0.001); //  -- "" --
 
-    //const auto& sampled_hypothesis = tracker.sample_current_hypothesis();
+    const auto& sampled_hypothesis = tracker.sample_current_hypothesis();
 
+    
 }
 
 int main(int argc, char **argv) {

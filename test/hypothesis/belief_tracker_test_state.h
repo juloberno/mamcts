@@ -23,9 +23,9 @@ public:
     template<typename ActionType = int>
     Probability get_probability(const HypothesisId& hypothesis, const ActionType& action) const {
         if(hypothesis == 0) {
-            return get_prob_hy1();
+            return get_prob_hy1(action);
         } else if(hypothesis==1) {
-            return get_prob_hy2();
+            return get_prob_hy2(action);
         } else {
             throw;
         }
@@ -86,9 +86,21 @@ private:
 
     Probability get_prior_ag2_hy2() const { return 0.4f;}
 
-    Probability get_prob_hy1() const { return 0.5f;}
+    template<typename ActionType = int>
+    Probability get_prob_hy1(const ActionType& action) const { 
+        switch(action) {
+            case 5: return 0.3f;
+            case 2: return 0.2f;      
+        } 
+    }
 
-    Probability get_prob_hy2() const { return 0.7f;}
+    template<typename ActionType = int>
+    Probability get_prob_hy2(const ActionType& action) const { 
+        switch(action) {
+            case 5: return 0.7f;
+            case 2: return 0.4f;      
+        } 
+    }
 };
 
 
