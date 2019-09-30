@@ -30,7 +30,7 @@ TEST(test_mcts, verify_uct )
     
     mcts.search(state, 50000, 2000);
 
-    MctsTest test;
+    UctTest test;
     test.verify_uct(mcts,1);
 
 }

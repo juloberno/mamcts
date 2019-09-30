@@ -19,8 +19,8 @@ class UctStatistic : public mcts::NodeStatistic<UctStatistic>, mcts::RandomGener
 public:
     MCTS_TEST
 
-    UctStatistic(ActionIdx num_actions) :
-             NodeStatistic<UctStatistic>(num_actions),
+    UctStatistic(ActionIdx num_actions, AgentIdx agent_idx) :
+             NodeStatistic<UctStatistic>(num_actions, agent_idx),
              value_(0.0f),
              latest_return_(0.0),
              ucb_statistics_([&]() -> std::map<ActionIdx, UcbPair>{

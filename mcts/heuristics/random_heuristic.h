@@ -23,10 +23,13 @@ public:
         if(node->get_state()->is_terminal()){
             const AgentIdx num_agents = node->get_state()->get_agent_idx().size();
             const ActionIdx num_actions = node->get_state()->get_num_actions(S::ego_agent_idx); 
-            std::vector<SE> statistics(num_agents,SE(num_actions));
-            for (AgentIdx ai = 0; ai < num_agents; ++ai){
-                statistics.at(ai).set_heuristic_estimate(0);
-            }
+            std::vector<SE> statistics;
+            for (AgentIdx ai = 0; ai < num_agents; ++ai)
+            {   
+                SE statistic(num_actions, ai);
+                statistic.set_heuristic_estimate(0);
+                statistics.push_back(statistic);
+                }
             return  statistics;
         }
         
@@ -55,10 +58,12 @@ public:
 
          };
         // generate an extra node statistic for each agent
-        std::vector<SE> statistics(num_agents,SE(num_actions));
+        std::vector<SE> statistics;
         for (AgentIdx ai = 0; ai < num_agents; ++ai)
-        {
-            statistics.at(ai).set_heuristic_estimate(accum_rewards.at(ai));
+        {   
+            SE statistic(num_actions, ai);
+            statistic.set_heuristic_estimate(accum_rewards.at(ai));
+            statistics.push_back(statistic);
          }
 
         return  statistics;

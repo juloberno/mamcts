@@ -16,7 +16,7 @@ using namespace mcts;
 using namespace std;
 
 
-class mcts::MctsTest
+class mcts::UctTest
 {
 
 public:
