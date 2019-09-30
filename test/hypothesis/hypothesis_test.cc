@@ -13,6 +13,7 @@
 #include "mcts/hypothesis/hypothesis_statistic.h"
 #include "mcts/statistics/uct_statistic.h"
 #include "test/hypothesis/hypothesis_simple_state.h"
+#include "test/hypothesis/belief_tracker_test_state.h"
 #include "mcts/hypothesis/hypothesis_belief_tracker.h"
 #include <cstdio>
 
@@ -37,9 +38,10 @@ TEST(test_hypothesis, belief_tracking)
 {
 
     RandomGenerator::random_generator_ = std::mt19937(1000);
-    HypothesisSimpleState state(4);
-    HypothesisBeliefTracker<HypothesisSimpleState> tracker;
+    HypothesisBeliefTracker<BeliefTrackerTestState> tracker;
 
+    // Inits reference to current sampled hypothesis
+    BeliefTrackerTestState state(tracker.sample_current_hypothesis()); 
     tracker.belief_update(state);
 
     //const auto& sampled_hypothesis = tracker.sample_current_hypothesis();

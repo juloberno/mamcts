@@ -60,7 +60,6 @@ const std::unordered_map<AgentIdx, HypothesisId>& HypothesisBeliefTracker<S>::sa
     auto& hypothesis_id = current_sampled_hypothesis_[it.first];
     hypothesis_id = hypothesis_distribution(random_generator_);
   }
-
   return current_sampled_hypothesis_;
 }
 
