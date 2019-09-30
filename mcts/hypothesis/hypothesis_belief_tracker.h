@@ -48,10 +48,17 @@ void HypothesisBeliefTracker<S>::belief_update(HypothesisStateInterface<S> state
 
     // Update belief for each tracked hypothesis
     auto& belief_track_agent = tracked_beliefs_[agent_idx];
+    float belief_sum = 0.0f;
     for (HypothesisId hid = 0; hid < belief_track_agent.size(); ++hid) {
         const auto& last_action = state.get_last_action(agent_idx);
         belief_track_agent[hid] *= state.get_probability(hid, last_action);
-      }
+        belief_sum += belief_track_agent[hid];
+    }
+
+    // Normalize beliefs
+    for (HypothesisId hid = 0; hid < belief_track_agent.size(); ++hid) {
+        belief_track_agent[hid] /= belief_sum;
+    }
   }
 }
 

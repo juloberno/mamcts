@@ -36,7 +36,6 @@ TEST(test_hypothesis, interfaces)
 
 TEST(test_hypothesis, belief_tracking)
 {
-
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker<BeliefTrackerTestState> tracker;
 
@@ -44,13 +43,37 @@ TEST(test_hypothesis, belief_tracking)
     BeliefTrackerTestState state(tracker.sample_current_hypothesis()); 
     tracker.belief_update(state);
     auto beliefs = tracker.get_beliefs();
-    EXPECT_NEAR(beliefs[0][0], 0.5*0.3, 0.001); // prior x prob(last_action)
-    EXPECT_NEAR(beliefs[1][0], 0.6*0.2, 0.001); //  -- "" --
-    EXPECT_NEAR(beliefs[0][1], 0.7*0.7, 0.001); //  -- "" --
-    EXPECT_NEAR(beliefs[1][1], 0.4*0.4, 0.001); //  -- "" --
+    EXPECT_NEAR(beliefs[0][0], 0.5*0.3/(0.5*0.3 +  0.7*0.7), 0.001); // prior x prob(last_action) / normalize by total agent belief
+    EXPECT_NEAR(beliefs[1][0], 0.6*0.2/( 0.6*0.2 + 0.4*0.4), 0.001); //  -- "" --
+    EXPECT_NEAR(beliefs[0][1], 0.7*0.7/(0.5*0.3 +  0.7*0.7), 0.001); //  -- "" --
+    EXPECT_NEAR(beliefs[1][1], 0.4*0.4/( 0.6*0.2 + 0.4*0.4), 0.001); //  -- "" --
 
     const auto& sampled_hypothesis = tracker.sample_current_hypothesis();
 
+    tracker.belief_update(state);
+    beliefs = tracker.get_beliefs();
+    EXPECT_NEAR(beliefs[0][0], 0.5*0.3*0.3/(0.5*0.3*0.3 +  0.7*0.7*0.7), 0.001); // prior x prob(last_action)
+    EXPECT_NEAR(beliefs[1][0], 0.6*0.2*0.2/( 0.6*0.2*0.2 + 0.4*0.4*0.4), 0.001); //  -- "" --
+    EXPECT_NEAR(beliefs[0][1], 0.7*0.7*0.7/(0.5*0.3*0.3 +  0.7*0.7*0.7), 0.001); //  -- "" --
+    EXPECT_NEAR(beliefs[1][1], 0.4*0.4*0.4/( 0.6*0.2*0.2 + 0.4*0.4*0.4), 0.001); //  -- "" --
+
+    // Check if hypothesis are accurately sampled from belief
+    beliefs = tracker.get_beliefs();
+    std::unordered_map<AgentIdx, std::unordered_map<HypothesisId,uint>> counts;
+
+    const uint num_samples = 10000;
+    for(uint i = 0; i < num_samples; ++i) {
+      const auto& sampled = tracker.sample_current_hypothesis();
+      for (auto agent_it : sampled) {
+        auto& count_agent =  counts[agent_it.first];
+        count_agent[sampled.at(agent_it.first)]++;
+      }
+    }
+
+    EXPECT_NEAR(counts[0][0]/float(num_samples), beliefs[0][0], 0.1);
+    EXPECT_NEAR(counts[1][0]/float(num_samples), beliefs[1][0], 0.1);
+    EXPECT_NEAR(counts[0][1]/float(num_samples), beliefs[0][1], 0.1);
+    EXPECT_NEAR(counts[1][1]/float(num_samples), beliefs[1][1], 0.1);
     
 }
 
