@@ -10,6 +10,7 @@
 
 #include "stage_node.h"
 #include "heuristic.h"
+#include "hypothesis/hypothesis_belief_tracker.h"
 #include <chrono>  // for high_resolution_clock
 #include "common.h"
 #include <string>
@@ -35,6 +36,9 @@ public:
     Mcts() : root_(), num_iterations(0), heuristic_() {};
 
     ~Mcts() {}
+    
+    template<typename std::enable_if<std::is_base_of<RequiresHypothesis, S>::value>::type* = nullptr>
+    void search(const S& current_state, HypothesisBeliefTracker<S>& belief_tracker, unsigned int max_search_time_ms, unsigned int max_iterations);
 
     void search(const S& current_state, unsigned int max_search_time_ms, unsigned int max_iterations);
     int numIterations();
@@ -60,32 +64,41 @@ private:
 };
 
 template<class S, class SE, class SO, class H>
+template<typename std::enable_if<std::is_base_of<RequiresHypothesis, S>::value>::type*>
+void Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker<S>& belief_tracker,
+                                     unsigned int max_search_time_ms, unsigned int max_iterations) {
+    auto start = std::chrono::high_resolution_clock::now();
+    StageNode<S,SE, SO, H>::reset_counter();
+
+    root_ = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
+            const unsigned int&> (nullptr, current_state.clone(),JointAction(),0);
+    num_iterations = 0;
+    while (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ms && num_iterations<max_iterations) {
+        belief_tracker.sample_current_hypothesis();
+        iterate(root_);
+        num_iterations += 1;
+    }
+}
+
+template<class S, class SE, class SO, class H>
 void Mcts<S,SE,SO,H>::search(const S& current_state, unsigned int max_search_time_ms, unsigned int max_iterations)
 {
-    namespace chr = std::chrono;
     auto start = std::chrono::high_resolution_clock::now();
 
     StageNode<S,SE, SO, H>::reset_counter();
 
-#ifdef PLAN_DEBUG_INFO
-    std::cout << "starting state: " << current_state.sprintf();
-#endif
-
     root_ = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
-            const unsigned int&> (nullptr, current_state.clone(),JointAction(),0);
-   
+            const unsigned int&> (nullptr, current_state.clone(), JointAction(),0);
     num_iterations = 0;
     while (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ms && num_iterations<max_iterations) {
         iterate(root_);
         num_iterations += 1;
     }
-
 }
 
 template<class S, class SE, class SO, class H>
 void Mcts<S,SE,SO,H>::iterate(const StageNodeSPtr& root_node)
 {
-
     StageNodeSPtr node = root_node;
     StageNodeSPtr node_p;
 
@@ -99,7 +112,7 @@ void Mcts<S,SE,SO,H>::iterate(const StageNodeSPtr& root_node)
     node->update_statistics(heuristics.first, heuristics.second);
     
     // --------------- Backpropagation ----------------
-    // Backpropagate starting from parent node of newly expanded node
+    // Backpropagate, starting from parent node of newly expanded node
     node_p = node->get_parent().lock();
     while(true)
     {
@@ -112,7 +125,6 @@ void Mcts<S,SE,SO,H>::iterate(const StageNodeSPtr& root_node)
         {
             node = node->get_parent().lock();
             node_p = node_p->get_parent().lock();
-
         }
     }
 

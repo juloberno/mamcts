@@ -16,7 +16,8 @@ using namespace mcts;
 class HypothesisSimpleState : public mcts::HypothesisStateInterface<HypothesisSimpleState>
 {
 public:
-    HypothesisSimpleState(int length) : HypothesisStateInterface<HypothesisSimpleState>({}),
+    HypothesisSimpleState(int length, const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis) :
+                             HypothesisStateInterface<HypothesisSimpleState>(current_agents_hypothesis),
      state_length_(length), winning_state_length_(10), loosing_state_length_(-1) {};
     ~HypothesisSimpleState() {};
 
@@ -61,7 +62,8 @@ public:
                 rewards = std::vector<Reward>{5, 10};
                 new_state_length = winning_state_length_;
             }
-            return std::make_shared<HypothesisSimpleState>(new_state_length);
+            return std::make_shared<HypothesisSimpleState>(new_state_length,
+                             HypothesisStateInterface<HypothesisSimpleState>::current_agents_hypothesis_ );
         }
         else
         {

@@ -30,7 +30,7 @@ public:
 
     void set_heuristic_estimate(const Reward& accum_rewards);
 
-    void collect_reward(const Reward& reward, const ActionIdx& action_idx);
+    void collect(const Reward& reward, const ActionIdx& action_idx);
 
     std::string print_node_information() const;
     std::string print_edge_information(const ActionIdx& action) const;
@@ -88,7 +88,7 @@ void NodeStatistic<Implementation>::update_from_heuristic(const NodeStatistic<Im
 }
 
 template <class Implementation>
-void NodeStatistic<Implementation>::collect_reward(const mcts::Reward &reward, const ActionIdx& action_idx) {
+void NodeStatistic<Implementation>::collect(const mcts::Reward &reward, const ActionIdx& action_idx) {
     collected_reward_= std::pair<ActionIdx, Reward>(action_idx, reward);
 }
 

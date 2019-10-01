@@ -47,5 +47,11 @@ class UctTest;
 
 #define MCTS_EXPECT_TRUE(cond)
 
+struct RequiresHypothesis 
+{};
+
+struct RequiresCost 
+{};
+
 } // namespace mcts
 #endif

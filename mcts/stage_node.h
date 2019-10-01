@@ -140,10 +140,10 @@ struct container_hash {
     bool StageNode<S,SE, SO, H>::select_or_expand(StageNodeSPtr& next_node) {
         // helper function to fill rewards
         auto fill_rewards = [this](const std::vector<Reward>& reward_list, const JointAction& ja) {
-            ego_int_node_.collect_reward(reward_list[S::ego_agent_idx], ja[S::ego_agent_idx]);
+            ego_int_node_.collect(reward_list[S::ego_agent_idx], ja[S::ego_agent_idx]);
             for (auto it = other_int_nodes_.begin(); it != other_int_nodes_.end(); ++it)
             {
-                it->collect_reward(reward_list[it->get_agent_idx()],ja[it->get_agent_idx()] );
+                it->collect(reward_list[it->get_agent_idx()],ja[it->get_agent_idx()] );
             }
         };
 
