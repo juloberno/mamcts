@@ -37,10 +37,12 @@ public:
 
     ~Mcts() {}
     
-    template<typename std::enable_if<std::is_base_of<RequiresHypothesis, S>::value>::type* = nullptr>
-    void search(const S& current_state, HypothesisBeliefTracker<S>& belief_tracker, unsigned int max_search_time_ms, unsigned int max_iterations);
+    template< class Q = S>
+    typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
+    search(const S& current_state, HypothesisBeliefTracker<S>& belief_tracker, unsigned int max_search_time_ms, unsigned int max_iterations);
 
     void search(const S& current_state, unsigned int max_search_time_ms, unsigned int max_iterations);
+    
     int numIterations();
     std::string nodeInfo();
     ActionIdx returnBestAction();
@@ -64,8 +66,9 @@ private:
 };
 
 template<class S, class SE, class SO, class H>
-template<typename std::enable_if<std::is_base_of<RequiresHypothesis, S>::value>::type*>
-void Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker<S>& belief_tracker,
+template< class Q>
+typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
+Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker<S>& belief_tracker,
                                      unsigned int max_search_time_ms, unsigned int max_iterations) {
     auto start = std::chrono::high_resolution_clock::now();
     StageNode<S,SE, SO, H>::reset_counter();

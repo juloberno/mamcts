@@ -30,7 +30,10 @@ public:
 
     void set_heuristic_estimate(const Reward& accum_rewards);
 
+
     void collect(const Reward& reward, const ActionIdx& action_idx);
+
+    //void collect(const Reward& reward,  const Cost& cost, const ActionIdx& action_idx);
 
     std::string print_node_information() const;
     std::string print_edge_information(const ActionIdx& action) const;

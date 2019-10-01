@@ -23,6 +23,7 @@ typedef unsigned char AgentIdx;
 typedef std::vector<ActionIdx> JointAction;
 
 typedef double Reward;
+typedef double Cost;
 
     template <typename T>
 inline std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
