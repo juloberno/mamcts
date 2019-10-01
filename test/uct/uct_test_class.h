@@ -54,8 +54,9 @@ public:
 
                 auto& child = it->second;
                 std::vector<Reward> rewards;
+                Cost ego_cost; // todo check
                 auto& joint_action = child->joint_action_;
-                auto new_state =  start_node->state_->execute(joint_action, rewards);
+                auto new_state =  start_node->state_->execute(joint_action, rewards, ego_cost);
 
                 // ---------------------- Expected statistics calculation --------------------------
                 bool is_first_child_and_not_parent_root = (it == start_node->children_.begin()) && (!start_node->is_root());

@@ -42,7 +42,7 @@ public:
 
 
 
-    std::shared_ptr<HypothesisSimpleState> execute(const JointAction& joint_action, std::vector<Reward>& rewards ) const {
+    std::shared_ptr<HypothesisSimpleState> execute(const JointAction& joint_action, std::vector<Reward>& rewards, const Cost& ego_cost) const {
         // normally we map each single action value in joint action with a map to the floating point action. Here, not required
         rewards.resize(2);
         rewards[0] = 0; rewards[1] = 0;

@@ -28,12 +28,9 @@ public:
     void update_from_heuristic(const NodeStatistic<Implementation>& heuristic_statistic); // update statistic during backpropagation from heuristic estimate
     ActionIdx get_best_action();
 
-    void set_heuristic_estimate(const Reward& accum_rewards);
+    void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost);
 
-
-    void collect(const Reward& reward, const ActionIdx& action_idx);
-
-    //void collect(const Reward& reward,  const Cost& cost, const ActionIdx& action_idx);
+    void collect(const Reward& reward,  const Cost& cost, const ActionIdx& action_idx);
 
     std::string print_node_information() const;
     std::string print_edge_information(const ActionIdx& action) const;
@@ -43,6 +40,7 @@ public:
 
 protected:
     std::pair<ActionIdx, Reward> collected_reward_;
+    std::pair<ActionIdx, Cost> collected_cost_;
     ActionIdx num_actions_;
     AgentIdx agent_idx_;
 
@@ -91,13 +89,14 @@ void NodeStatistic<Implementation>::update_from_heuristic(const NodeStatistic<Im
 }
 
 template <class Implementation>
-void NodeStatistic<Implementation>::collect(const mcts::Reward &reward, const ActionIdx& action_idx) {
+void NodeStatistic<Implementation>::collect(const mcts::Reward &reward, const mcts::Cost& cost, const ActionIdx& action_idx) {
     collected_reward_= std::pair<ActionIdx, Reward>(action_idx, reward);
+    collected_cost_= std::pair<ActionIdx, Reward>(action_idx, reward);
 }
 
 template <class Implementation>
-void NodeStatistic<Implementation>::set_heuristic_estimate(const Reward& accum_rewards) {
-    return impl().set_heuristic_estimate(accum_rewards);
+void NodeStatistic<Implementation>::set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost) {
+    return impl().set_heuristic_estimate(accum_rewards, accum_ego_cost);
 }
 
 

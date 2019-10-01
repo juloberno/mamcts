@@ -61,7 +61,9 @@ template<typename Implementation>
 class StateInterface {
 public:
 
-    std::shared_ptr<Implementation> execute(const JointAction &joint_action, std::vector<Reward>& rewards) const;
+    std::shared_ptr<Implementation> execute(const JointAction &joint_action,
+                                            std::vector<Reward>& rewards,
+                                            const Cost& ego_cost = 0.0f) const;
 
     std::shared_ptr<Implementation> clone() const;
 
@@ -86,7 +88,9 @@ public:
 
 
 template<typename Implementation>
-inline std::shared_ptr<Implementation> StateInterface<Implementation>::execute(const JointAction &joint_action, std::vector<Reward>& rewards) const {
+inline std::shared_ptr<Implementation> StateInterface<Implementation>::execute(const JointAction &joint_action,
+                                                                               std::vector<Reward>& rewards,
+                                                                               const Cost& ego_cost) const {
    return impl().execute(joint_action, rewards);
 }
 

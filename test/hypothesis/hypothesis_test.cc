@@ -31,6 +31,7 @@ TEST(test_hypothesis, interfaces)
     HypothesisSimpleState state(4, belief_tracker.sample_current_hypothesis());
     belief_tracker.belief_update(state);
     mcts.search(state, belief_tracker, 100000, 200);
+    mcts.search(state, 100000, 200);
 }
 
 TEST(test_hypothesis, belief_tracking)

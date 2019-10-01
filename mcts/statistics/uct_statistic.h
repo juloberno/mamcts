@@ -94,7 +94,7 @@ public:
         value_ = value_ + (latest_return_ - value_) / total_node_visits_;
     }
 
-    void set_heuristic_estimate(const Reward& accum_rewards)
+    void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost)
     {
        value_ = accum_rewards;
     }

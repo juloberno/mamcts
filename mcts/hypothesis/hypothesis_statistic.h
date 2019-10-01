@@ -35,9 +35,7 @@ public:
     
     ActionIdx get_best_action() {return 0;};
 
-    void set_heuristic_estimate(const Reward& accum_rewards) {};
-
-    void collect(const Reward& reward, const ActionIdx& action_idx) {};
+    void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost) {};
 
     std::string print_node_information() const {return "";};
 

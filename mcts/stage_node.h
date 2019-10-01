@@ -45,6 +45,7 @@ struct container_hash {
         using StageNodeWPtr = std::weak_ptr<StageNode<S,SE,SO, H>>;
         typedef std::unordered_map<JointAction,StageNodeSPtr,container_hash<JointAction>> StageChildMap;
         typedef std::unordered_map<JointAction,std::vector<Reward>,container_hash<JointAction>> StageRewardMap; //< remembers joint rewards 
+        typedef std::unordered_map<JointAction,Cost ,container_hash<JointAction>> StageCostMap; //< remembers ego costs 
         //of state execute to avoid rerunning execute during node selection
 
         // Environment State
@@ -54,6 +55,7 @@ struct container_hash {
         StageNodeWPtr parent_;
         StageChildMap children_;
         StageRewardMap joint_rewards_;
+        StageCostMap   ego_costs_;
 
         // Intermediate decision nodes
         IntermediateNode<S, SE> ego_int_node_;
@@ -105,6 +107,7 @@ struct container_hash {
     parent_(parent),
     children_(),
     joint_rewards_(),
+    ego_costs_(),
     ego_int_node_(*state_,S::ego_agent_idx,state_->get_num_actions(S::ego_agent_idx)),
     other_int_nodes_([this]()-> InterNodeVector {
         // Initialize the intermediate nodes of other agents
@@ -138,12 +141,12 @@ struct container_hash {
 
     template<class S, class SE, class SO, class H>
     bool StageNode<S,SE, SO, H>::select_or_expand(StageNodeSPtr& next_node) {
-        // helper function to fill rewards
-        auto fill_rewards = [this](const std::vector<Reward>& reward_list, const JointAction& ja) {
-            ego_int_node_.collect(reward_list[S::ego_agent_idx], ja[S::ego_agent_idx]);
+        // helper function to fill rewards and costs
+        auto fill_rewards = [this](const std::vector<Reward>& reward_list, const Cost& ego_cost, const JointAction& ja) {
+            ego_int_node_.collect(reward_list[S::ego_agent_idx], ego_cost, ja[S::ego_agent_idx]);
             for (auto it = other_int_nodes_.begin(); it != other_int_nodes_.end(); ++it)
             {
-                it->collect(reward_list[it->get_agent_idx()],ja[it->get_agent_idx()] );
+                it->collect(reward_list[it->get_agent_idx()], ego_cost, ja[it->get_agent_idx()] );
             }
         };
 
@@ -167,21 +170,27 @@ struct container_hash {
         {
             // SELECT EXISTING NODE
             next_node = it->second;
-            fill_rewards(joint_rewards_[joint_action], joint_action);
+            fill_rewards(joint_rewards_[joint_action], ego_costs_[joint_action], joint_action);
             return true;
         }
         else
         {   // EXPAND NEW NODE BASED ON NEW JOINT ACTION
             std::vector<Reward> rewards;
+            Cost ego_cost;
             next_node = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>,
-                    const JointAction&, const unsigned int&> (get_shared(), state_->execute(joint_action, rewards),joint_action,depth_+1);
+                    const JointAction&, const unsigned int&> 
+                    (get_shared(),
+                    state_->execute(joint_action, rewards, ego_cost),
+                    joint_action,
+                    depth_+1);
             children_[joint_action] = next_node;
             #ifdef PLAN_DEBUG_INFO
             //     std::cout << "expanded node state: " << state_->execute(joint_action, rewards)->sprintf();
             #endif
             // collect intermediate rewards and selected action indexes
-            fill_rewards(rewards, joint_action);
+            fill_rewards(rewards, ego_cost, joint_action);
             joint_rewards_[joint_action] = rewards;
+            ego_costs_[joint_action] = ego_cost;
 
             return false;
         }
