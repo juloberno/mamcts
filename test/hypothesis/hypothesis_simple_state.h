@@ -63,7 +63,7 @@ public:
                 new_state_length = winning_state_length_;
             }
             return std::make_shared<HypothesisSimpleState>(new_state_length,
-                             HypothesisStateInterface<HypothesisSimpleState>::current_agents_hypothesis_ );
+                             HypothesisStateInterface<HypothesisSimpleState>::current_agents_hypothesis_);
         }
         else
         {
