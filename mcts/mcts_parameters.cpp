@@ -10,12 +10,18 @@
 namespace mcts {
 
     double MctsParameters::DISCOUNT_FACTOR = 0.9;
-    double MctsParameters::EXPLORATION_CONSTANT = 0.7;
 
-    double MctsParameters::MAX_SEARCH_TIME_RANDOM_HEURISTIC = 1;
-    double MctsParameters::MAX_NUMBER_OF_ITERATIONS_RANDOM_HEURISTIC = 1000;
+    double MctsParameters::RandomHeuristic::MAX_SEARCH_TIME_RANDOM_HEURISTIC = 1;
+    double MctsParameters::RandomHeuristic::MAX_NUMBER_OF_ITERATIONS_RANDOM_HEURISTIC = 1000;
 
-    double MctsParameters::LOWER_BOUND = -1010;
-    double MctsParameters::UPPER_BOUND = 95;
-    
+    double MctsParameters::UctStatistic::LOWER_BOUND = -1010;
+    double MctsParameters::UctStatistic::UPPER_BOUND = 95;
+    double MctsParameters::UctStatistic::EXPLORATION_CONSTANT = 0.7;
+
+    bool MctsParameters::HypothesisStatistic::COST_BASED_ACTION_SELECTION = false;
+    double MctsParameters::HypothesisStatistic::LOWER_COST_BOUND = 0;
+    double MctsParameters::HypothesisStatistic::UPPER_COST_BOUND = 1;
+    double MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_ALPHA = 0.5;
+    double MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_K = 1;
+    double MctsParameters::HypothesisStatistic::EXPLORATION_CONSTANT = 0.7;
 } // namespace mcts

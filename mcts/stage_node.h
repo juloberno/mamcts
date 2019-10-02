@@ -211,6 +211,7 @@ struct container_hash {
     
     }
 
+    // Deprecated
     template<class S, class SE, class SO, class H>
     bool StageNode<S,SE, SO, H>::each_agents_actions_expanded() {
         if(!ego_int_node_.all_actions_expanded())

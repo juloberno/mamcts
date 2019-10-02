@@ -12,6 +12,7 @@ namespace mcts {
 typedef double Belief;
 typedef double Probability;
 
+typedef unsigned int HypothesisId;
 
 
 

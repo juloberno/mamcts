@@ -13,7 +13,6 @@
 
 namespace mcts {
 
-typedef unsigned int HypothesisId;
 
 template<typename Implementation>
 class HypothesisStateInterface : public StateInterface<Implementation>,
@@ -33,6 +32,8 @@ public:
     Probability get_prior(const HypothesisId& hypothesis, const AgentIdx& agent_idx) const;
 
     HypothesisId get_num_hypothesis(const AgentIdx& agent_idx) const;
+
+    HypothesisId get_current_hypothesis(const AgentIdx& agent_idx) const;
 
 protected:
     const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis_; // shared across all states
@@ -63,6 +64,11 @@ inline Probability HypothesisStateInterface<Implementation>::get_prior(const Hyp
 template<typename Implementation>
 inline HypothesisId HypothesisStateInterface<Implementation>::get_num_hypothesis(const AgentIdx& agent_idx) const {
  return StateInterface<Implementation>::impl().get_num_hypothesis(agent_idx);
+}
+
+template<typename Implementation>
+inline HypothesisId HypothesisStateInterface<Implementation>::get_current_hypothesis(const AgentIdx& agent_idx) const {
+ return current_agents_hypothesis_.at(agent_idx);
 }
 
 

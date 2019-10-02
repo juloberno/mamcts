@@ -14,15 +14,30 @@ namespace mcts{
 
         //MCTS
         static double DISCOUNT_FACTOR;
-        static double EXPLORATION_CONSTANT;
+        
 
         static double RANDOM_GENERATOR_SEED;
         static double MAX_NUMBER_OF_ITERATIONS;
-        static double MAX_SEARCH_TIME_RANDOM_HEURISTIC;
-        static double MAX_NUMBER_OF_ITERATIONS_RANDOM_HEURISTIC;
 
-        static double LOWER_BOUND;
-        static double UPPER_BOUND;
+        struct RandomHeuristic {
+            static double MAX_SEARCH_TIME_RANDOM_HEURISTIC;
+            static double MAX_NUMBER_OF_ITERATIONS_RANDOM_HEURISTIC;
+        };
+
+        struct UctStatistic {
+            static double LOWER_BOUND;
+            static double UPPER_BOUND;
+            static double EXPLORATION_CONSTANT;
+        };
+
+        struct HypothesisStatistic {
+            static bool COST_BASED_ACTION_SELECTION;
+            static double UPPER_COST_BOUND;
+            static double LOWER_COST_BOUND;
+            static double PROGRESSIVE_WIDENING_K;
+            static double PROGRESSIVE_WIDENING_ALPHA;
+            static double EXPLORATION_CONSTANT;
+        };
     };
 } // namespace mcts
 
