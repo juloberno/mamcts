@@ -60,7 +60,7 @@ public:
         hypothesis_id_current_iteration_ = impl.get_current_hypothesis(agent_idx_);
         /* Init hypothesis node count and Q-Values if not visited under this hypothesis yet */
         init_hypothesis_variables(hypothesis_id_current_iteration_);
-        
+
         if(require_progressive_widening(hypothesis_id_current_iteration_)) {
             /* Sample new action:
             1) Sample action from hypothesis
@@ -74,19 +74,8 @@ public:
             if(cost_based_action_selection_) {
                 /*  Cost-based action selection out of hypothesis action set
                 with highest ego cost to predict worst case behavior for this hypothesis (uses uct formula to also explore other actions) */
-                std::vector<double> uct_values;
-                calculate_ucb_values(ucb_statistics_[hypothesis_id_current_iteration_], std::vector<double>& uct_values);
-                double temp = uct_values.begin();
-                ActionIdx best = 0;
-                for (auto it = ucb_statistics_.begin(); it != ucb_statistics_.end(); ++it)
-                {
-                if(it->second.action_value_>temp){
-                    temp = it->second.action_value_;
-                    best = it->first;
-                }
-            }
-        return best;
-           } else {
+                return get_worst_case_action(uct_statistics_[hypothesis_id_current_iteration_], total_node_visits_[hypothesis_id_current_iteration_];)
+            } else {
            /* Random action-selection just use one action  */    
 
            }
@@ -137,17 +126,23 @@ public:
         double action_ego_cost_;
     } UcbPair;
 
-    void calculate_ucb_values(const std::map<ActionIdx, UcbPair>& ucb_statistics, std::vector<double>& values ) const
+    ActionIdx get_worst_case_action(const std::map<ActionIdx, UcbPair>& ucb_statistics, unsigned int node_visits) const
     {
-        values.resize(ucb_statistics.size());
+        double largest_cost = std::numeric_limits<double>::min();
+        ActionIdx worst_action = ucb_statistics.begin()->first;
 
-        for (size_t idx = 0; idx < ucb_statistics.size(); ++idx)
+        for (const auto& ucb_pair : ucb_statistics) 
         {
-            double action_value_normalized = (ucb_statistics.at(idx).action_ego_cost_-lower_cost_bound)/(upper_cost_bound-lower_cost_bound); 
+            double action_cost_normalized = (ucb_pair.second.action_ego_cost_-lower_cost_bound)/(upper_cost_bound-lower_cost_bound); 
             MCTS_EXPECT_TRUE(action_value_normalized>=0);
             MCTS_EXPECT_TRUE(action_value_normalized<=1);
-            values[idx] = action_value_normalized + 2 * k_exploration_constant * sqrt( (2* std::log(total_node_visits_)) / ( ucb_statistics.at(idx).action_count_)  );
+            const double ucb_cost = action_cost_normalized + 2 * k_exploration_constant * sqrt( (2* std::log(total_node_visits_)) / (ucb_pair.second.action_count_)  );
+            if (ucb_cost > largest_cost) {
+                largest_cost = ucb_cost;
+                worst_action = ucb_pair.first;
+            }
         }
+        return worst_action;
     }
 
 private: // methods
