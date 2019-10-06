@@ -51,7 +51,7 @@ void HypothesisBeliefTracker<S>::belief_update(HypothesisStateInterface<S> state
     float belief_sum = 0.0f;
     for (HypothesisId hid = 0; hid < belief_track_agent.size(); ++hid) {
         const auto& last_action = state.get_last_action(agent_idx);
-        belief_track_agent[hid] *= state.get_probability(hid, last_action);
+        belief_track_agent[hid] *= state.get_probability(hid, agent_idx, last_action);
         belief_sum += belief_track_agent[hid];
     }
 

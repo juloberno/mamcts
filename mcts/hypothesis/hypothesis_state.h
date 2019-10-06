@@ -24,7 +24,7 @@ public:
     ActionIdx plan_action_current_hypothesis(const AgentIdx& agent_idx) const;
 
     template<typename ActionType = ActionIdx>
-    Probability get_probability(const HypothesisId& hypothesis, const ActionType& action) const;
+    Probability get_probability(const HypothesisId& hypothesis, const AgentIdx& agent_idx, const ActionType& action) const;
 
     template<typename ActionType = ActionIdx>
     ActionType get_last_action(const AgentIdx& agent_idx) const;
@@ -46,8 +46,10 @@ inline ActionIdx HypothesisStateInterface<Implementation>::plan_action_current_h
 
 template<typename Implementation>
 template<typename ActionType>
-Probability HypothesisStateInterface<Implementation>::get_probability(const HypothesisId& hypothesis, const ActionType& action) const {
- return StateInterface<Implementation>::impl().get_probability(hypothesis, action);
+Probability HypothesisStateInterface<Implementation>::get_probability(const HypothesisId& hypothesis,
+                                                                      const AgentIdx& agent_idx,
+                                                                      const ActionType& action) const {
+ return StateInterface<Implementation>::impl().get_probability(hypothesis, agent_idx, action);
 }
 
 template<typename Implementation>

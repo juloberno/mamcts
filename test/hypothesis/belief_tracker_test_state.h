@@ -21,7 +21,7 @@ public:
     ~BeliefTrackerTestState() {};
 
     template<typename ActionType = int>
-    Probability get_probability(const HypothesisId& hypothesis, const ActionType& action) const {
+    Probability get_probability(const HypothesisId& hypothesis, const AgentIdx& agent_idx, const ActionType& action) const {
         if(hypothesis == 0) {
             return get_prob_hy1(action);
         } else if(hypothesis==1) {

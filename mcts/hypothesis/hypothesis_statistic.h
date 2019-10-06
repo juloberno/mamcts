@@ -70,14 +70,17 @@ public:
             auto& ucb_pair = ucb_statistics_[hypothesis_id_current_iteration_][sampled_action];
             return sampled_action;
         } else {
-            /* Select an action based on previous actions */
+            /* Select one action of previous actions */
             if(cost_based_action_selection_) {
                 /*  Cost-based action selection out of hypothesis action set
                 with highest ego cost to predict worst case behavior for this hypothesis (uses uct formula to also explore other actions) */
                 return get_worst_case_action(uct_statistics_[hypothesis_id_current_iteration_], total_node_visits_[hypothesis_id_current_iteration_];)
             } else {
-           /* Random action-selection just use one action  */    
-
+                /* Random action-selection */    
+                const auto& action_map = ucb_statistics_[hypothesis_id_current_iteration_];
+                std::uniform_int_distribution<ActionIdx> random_action_selection(0,action_map.size()-1);
+                auto random_it = std::next(std::begin(action_map), random_action_selection(random_generator_));
+                return random_it.first;
            }
         }
         
