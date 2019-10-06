@@ -104,43 +104,46 @@ public:
 
     std::shared_ptr<HypothesisSimpleState> execute(const JointAction& joint_action, std::vector<Reward>& rewards, const Cost& ego_cost) const {
         // normally we map each single action value in joint action with a map to the floating point action. Here, not required
-        const unsigned int ego_x_pos_before = ego_state.x_pos;
-        const unsigned int ego_x_pos_after = ego_state.x_pos + ego_velocity_after;
+        const AgentState next_ego_state {ego_state.x_pos + join_action[S::ego_agent_idx], join_action[S::ego_agent_idx]};
 
-         // todo
+        std::array<AgentState, num_other_agents> next_other_agent_states;
+        for(size_t i = 0; i < other_agent_states_.size(); ++i) {
+            const auto& old_state = other_agent_states_[i];
+            next_other_agent_states[i] = {old_state.x_pos + join_action[i+1], join_action[i+1]};
+        }
 
+        const bool goal_reached = ego_state.x_pos >= ego_goal_reached_position;
+        bool collision = false;
+        for (const auto& state: next_other_agent_states) {
+            if(next_ego_state.x_pos == state.x_pos) {
+                collision = true;
+            }
+        }
+
+        const bool terminal = goal_reached || collision;
+        rewards.resize(num_other_agents+1);
+        rewards[0] = goal_reached * 100.0f - 1000.0f * collision;
+        cost = collision * 1.0f;
     }
 
     ActionIdx get_num_actions(AgentIdx agent_idx) const {
         return Actions::NUM; // WAIT, FORWARD, BACKWARD
     }
 
-
     bool is_terminal() const {
-        return ego_at_goal() || ego_collision();
+        return terminal_;
     }
 
-    const std::vector<AgentIdx> get_agent_idx() const {
-        return std::vector<AgentIdx>{0,1}; // adapt to number of agents
+    constexpr std::vector<AgentIdx> get_agent_idx() const {
+        std::vector<AgentIdx> agent_idx;
+        std::iota(agent_idx.begind(), agent_idx.end(),0);
+        return agent_idx; // adapt to number of agents
     }
 
     std::string sprintf() const
     {
         std::stringstream ss; // todo
         return ss.str();
-    }
-
-private: 
-    inline bool ego_at_goal() const {
-        ego_state.x_pos >= ego_goal_reached_position;
-    }
-
-    inline bool ego_collision() const {
-        for (const auto& state: other_agent_positions) {
-            if(ego_state.x_pos == state.x_pos) {
-                return true;
-            }
-        }
     }
 
     inline unsigned int dst_to_ego(const AgentIdx& other_agent_idx) const {
