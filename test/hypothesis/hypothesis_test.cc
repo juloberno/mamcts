@@ -110,11 +110,11 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
         if (agent_idx == HypothesisCrossingState::ego_agent_idx ) {
           jointaction[agent_idx] = Actions::FORWARD;
         } else {
-          const auto action = true_agents_policy.act(state->distance_to_ego(agent_idx));
+          const auto action = true_agents_policy.act(state->distance_to_ego(agent_idx-1));
           jointaction[agent_idx] = action;
         }
       }
-      std::cout << "Step " << i << ", Action = " << jointaction << std::endl;
+      std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;
       state = state->execute(jointaction, rewards, cost);
       if (state->is_terminal()) {
         break;

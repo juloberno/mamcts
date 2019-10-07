@@ -25,7 +25,7 @@ class AgentPolicyCrossingState : public RandomGenerator {
   public:
     AgentPolicyCrossingState(const std::pair<int, int>& desired_gap_range) : 
                             desired_gap_range_(desired_gap_range) {}
-    ActionIdx act(const unsigned int& ego_distance) const {
+    ActionIdx act(const int& ego_distance) const {
         // sample desired gap parameter
         std::uniform_int_distribution<int> dis(desired_gap_range_.first, desired_gap_range_.second);
         int desired_gap_dst = dis(random_generator_);
@@ -33,7 +33,7 @@ class AgentPolicyCrossingState : public RandomGenerator {
         return calculate_action(ego_distance, desired_gap_dst);
     }
 
-    ActionIdx calculate_action(const unsigned int& ego_distance, int desired_gap_dst) const {
+    ActionIdx calculate_action(const int& ego_distance, int desired_gap_dst) const {
         const auto gap_error = static_cast<int>(ego_distance) - desired_gap_dst;
         if (gap_error > 0) {
             return Actions::FORWARD;
@@ -44,7 +44,7 @@ class AgentPolicyCrossingState : public RandomGenerator {
         }
     }
 
-    Probability get_probability(const unsigned int& ego_distance, const ActionIdx& action) const {
+    Probability get_probability(const int& ego_distance, const ActionIdx& action) const {
         std::vector<int> gap_distances(desired_gap_range_.second - desired_gap_range_.first+1);
         std::iota(gap_distances.begin(), gap_distances.end(),desired_gap_range_.first);
         unsigned int action_selected = 0;
@@ -65,9 +65,9 @@ class AgentPolicyCrossingState : public RandomGenerator {
     
 typedef struct AgentState {
     AgentState() : x_pos(0), last_action(Actions::WAIT) {}
-    AgentState(const unsigned int& x, const Actions& last_action) : 
+    AgentState(const int& x, const Actions& last_action) : 
             x_pos(x), last_action(last_action) {}
-    unsigned int x_pos;
+    int x_pos;
     Actions last_action;
 } AgentState;
 
@@ -172,7 +172,14 @@ public:
 
     std::string sprintf() const
     {
-        std::stringstream ss; // todo
+        std::stringstream ss;
+        ss << "Ego: x=" << ego_state_.x_pos;
+        int i = 0;
+        for (const auto& st : other_agent_states_) {
+            ss << ", Ag" << i << ": x=" << st.x_pos;
+            i++;
+        } 
+        ss << std::endl;
         return ss.str();
     }
 
@@ -188,8 +195,8 @@ public:
         return ego_state_.x_pos >= ego_goal_reached_position;
     }
 
-    unsigned int min_distance_to_ego() const {
-        unsigned int min_dist = std::numeric_limits<unsigned int>::max();
+    int min_distance_to_ego() const {
+        int min_dist = std::numeric_limits<int>::max();
         for (int i = 0; i < other_agent_states_.size(); ++i) {
             const auto dist = distance_to_ego(i);
             if (min_dist > dist) {
@@ -199,18 +206,16 @@ public:
         return min_dist;
     }
 
-    inline unsigned int distance_to_ego(const AgentIdx& other_agent_idx) const {
+    inline int distance_to_ego(const AgentIdx& other_agent_idx) const {
         return ego_state_.x_pos - other_agent_states_[other_agent_idx].x_pos;
     }
-
-private:
 
 
 private:
   
-    const unsigned int state_x_length = 41; /* 21 is crossing point (41-1)/2+1 */
-    const unsigned int ego_goal_reached_position = 35;
-    const unsigned int crossing_point = (state_x_length-1)/2+1;
+    const int state_x_length = 41; /* 21 is crossing point (41-1)/2+1 */
+    const int ego_goal_reached_position = 35;
+    const int crossing_point = (state_x_length-1)/2+1;
 
     std::vector<AgentPolicyCrossingState> hypothesis_;
 
