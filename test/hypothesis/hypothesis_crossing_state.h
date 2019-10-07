@@ -83,10 +83,14 @@ public:
                             hypothesis_(),
                             other_agent_states_(),
                             ego_state_(),
-                            terminal_(false) {}
+                            terminal_(false) {
+                                for (auto& state : other_agent_states_) {
+                                    state = AgentState();
+                                }
+                            }
 
     HypothesisCrossingState(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis,
-                            const std::array<AgentState, num_other_agents> other_agent_states,
+                            const std::array<AgentState, num_other_agents>& other_agent_states,
                             const AgentState& ego_state,
                             const bool& terminal,
                             const std::vector<AgentPolicyCrossingState>& hypothesis) : // add hypothesis to execute copying
@@ -132,7 +136,8 @@ public:
         std::array<AgentState, num_other_agents> next_other_agent_states;
         for(size_t i = 0; i < other_agent_states_.size(); ++i) {
             const auto& old_state = other_agent_states_[i];
-            next_other_agent_states[i] = AgentState(old_state.x_pos + joint_action[i+1], static_cast<Actions>(joint_action[i+1]));
+            int new_x = static_cast<int>(old_state.x_pos) + joint_action[i+1];
+            next_other_agent_states[i] = AgentState( (new_x>= 0) ? new_x : 0, static_cast<Actions>(joint_action[i+1]));
         }
 
         const bool goal_reached = next_ego_state.x_pos >= ego_goal_reached_position;
