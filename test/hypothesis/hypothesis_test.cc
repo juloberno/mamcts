@@ -28,10 +28,24 @@ TEST(test_hypothesis, hypothesis_crossing_state)
 {
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker<HypothesisCrossingState> belief_tracker;
-    HypothesisCrossingState state(belief_tracker.sample_current_hypothesis());
-    belief_tracker.belief_update(state);
+    auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
+    state->add_hypothesis(AgentPolicyCrossingState({5,5}));
+    belief_tracker.belief_update(*state);
 
+    std::vector<Reward> rewards;
+    Cost cost;
+    bool collision = false;
 
+    // All agents move forward 
+    const auto action = JointAction(state->get_agent_idx().size(), Actions::FORWARD);
+    for(int i = 0; i< 100; ++i) {
+      state = state->execute(action, rewards, cost);
+      if (cost > 0 && state->is_terminal()) {
+        collision=true;
+        break;
+      }
+    }
+    EXPECT_TRUE(collision);
 }
 
 

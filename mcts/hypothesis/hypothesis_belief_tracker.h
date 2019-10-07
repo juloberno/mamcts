@@ -21,7 +21,7 @@ class HypothesisBeliefTracker : public mcts::RandomGenerator {
   public:
     HypothesisBeliefTracker() : tracked_beliefs_(), current_sampled_hypothesis_() {};
     
-    void belief_update(HypothesisStateInterface<S> state);
+    void belief_update(const HypothesisStateInterface<S>& state);
 
     const std::unordered_map<AgentIdx, HypothesisId>& sample_current_hypothesis(); // shared across all states
 
@@ -34,7 +34,7 @@ private:
 };
 
 template <typename S>
-void HypothesisBeliefTracker<S>::belief_update(HypothesisStateInterface<S> state) {
+void HypothesisBeliefTracker<S>::belief_update(const HypothesisStateInterface<S>& state) {
   for(auto agent_idx : state.get_agent_idx() ) {
     auto belief_track_it = tracked_beliefs_.find(agent_idx);
     if(belief_track_it == tracked_beliefs_.end()) {

@@ -79,6 +79,7 @@ private:
 public:
     HypothesisCrossingState(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis) :
                             HypothesisStateInterface<HypothesisCrossingState>(current_agents_hypothesis),
+                            hypothesis_(),
                             other_agent_states_(),
                             ego_state_(),
                             terminal_(false) {}
@@ -88,6 +89,7 @@ public:
                             const AgentState& ego_state,
                             const bool& terminal) :
                             HypothesisStateInterface<HypothesisCrossingState>(current_agents_hypothesis),
+                            hypothesis_(),
                             other_agent_states_(other_agent_states),
                             ego_state_(ego_state),
                             terminal_(terminal) {};
@@ -100,12 +102,12 @@ public:
 
     ActionIdx plan_action_current_hypothesis(const AgentIdx& agent_idx) const {
         const HypothesisId agt_hyp_id = current_agents_hypothesis_.at(agent_idx);
-        return hypothesis_map_.at(agt_hyp_id).act(dst_to_ego(agent_idx-1));
+        return hypothesis_.at(agt_hyp_id).act(dst_to_ego(agent_idx-1));
     };
 
     template<typename ActionType = int>
     Probability get_probability(const HypothesisId& hypothesis, const AgentIdx& agent_idx, const ActionType& action) const { 
-        return hypothesis_map_.at(hypothesis).get_probability(dst_to_ego(agent_idx-1), action);
+        return hypothesis_.at(hypothesis).get_probability(dst_to_ego(agent_idx-1), action);
     ;}
 
     template<typename ActionType = int>
@@ -119,7 +121,7 @@ public:
 
     Probability get_prior(const HypothesisId& hypothesis, const AgentIdx& agent_idx) const { return 0.5f;}
 
-    HypothesisId get_num_hypothesis(const AgentIdx& agent_idx) const {return hypothesis_map_.size();}
+    HypothesisId get_num_hypothesis(const AgentIdx& agent_idx) const {return hypothesis_.size();}
 
     std::shared_ptr<HypothesisCrossingState> execute(const JointAction& joint_action, std::vector<Reward>& rewards, Cost& ego_cost) const {
         // normally we map each single action value in joint action with a map to the floating point action. Here, not required
@@ -134,7 +136,7 @@ public:
         const bool goal_reached = ego_state_.x_pos >= ego_goal_reached_position;
         bool collision = false;
         for (const auto& state: next_other_agent_states) {
-            if(next_ego_state.x_pos == state.x_pos) {
+            if(next_ego_state.x_pos == crossing_point && state.x_pos == crossing_point) {
                 collision = true;
             }
         }
@@ -156,7 +158,7 @@ public:
     }
 
     const std::vector<AgentIdx> get_agent_idx() const {
-        std::vector<AgentIdx> agent_idx;
+        std::vector<AgentIdx> agent_idx(num_other_agents+1);
         std::iota(agent_idx.begin(), agent_idx.end(),0);
         return agent_idx; // adapt to number of agents
     }
@@ -166,6 +168,11 @@ public:
         std::stringstream ss; // todo
         return ss.str();
     }
+
+    void add_hypothesis(const AgentPolicyCrossingState& hypothesis) {
+        hypothesis_.push_back(hypothesis);
+    }
+
 private:
 
     inline unsigned int dst_to_ego(const AgentIdx& other_agent_idx) const {
@@ -178,11 +185,7 @@ private:
     const unsigned int ego_goal_reached_position = 35;
     const unsigned int crossing_point = (state_x_length-1)/2+1;
 
-    const std::unordered_map<HypothesisId, AgentPolicyCrossingState> hypothesis_map_ =  {
-        {0, AgentPolicyCrossingState({-4, 1})}, // aggressive agent type (negative desired gap leads to always forward moving)
-        {1, AgentPolicyCrossingState({1, 5})}, // medium type
-        {2, AgentPolicyCrossingState({6, 10})} // passive type
-    };
+    std::vector<AgentPolicyCrossingState> hypothesis_;
 
     std::array<AgentState, num_other_agents> other_agent_states_;
     AgentState ego_state_;
