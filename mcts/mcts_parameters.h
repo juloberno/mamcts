@@ -20,8 +20,8 @@ namespace mcts{
         static double MAX_NUMBER_OF_ITERATIONS;
 
         struct RandomHeuristic {
-            static double MAX_SEARCH_TIME_RANDOM_HEURISTIC;
-            static double MAX_NUMBER_OF_ITERATIONS_RANDOM_HEURISTIC;
+            static double MAX_SEARCH_TIME;
+            static double MAX_NUMBER_OF_ITERATIONS;
         };
 
         struct UctStatistic {

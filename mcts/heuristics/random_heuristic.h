@@ -87,8 +87,8 @@ public:
         std::generate(std::begin(ja), std::end(ja), gen);
         return ja;
     }
-    const double max_search_time_random_heuristic = mcts::MctsParameters::MAX_SEARCH_TIME_RANDOM_HEURISTIC;
-    const double max_iterations_random_heuristic = mcts::MctsParameters::MAX_NUMBER_OF_ITERATIONS_RANDOM_HEURISTIC;
+    const double max_search_time_random_heuristic = mcts::MctsParameters::RandomHeuristic::MAX_SEARCH_TIME;
+    const double max_iterations_random_heuristic = mcts::MctsParameters::RandomHeuristic::MAX_NUMBER_OF_ITERATIONS;
 
 
 };

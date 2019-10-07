@@ -32,7 +32,7 @@ public:
              upper_bound(mcts::MctsParameters::UctStatistic::UPPER_BOUND),
              lower_bound(mcts::MctsParameters::UctStatistic::LOWER_BOUND),
              k_discount_factor(mcts::MctsParameters::DISCOUNT_FACTOR), 
-             k_exploration_constant(mcts::MctsParameters::EXPLORATION_CONSTANT) {};
+             k_exploration_constant(mcts::MctsParameters::UctStatistic::EXPLORATION_CONSTANT) {};
 
     ~UctStatistic() {};
 
@@ -130,7 +130,7 @@ public:
 
         for (size_t idx = 0; idx < ucb_statistics.size(); ++idx)
         {
-            double action_value_normalized = (ucb_statistics.at(idx).action_value_-lower_cost_bound)/(upper_cost_bound-lower_cost_bound); 
+            double action_value_normalized = (ucb_statistics.at(idx).action_value_-lower_bound)/(upper_bound-lower_bound); 
             MCTS_EXPECT_TRUE(action_value_normalized>=0);
             MCTS_EXPECT_TRUE(action_value_normalized<=1);
             values[idx] = action_value_normalized + 2 * k_exploration_constant * sqrt( (2* log(total_node_visits_)) / ( ucb_statistics.at(idx).action_count_)  );
@@ -144,8 +144,8 @@ private:
     unsigned int total_node_visits_;
 
     // PARAMS
-    const double upper_cost_bound;
-    const double lower_cost_bound;
+    const double upper_bound;
+    const double lower_bound;
     const double k_discount_factor;
     const double k_exploration_constant;
 

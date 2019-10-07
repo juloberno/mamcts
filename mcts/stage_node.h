@@ -283,7 +283,6 @@ struct container_hash {
     {      
         std::ofstream outfile (filename+".gv");
         outfile << "digraph G {" << std::endl;
-        outfile << "label = \"MCTS with Exploration constant = "<< mcts::MctsParameters::EXPLORATION_CONSTANT << "\";" << std::endl;
         outfile << "labelloc = \"t\";" << std::endl;
         outfile.close();
 

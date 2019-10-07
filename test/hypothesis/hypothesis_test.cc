@@ -12,7 +12,7 @@
 #include "mcts/heuristics/random_heuristic.h"
 #include "mcts/hypothesis/hypothesis_statistic.h"
 #include "mcts/statistics/uct_statistic.h"
-#include "test/hypothesis/hypothesis_simple_state.h"
+#include "test/hypothesis/hypothesis_crossing_state.h"
 #include "test/hypothesis/belief_tracker_test_state.h"
 #include "mcts/hypothesis/hypothesis_belief_tracker.h"
 #include <cstdio>
@@ -23,15 +23,27 @@ using namespace mcts;
 
 std::mt19937  mcts::RandomGenerator::random_generator_;
 
-TEST(test_hypothesis, interfaces)
+
+TEST(test_hypothesis, hypothesis_crossing_state)
 {
     RandomGenerator::random_generator_ = std::mt19937(1000);
-    Mcts<HypothesisSimpleState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
+    HypothesisBeliefTracker<HypothesisCrossingState> belief_tracker;
+    HypothesisCrossingState state(belief_tracker.sample_current_hypothesis());
+    belief_tracker.belief_update(state);
+
+
+}
+
+
+TEST(test_hypothesis, test2)
+{
+    RandomGenerator::random_generator_ = std::mt19937(1000);
+   /* Mcts<HypothesisCrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
     HypothesisBeliefTracker<HypothesisSimpleState> belief_tracker;
     HypothesisSimpleState state(4, belief_tracker.sample_current_hypothesis());
     belief_tracker.belief_update(state);
     mcts.search(state, belief_tracker, 100000, 200);
-    mcts.search(state, 100000, 200);
+    mcts.search(state, 100000, 200);*/
 }
 
 TEST(test_hypothesis, belief_tracking)

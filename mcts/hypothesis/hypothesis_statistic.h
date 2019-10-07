@@ -74,19 +74,18 @@ public:
             if(cost_based_action_selection_) {
                 /*  Cost-based action selection out of hypothesis action set
                 with highest ego cost to predict worst case behavior for this hypothesis (uses uct formula to also explore other actions) */
-                return get_worst_case_action(uct_statistics_[hypothesis_id_current_iteration_], total_node_visits_[hypothesis_id_current_iteration_];)
+                return get_worst_case_action(ucb_statistics_.at(hypothesis_id_current_iteration_), total_node_visits_.at(hypothesis_id_current_iteration_));
             } else {
                 /* Random action-selection */    
                 const auto& action_map = ucb_statistics_[hypothesis_id_current_iteration_];
                 std::uniform_int_distribution<ActionIdx> random_action_selection(0,action_map.size()-1);
-                auto random_it = std::next(std::begin(action_map), random_action_selection(random_generator_));
-                return random_it.first;
+                const auto& random_it = std::next(std::begin(action_map), random_action_selection(random_generator_));
+                return random_it->first;
            }
         }
-        
     }
 
-    void update_from_heuristic(const NodeStatistic<UctStatistic>& heuristic_statistic)
+    void update_from_heuristic(const NodeStatistic<HypothesisStatistic>& heuristic_statistic)
     {
         const HypothesisStatistic& heuristic_statistic_impl = heuristic_statistic.impl();
         ego_cost_value_ = heuristic_statistic_impl.ego_cost_value_;
@@ -96,7 +95,7 @@ public:
         node_visits_hypothesis += 1;
     }
 
-    void update_statistic(const NodeStatistic<UctStatistic>& changed_child_statistic) {
+    void update_statistic(const NodeStatistic<HypothesisStatistic>& changed_child_statistic) {
         const HypothesisStatistic& changed_uct_statistic = changed_child_statistic.impl();
 
         //Action Value update step
@@ -129,7 +128,7 @@ public:
         double action_ego_cost_;
     } UcbPair;
 
-    ActionIdx get_worst_case_action(const std::map<ActionIdx, UcbPair>& ucb_statistics, unsigned int node_visits) const
+    ActionIdx get_worst_case_action(const std::unordered_map<ActionIdx, UcbPair>& ucb_statistics, unsigned int node_visits) const
     {
         double largest_cost = std::numeric_limits<double>::min();
         ActionIdx worst_action = ucb_statistics.begin()->first;
@@ -139,7 +138,7 @@ public:
             double action_cost_normalized = (ucb_pair.second.action_ego_cost_-lower_cost_bound)/(upper_cost_bound-lower_cost_bound); 
             MCTS_EXPECT_TRUE(action_value_normalized>=0);
             MCTS_EXPECT_TRUE(action_value_normalized<=1);
-            const double ucb_cost = action_cost_normalized + 2 * k_exploration_constant * sqrt( (2* std::log(total_node_visits_)) / (ucb_pair.second.action_count_)  );
+            const double ucb_cost = action_cost_normalized + 2 * k_exploration_constant * sqrt( (2* std::log(node_visits)) / (ucb_pair.second.action_count_)  );
             if (ucb_cost > largest_cost) {
                 largest_cost = ucb_cost;
                 worst_action = ucb_pair.first;

@@ -63,7 +63,7 @@ public:
 
     std::shared_ptr<Implementation> execute(const JointAction &joint_action,
                                             std::vector<Reward>& rewards,
-                                            const Cost& ego_cost = 0.0f) const;
+                                            Cost& ego_cost) const;
 
     std::shared_ptr<Implementation> clone() const;
 
@@ -90,7 +90,7 @@ public:
 template<typename Implementation>
 inline std::shared_ptr<Implementation> StateInterface<Implementation>::execute(const JointAction &joint_action,
                                                                                std::vector<Reward>& rewards,
-                                                                               const Cost& ego_cost) const {
+                                                                               Cost& ego_cost) const {
    return impl().execute(joint_action, rewards);
 }
 
