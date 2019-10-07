@@ -91,7 +91,8 @@ private:
         switch(action) {
             case 5: return 0.3f;
             case 2: return 0.2f;      
-        } 
+        }
+        return 0.0f;
     }
 
     template<typename ActionType = int>
@@ -100,6 +101,7 @@ private:
             case 5: return 0.7f;
             case 2: return 0.4f;      
         } 
+        return 0.0f;
     }
 };
 

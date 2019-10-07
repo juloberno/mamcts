@@ -24,10 +24,10 @@ using namespace mcts;
 std::mt19937  mcts::RandomGenerator::random_generator_;
 
 
-TEST(test_hypothesis, hypothesis_crossing_state)
+TEST(hypothesis_crossing_state, collision )
 {
     RandomGenerator::random_generator_ = std::mt19937(1000);
-    HypothesisBeliefTracker<HypothesisCrossingState> belief_tracker;
+    HypothesisBeliefTracker<HypothesisCrossingState> belief_tracker(100, 1, HypothesisBeliefTracker<HypothesisCrossingState>::PRODUCT);
     auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
     state->add_hypothesis(AgentPolicyCrossingState({5,5}));
     belief_tracker.belief_update(*state);
@@ -41,11 +41,89 @@ TEST(test_hypothesis, hypothesis_crossing_state)
     for(int i = 0; i< 100; ++i) {
       state = state->execute(action, rewards, cost);
       if (cost > 0 && state->is_terminal()) {
-        collision=true;
+        collision = true;
         break;
       }
     }
     EXPECT_TRUE(collision);
+}
+
+TEST(hypothesis_crossing_state, hypothesis_friendly)
+{
+    RandomGenerator::random_generator_ = std::mt19937(1000);
+    HypothesisBeliefTracker<HypothesisCrossingState> belief_tracker(100, 1, HypothesisBeliefTracker<HypothesisCrossingState>::PRODUCT);
+    auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
+    state->add_hypothesis(AgentPolicyCrossingState({5,5}));
+    belief_tracker.belief_update(*state);
+
+    std::vector<Reward> rewards;
+    Cost cost;
+    bool collision = false;
+
+    // Ego agent moves forward other stick to deterministic hypothesis keeping distance of 5
+    for(int i = 0; i< 100; ++i) {
+      belief_tracker.sample_current_hypothesis();
+      auto jointaction = JointAction(state->get_agent_idx().size());
+      for (auto agent_idx : state->get_agent_idx()) {
+        if (agent_idx == HypothesisCrossingState::ego_agent_idx ) {
+          jointaction[agent_idx] = Actions::FORWARD;
+        } else {
+          const auto action = state->plan_action_current_hypothesis(agent_idx);
+          jointaction[agent_idx] = action;
+        }
+      }
+      const auto action_other = 
+      state = state->execute(jointaction, rewards, cost);
+      if (cost > 0) {
+        collision=true;
+        break;
+      }
+      if(state->is_terminal()) {
+        break;
+      }
+    }
+    EXPECT_EQ(state->min_distance_to_ego(), 6); // the deterministic hypothesis keeps a desired gap of 5
+    EXPECT_FALSE(collision);
+}
+
+TEST(hypothesis_crossing_state, hypothesis_belief_correct)
+{
+    RandomGenerator::random_generator_ = std::mt19937(1000);
+    HypothesisBeliefTracker<HypothesisCrossingState> belief_tracker(10, 1, HypothesisBeliefTracker<HypothesisCrossingState>::SUM);
+    auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
+    state->add_hypothesis(AgentPolicyCrossingState({-2,1}));
+    state->add_hypothesis(AgentPolicyCrossingState({4,5}));
+    state->add_hypothesis(AgentPolicyCrossingState({5,6}));
+    belief_tracker.belief_update(*state);
+
+    AgentPolicyCrossingState true_agents_policy({5,5});
+
+    std::vector<Reward> rewards;
+    Cost cost;
+    bool collision = false;
+
+    // Ego agent moves forward other stick to deterministic hypothesis keeping distance of 5
+    for(int i = 0; i< 100; ++i) {
+      belief_tracker.sample_current_hypothesis();
+      auto jointaction = JointAction(state->get_agent_idx().size());
+      for (auto agent_idx : state->get_agent_idx()) {
+        if (agent_idx = HypothesisCrossingState::ego_agent_idx ) {
+          jointaction[agent_idx] = Actions::FORWARD;
+        } else {
+          const auto action = true_agents_policy.act(state->distance_to_ego(agent_idx));
+          jointaction[agent_idx] = action;
+        }
+      }
+      state = state->execute(jointaction, rewards, cost);
+      if (state->is_terminal()) {
+        break;
+      }
+      belief_tracker.belief_update(*state);
+    }
+    // Both hypothesis should have same belief as true behavior
+    // employs desired gap in each of them with equal probability
+    const auto beliefs = belief_tracker.get_beliefs();
+    EXPECT_NEAR(beliefs.at(1)[2], beliefs.at(1)[1], 0.01);
 }
 
 
@@ -60,10 +138,10 @@ TEST(test_hypothesis, test2)
     mcts.search(state, 100000, 200);*/
 }
 
-TEST(test_hypothesis, belief_tracking)
+TEST(belief_tracker, simple_tracking_state)
 {
     RandomGenerator::random_generator_ = std::mt19937(1000);
-    HypothesisBeliefTracker<BeliefTrackerTestState> tracker;
+    HypothesisBeliefTracker<BeliefTrackerTestState> tracker(10, 1, HypothesisBeliefTracker<BeliefTrackerTestState>::PRODUCT);
 
     // Inits reference to current sampled hypothesis
     BeliefTrackerTestState state(tracker.sample_current_hypothesis()); 

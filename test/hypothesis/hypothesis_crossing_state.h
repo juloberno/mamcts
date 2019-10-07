@@ -21,23 +21,23 @@ typedef enum Actions {
         NUM = 3
     } Actions;
 
-class AgentPolicyCrossingState {
+class AgentPolicyCrossingState : public RandomGenerator {
   public:
-    AgentPolicyCrossingState(const std::pair<unsigned int, unsigned int>& desired_gap_range) : 
+    AgentPolicyCrossingState(const std::pair<int, int>& desired_gap_range) : 
                             desired_gap_range_(desired_gap_range) {}
     ActionIdx act(const unsigned int& ego_distance) const {
         // sample desired gap parameter
-        std::mt19937 gen(1000); //Standard mersenne_twister_engine seeded with rd()
-        std::uniform_int_distribution<unsigned int> dis(desired_gap_range_.first, desired_gap_range_.second);
-        const unsigned int desired_gap_dst = dis(gen);
+        std::uniform_int_distribution<int> dis(desired_gap_range_.first, desired_gap_range_.second);
+        int desired_gap_dst = dis(random_generator_);
 
         return calculate_action(ego_distance, desired_gap_dst);
     }
 
-    ActionIdx calculate_action(const unsigned int& ego_distance, const unsigned int desired_gap_dst) const {
-        if (ego_distance - desired_gap_dst > 0) {
+    ActionIdx calculate_action(const unsigned int& ego_distance, int desired_gap_dst) const {
+        const auto gap_error = static_cast<int>(ego_distance) - desired_gap_dst;
+        if (gap_error > 0) {
             return Actions::FORWARD;
-        } else if (ego_distance - desired_gap_dst == 0) {
+        } else if (gap_error == 0) {
             return Actions::WAIT;
         } else {
             return Actions::BACKWARD;
@@ -45,7 +45,7 @@ class AgentPolicyCrossingState {
     }
 
     Probability get_probability(const unsigned int& ego_distance, const ActionIdx& action) const {
-        std::vector<unsigned int> gap_distances(desired_gap_range_.second - desired_gap_range_.first+1);
+        std::vector<int> gap_distances(desired_gap_range_.second - desired_gap_range_.first+1);
         std::iota(gap_distances.begin(), gap_distances.end(),desired_gap_range_.first);
         unsigned int action_selected = 0;
         for(const auto& desired_gap_dst : gap_distances) {
@@ -54,11 +54,12 @@ class AgentPolicyCrossingState {
                 action_selected++;
             }
         }
-        return static_cast<float>(action_selected)/static_cast<float>(gap_distances.size());
+        const auto probability = static_cast<float>(action_selected)/static_cast<float>(gap_distances.size());
+        return probability;
     }
 
   private: 
-        const std::pair<unsigned int, unsigned int> desired_gap_range_;
+        const std::pair<int, int> desired_gap_range_;
 };
 
     
@@ -74,7 +75,7 @@ typedef struct AgentState {
 class HypothesisCrossingState : public mcts::HypothesisStateInterface<HypothesisCrossingState>
 {
 private:
-  static const unsigned int num_other_agents = 1;
+  static const unsigned int num_other_agents = 2;
 
 public:
     HypothesisCrossingState(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis) :
@@ -87,9 +88,10 @@ public:
     HypothesisCrossingState(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis,
                             const std::array<AgentState, num_other_agents> other_agent_states,
                             const AgentState& ego_state,
-                            const bool& terminal) :
+                            const bool& terminal,
+                            const std::vector<AgentPolicyCrossingState>& hypothesis) : // add hypothesis to execute copying
                             HypothesisStateInterface<HypothesisCrossingState>(current_agents_hypothesis),
-                            hypothesis_(),
+                            hypothesis_(hypothesis),
                             other_agent_states_(other_agent_states),
                             ego_state_(ego_state),
                             terminal_(terminal) {};
@@ -102,12 +104,12 @@ public:
 
     ActionIdx plan_action_current_hypothesis(const AgentIdx& agent_idx) const {
         const HypothesisId agt_hyp_id = current_agents_hypothesis_.at(agent_idx);
-        return hypothesis_.at(agt_hyp_id).act(dst_to_ego(agent_idx-1));
+        return hypothesis_.at(agt_hyp_id).act(distance_to_ego(agent_idx-1));
     };
 
     template<typename ActionType = int>
     Probability get_probability(const HypothesisId& hypothesis, const AgentIdx& agent_idx, const ActionType& action) const { 
-        return hypothesis_.at(hypothesis).get_probability(dst_to_ego(agent_idx-1), action);
+        return hypothesis_.at(hypothesis).get_probability(distance_to_ego(agent_idx-1), action);
     ;}
 
     template<typename ActionType = int>
@@ -133,7 +135,7 @@ public:
             next_other_agent_states[i] = AgentState(old_state.x_pos + joint_action[i+1], static_cast<Actions>(joint_action[i+1]));
         }
 
-        const bool goal_reached = ego_state_.x_pos >= ego_goal_reached_position;
+        const bool goal_reached = next_ego_state.x_pos >= ego_goal_reached_position;
         bool collision = false;
         for (const auto& state: next_other_agent_states) {
             if(next_ego_state.x_pos == crossing_point && state.x_pos == crossing_point) {
@@ -146,7 +148,7 @@ public:
         rewards[0] = goal_reached * 100.0f - 1000.0f * collision;
         ego_cost = collision * 1.0f;
 
-        return std::make_shared<HypothesisCrossingState>(current_agents_hypothesis_, next_other_agent_states, next_ego_state, terminal);
+        return std::make_shared<HypothesisCrossingState>(current_agents_hypothesis_, next_other_agent_states, next_ego_state, terminal, hypothesis_);
     }
 
     ActionIdx get_num_actions(AgentIdx agent_idx) const {
@@ -173,11 +175,31 @@ public:
         hypothesis_.push_back(hypothesis);
     }
 
-private:
+    void clear_hypothesis() {
+        hypothesis_.clear();
+    }
 
-    inline unsigned int dst_to_ego(const AgentIdx& other_agent_idx) const {
+    bool ego_goal_reached() const {
+        return ego_state_.x_pos >= ego_goal_reached_position;
+    }
+
+    unsigned int min_distance_to_ego() const {
+        unsigned int min_dist = std::numeric_limits<unsigned int>::max();
+        for (int i = 0; i < other_agent_states_.size(); ++i) {
+            const auto dist = distance_to_ego(i);
+            if (min_dist > dist) {
+                min_dist = dist;
+            }
+        }
+        return min_dist;
+    }
+
+    inline unsigned int distance_to_ego(const AgentIdx& other_agent_idx) const {
         return ego_state_.x_pos - other_agent_states_[other_agent_idx].x_pos;
     }
+
+private:
+
 
 private:
   
