@@ -37,7 +37,7 @@ TEST(hypothesis_crossing_state, collision )
     bool collision = false;
 
     // All agents move forward 
-    const auto action = JointAction(state->get_agent_idx().size(), Actions::FORWARD);
+    const auto action = JointAction(state->get_agent_idx().size(), aconv(Actions::FORWARD));
     for(int i = 0; i< 100; ++i) {
       state = state->execute(action, rewards, cost);
       if (cost > 0 && state->is_terminal()) {
@@ -66,7 +66,7 @@ TEST(hypothesis_crossing_state, hypothesis_friendly)
       auto jointaction = JointAction(state->get_agent_idx().size());
       for (auto agent_idx : state->get_agent_idx()) {
         if (agent_idx == HypothesisCrossingState::ego_agent_idx ) {
-          jointaction[agent_idx] = Actions::FORWARD;
+          jointaction[agent_idx] = aconv(Actions::FORWARD);
         } else {
           const auto action = state->plan_action_current_hypothesis(agent_idx);
           jointaction[agent_idx] = action;
@@ -107,10 +107,10 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
       auto jointaction = JointAction(state->get_agent_idx().size());
       for (auto agent_idx : state->get_agent_idx()) {
         if (agent_idx == HypothesisCrossingState::ego_agent_idx ) {
-          jointaction[agent_idx] = Actions::FORWARD;
+          jointaction[agent_idx] =  aconv(Actions::FORWARD);
         } else {
           const auto action = true_agents_policy.act(state->distance_to_ego(agent_idx-1));
-          jointaction[agent_idx] = action;
+          jointaction[agent_idx] = aconv(action);
         }
       }
       std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;

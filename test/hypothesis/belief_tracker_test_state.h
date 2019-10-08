@@ -70,6 +70,7 @@ public:
         return std::vector<AgentIdx>{0,1};
     }
 
+    typedef int ActionType;
 
 private:
     template<typename ActionType = int>

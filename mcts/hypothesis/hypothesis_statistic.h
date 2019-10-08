@@ -45,11 +45,11 @@ public:
 
     inline void init_hypothesis_variables(const HypothesisId hypothesis_id) {
         const auto it_count = total_node_visits_.find(hypothesis_id);
-        if (it_count != total_node_visits_.end()) {
+        if (it_count == total_node_visits_.end()) {
             total_node_visits_[hypothesis_id] = 0;
         }
         const auto it_pair = ucb_statistics_.find(hypothesis_id);
-        if (it_pair != ucb_statistics_.end()) {
+        if (it_pair == ucb_statistics_.end()) {
             auto& ucb_pair = ucb_statistics_[hypothesis_id]; // no init required
         }
     }
