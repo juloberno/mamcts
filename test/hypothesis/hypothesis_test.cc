@@ -137,8 +137,8 @@ TEST(crossing_state, mcts_goal_reached)
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
     auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
-    state->add_hypothesis(AgentPolicyCrossingState({4,5}));
-    state->add_hypothesis(AgentPolicyCrossingState({5,6}));
+    //state->add_hypothesis(AgentPolicyCrossingState({4,5}));
+    state->add_hypothesis(AgentPolicyCrossingState({5,5}));
     belief_tracker.belief_update(*state);
 
     AgentPolicyCrossingState true_agents_policy({5,5});
@@ -153,7 +153,7 @@ TEST(crossing_state, mcts_goal_reached)
         if (agent_idx == HypothesisCrossingState::ego_agent_idx ) {
           // Plan for ego agent with hypothesis-based search
           Mcts<HypothesisCrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
-          mcts.search(*state, belief_tracker, 100000, 200);
+          mcts.search(*state, belief_tracker, 100000, 2000);
           jointaction[agent_idx] = mcts.returnBestAction();
           std::cout << "best uct action: " << jointaction[agent_idx] << std::endl;
         } else {

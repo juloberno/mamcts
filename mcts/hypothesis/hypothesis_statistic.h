@@ -149,9 +149,10 @@ public:
 
 private: // methods
     inline bool require_progressive_widening(const HypothesisId& hypothesis_id) const {
-        return num_expanded_actions(hypothesis_id) <= 
-                progressive_widening_k * std::pow(num_node_visits(hypothesis_id),
+        const auto num_expanded = num_expanded_actions(hypothesis_id);
+        const auto widening_term = progressive_widening_k * std::pow(num_node_visits(hypothesis_id),
                 progressive_widening_alpha);
+        return num_expanded <= widening_term;
     }
 
     // How many children exist based on specific hypothesis

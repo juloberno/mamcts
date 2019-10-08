@@ -174,6 +174,14 @@ public:
         rewards[0] = goal_reached * 100.0f - 1000.0f * collision;
         ego_cost = collision * 1.0f;
 
+        if(terminal) {
+            std::cout << "terminal_reached";
+        }
+        if(goal_reached) {
+            std::cout << "goal_reached" << std::endl;
+        }
+
+
         return std::make_shared<HypothesisCrossingState>(current_agents_hypothesis_, next_other_agent_states, next_ego_state, terminal, hypothesis_);
     }
 
