@@ -134,6 +134,20 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
 
 TEST(crossing_state, mcts_goal_reached)
 {
+    MctsParameters::DISCOUNT_FACTOR = 0.9;
+    MctsParameters::RandomHeuristic::MAX_SEARCH_TIME = 10;
+    MctsParameters::RandomHeuristic::MAX_NUMBER_OF_ITERATIONS = 1000;
+    MctsParameters::UctStatistic::LOWER_BOUND = -1010;
+    MctsParameters::UctStatistic::UPPER_BOUND = 95;
+    MctsParameters::UctStatistic::EXPLORATION_CONSTANT = 0.7;
+    MctsParameters::HypothesisStatistic::COST_BASED_ACTION_SELECTION = false;
+    MctsParameters::HypothesisStatistic::LOWER_COST_BOUND = 0;
+    MctsParameters::HypothesisStatistic::UPPER_COST_BOUND = 1;
+    MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_ALPHA = 0.5;
+    MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_K = 1;
+    MctsParameters::HypothesisStatistic::EXPLORATION_CONSTANT = 0.7;
+
+
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
     auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
@@ -153,7 +167,7 @@ TEST(crossing_state, mcts_goal_reached)
         if (agent_idx == HypothesisCrossingState::ego_agent_idx ) {
           // Plan for ego agent with hypothesis-based search
           Mcts<HypothesisCrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
-          mcts.search(*state, belief_tracker, 100000, 2000);
+          mcts.search(*state, belief_tracker, 100000, 200);
           jointaction[agent_idx] = mcts.returnBestAction();
           std::cout << "best uct action: " << jointaction[agent_idx] << std::endl;
         } else {
@@ -162,6 +176,8 @@ TEST(crossing_state, mcts_goal_reached)
           jointaction[agent_idx] = aconv(action);
         }
       }
+      EXPECT_EQ(jointaction[HypothesisCrossingState::ego_agent_idx], 
+                aconv(Actions::FORWARD));
       std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;
       state = state->execute(jointaction, rewards, cost);
       if (state->is_terminal()) {

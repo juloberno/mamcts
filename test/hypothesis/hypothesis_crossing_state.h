@@ -152,6 +152,11 @@ public:
 
     std::shared_ptr<HypothesisCrossingState> execute(const JointAction& joint_action, std::vector<Reward>& rewards, Cost& ego_cost) const {
         // normally we map each single action value in joint action with a map to the floating point action. Here, not required
+        int new_x_ego = ego_state_.x_pos + static_cast<int>(aconv(joint_action[ego_agent_idx]));
+        bool ego_out_of_map = false;
+        if(new_x_ego < 0) {
+            ego_out_of_map = true;
+        }
         const AgentState next_ego_state(ego_state_.x_pos + static_cast<int>(aconv(joint_action[ego_agent_idx])), aconv(joint_action[ego_agent_idx]));
 
         std::array<AgentState, num_other_agents> next_other_agent_states;
@@ -169,18 +174,10 @@ public:
             }
         }
 
-        const bool terminal = goal_reached || collision;
+        const bool terminal = goal_reached || collision || ego_out_of_map;
         rewards.resize(num_other_agents+1);
-        rewards[0] = goal_reached * 100.0f - 1000.0f * collision;
+        rewards[0] = goal_reached * 100.0f - 1000.0f * collision - 1000.0f * ego_out_of_map;
         ego_cost = collision * 1.0f;
-
-        if(terminal) {
-            std::cout << "terminal_reached";
-        }
-        if(goal_reached) {
-            std::cout << "goal_reached" << std::endl;
-        }
-
 
         return std::make_shared<HypothesisCrossingState>(current_agents_hypothesis_, next_other_agent_states, next_ego_state, terminal, hypothesis_);
     }

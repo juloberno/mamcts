@@ -11,7 +11,7 @@ namespace mcts {
 
     double MctsParameters::DISCOUNT_FACTOR = 0.9;
 
-    double MctsParameters::RandomHeuristic::MAX_SEARCH_TIME = 1;
+    double MctsParameters::RandomHeuristic::MAX_SEARCH_TIME = 10;
     double MctsParameters::RandomHeuristic::MAX_NUMBER_OF_ITERATIONS = 1000;
 
     double MctsParameters::UctStatistic::LOWER_BOUND = -1010;
