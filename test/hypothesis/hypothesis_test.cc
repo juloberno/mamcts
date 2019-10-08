@@ -167,7 +167,7 @@ TEST(crossing_state, mcts_goal_reached)
         if (agent_idx == HypothesisCrossingState::ego_agent_idx ) {
           // Plan for ego agent with hypothesis-based search
           Mcts<HypothesisCrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
-          mcts.search(*state, belief_tracker, 100000, 200);
+          mcts.search(*state, belief_tracker, 100000, 2000);
           jointaction[agent_idx] = mcts.returnBestAction();
           std::cout << "best uct action: " << jointaction[agent_idx] << std::endl;
         } else {
