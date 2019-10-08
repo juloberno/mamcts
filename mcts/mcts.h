@@ -39,7 +39,7 @@ public:
     
     template< class Q = S>
     typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
-    search(const S& current_state, HypothesisBeliefTracker<S>& belief_tracker, unsigned int max_search_time_ms, unsigned int max_iterations);
+    search(const S& current_state, HypothesisBeliefTracker& belief_tracker, unsigned int max_search_time_ms, unsigned int max_iterations);
 
     void search(const S& current_state, unsigned int max_search_time_ms, unsigned int max_iterations);
     
@@ -68,7 +68,7 @@ private:
 template<class S, class SE, class SO, class H>
 template<class Q>
 typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
-Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker<S>& belief_tracker,
+Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker& belief_tracker,
                                      unsigned int max_search_time_ms, unsigned int max_iterations) {
     auto start = std::chrono::high_resolution_clock::now();
     StageNode<S,SE, SO, H>::reset_counter();

@@ -27,7 +27,7 @@ std::mt19937  mcts::RandomGenerator::random_generator_;
 TEST(hypothesis_crossing_state, collision )
 {
     RandomGenerator::random_generator_ = std::mt19937(1000);
-    HypothesisBeliefTracker<HypothesisCrossingState> belief_tracker(100, 1, HypothesisBeliefTracker<HypothesisCrossingState>::PRODUCT);
+    HypothesisBeliefTracker belief_tracker(100, 1, HypothesisBeliefTracker::PRODUCT);
     auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
     state->add_hypothesis(AgentPolicyCrossingState({5,5}));
     belief_tracker.belief_update(*state);
@@ -51,7 +51,7 @@ TEST(hypothesis_crossing_state, collision )
 TEST(hypothesis_crossing_state, hypothesis_friendly)
 {
     RandomGenerator::random_generator_ = std::mt19937(1000);
-    HypothesisBeliefTracker<HypothesisCrossingState> belief_tracker(100, 1, HypothesisBeliefTracker<HypothesisCrossingState>::PRODUCT);
+    HypothesisBeliefTracker belief_tracker(100, 1, HypothesisBeliefTracker::PRODUCT);
     auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
     state->add_hypothesis(AgentPolicyCrossingState({5,5}));
     belief_tracker.belief_update(*state);
@@ -90,7 +90,7 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
 { 
     // This test checks if hypothesis probability is split up correctly between two overlapping hypothesis
     RandomGenerator::random_generator_ = std::mt19937(1000);
-    HypothesisBeliefTracker<HypothesisCrossingState> belief_tracker(4, 1, HypothesisBeliefTracker<HypothesisCrossingState>::PRODUCT);
+    HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
     auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
     state->add_hypothesis(AgentPolicyCrossingState({4,5}));
     state->add_hypothesis(AgentPolicyCrossingState({5,6}));
@@ -131,23 +131,51 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
 }
 
 
+
 TEST(crossing_state, mcts_goal_reached)
 {
     RandomGenerator::random_generator_ = std::mt19937(1000);
-   /* HypothesisBeliefTracker<HypothesisCrossingState> belief_tracker(10, 1, HypothesisBeliefTracker<HypothesisCrossingState>::SUM);
+    HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
     auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
-    state->add_hypothesis(AgentPolicyCrossingState({-2,1}));
     state->add_hypothesis(AgentPolicyCrossingState({4,5}));
     state->add_hypothesis(AgentPolicyCrossingState({5,6}));
     belief_tracker.belief_update(*state);
-    Mcts<HypothesisCrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
-    mcts.search(state, belief_tracker, 100000, 200);*/
+
+    AgentPolicyCrossingState true_agents_policy({5,5});
+
+    std::vector<Reward> rewards;
+    Cost cost;
+    bool collision = false;
+
+    for(int i = 0; i< 100; ++i) {
+      auto jointaction = JointAction(state->get_agent_idx().size());
+      for (auto agent_idx : state->get_agent_idx()) {
+        if (agent_idx == HypothesisCrossingState::ego_agent_idx ) {
+          // Plan for ego agent with hypothesis-based search
+          Mcts<HypothesisCrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
+          mcts.search(*state, belief_tracker, 100000, 200);
+          jointaction[agent_idx] = mcts.returnBestAction();
+          std::cout << "best uct action: " << jointaction[agent_idx] << std::endl;
+        } else {
+          // Other agents act according to unknown true agents policy
+          const auto action = true_agents_policy.act(state->distance_to_ego(agent_idx-1));
+          jointaction[agent_idx] = aconv(action);
+        }
+      }
+      std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;
+      state = state->execute(jointaction, rewards, cost);
+      if (state->is_terminal()) {
+        break;
+      }
+      belief_tracker.belief_update(*state);
+    }
+
 }
 
 TEST(belief_tracker, simple_tracking_state)
 {
     RandomGenerator::random_generator_ = std::mt19937(1000);
-    HypothesisBeliefTracker<BeliefTrackerTestState> tracker(10, 1, HypothesisBeliefTracker<BeliefTrackerTestState>::PRODUCT);
+    HypothesisBeliefTracker tracker(10, 1, HypothesisBeliefTracker::PRODUCT);
 
     // Inits reference to current sampled hypothesis
     BeliefTrackerTestState state(tracker.sample_current_hypothesis()); 

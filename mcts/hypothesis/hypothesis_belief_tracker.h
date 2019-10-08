@@ -17,7 +17,7 @@
 
 namespace mcts {
 
-template <typename S>
+
 class HypothesisBeliefTracker : public mcts::RandomGenerator {
   public:
     typedef enum PosteriorType {
@@ -35,7 +35,8 @@ class HypothesisBeliefTracker : public mcts::RandomGenerator {
                             tracked_probabilities_(),
                             tracked_beliefs_(),
                             current_sampled_hypothesis_() {};
-    
+
+    template <typename S>
     void belief_update(const HypothesisStateInterface<S>& state);
 
     const std::unordered_map<AgentIdx, HypothesisId>& sample_current_hypothesis(); // shared across all states
@@ -54,7 +55,7 @@ private:
 
 
 template <typename S>
-void HypothesisBeliefTracker<S>::belief_update(const HypothesisStateInterface<S>& state) {
+void HypothesisBeliefTracker::belief_update(const HypothesisStateInterface<S>& state) {
   for(auto agent_idx : state.get_agent_idx() ) {
     auto belief_track_it = tracked_beliefs_.find(agent_idx);
     if(belief_track_it == tracked_beliefs_.end()) {
@@ -107,8 +108,7 @@ void HypothesisBeliefTracker<S>::belief_update(const HypothesisStateInterface<S>
   }
 }
 
-template <typename S>
-const std::unordered_map<AgentIdx, HypothesisId>& HypothesisBeliefTracker<S>::sample_current_hypothesis() {
+const std::unordered_map<AgentIdx, HypothesisId>& HypothesisBeliefTracker::sample_current_hypothesis() {
   for (const auto& it : tracked_beliefs_) {
     // Sample one hypothesis for each agent
     std::discrete_distribution<HypothesisId> hypothesis_distribution(it.second.begin(), it.second.end());

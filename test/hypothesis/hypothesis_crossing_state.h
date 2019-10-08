@@ -21,6 +21,27 @@ typedef enum Actions {
         NUM = 3
     } Actions;
 
+
+const std::unordered_map<ActionIdx, Actions> idx_to_action = {
+    {0, Actions::WAIT},
+    {1, Actions::FORWARD},
+    {2, Actions::BACKWARD}
+};
+
+const std::unordered_map<Actions, ActionIdx> action_to_idx = {
+    {Actions::WAIT, 0},
+    {Actions::FORWARD, 1},
+    {Actions::BACKWARD, 2}
+};
+
+Actions aconv(const ActionIdx& action) {
+    return idx_to_action.at(action);
+}
+
+ActionIdx aconv(const Actions& action) {
+    return action_to_idx.at(action);
+}
+
 class AgentPolicyCrossingState : public RandomGenerator {
   public:
     AgentPolicyCrossingState(const std::pair<int, int>& desired_gap_range) : 
@@ -131,13 +152,13 @@ public:
 
     std::shared_ptr<HypothesisCrossingState> execute(const JointAction& joint_action, std::vector<Reward>& rewards, Cost& ego_cost) const {
         // normally we map each single action value in joint action with a map to the floating point action. Here, not required
-        const AgentState next_ego_state(ego_state_.x_pos + joint_action[ego_agent_idx], static_cast<Actions>(joint_action[ego_agent_idx]));
+        const AgentState next_ego_state(ego_state_.x_pos + aconv(joint_action[ego_agent_idx]), aconv(joint_action[ego_agent_idx]));
 
         std::array<AgentState, num_other_agents> next_other_agent_states;
         for(size_t i = 0; i < other_agent_states_.size(); ++i) {
             const auto& old_state = other_agent_states_[i];
-            int new_x = static_cast<int>(old_state.x_pos) + joint_action[i+1];
-            next_other_agent_states[i] = AgentState( (new_x>= 0) ? new_x : 0, static_cast<Actions>(joint_action[i+1]));
+            int new_x = static_cast<int>(old_state.x_pos) + aconv(joint_action[i+1]);
+            next_other_agent_states[i] = AgentState( (new_x>= 0) ? new_x : 0, aconv(joint_action[i+1]));
         }
 
         const bool goal_reached = next_ego_state.x_pos >= ego_goal_reached_position;
