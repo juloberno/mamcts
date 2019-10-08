@@ -28,7 +28,7 @@ TEST(test_mcts, verify_uct )
     Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts;
     SimpleState state(4);
     
-    mcts.search(state, 50000, 2000);
+    mcts.search(state, 50000, 20000);
 
     UctTest test;
     test.verify_uct(mcts,1);

@@ -211,19 +211,6 @@ struct container_hash {
     
     }
 
-    // Deprecated
-    template<class S, class SE, class SO, class H>
-    bool StageNode<S,SE, SO, H>::each_agents_actions_expanded() {
-        if(!ego_int_node_.all_actions_expanded())
-        {return false;}
-
-        for(auto it = other_int_nodes_.begin(); it != other_int_nodes_.end(); ++it)
-        {
-            if (!*it->all_actions_expanded())
-            {return false;}
-        }
-    }
-
     template<class S, class SE, class SO, class H>
     void StageNode<S,SE, SO, H>::update_statistics(const SE& ego_heuristic_estimate, const std::unordered_map<AgentIdx, SO>& other_heuristic_estimates)
     {

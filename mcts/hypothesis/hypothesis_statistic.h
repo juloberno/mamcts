@@ -55,7 +55,7 @@ public:
     }
 
     template <class S>
-    ActionIdx choose_next_action(const StateInterface<S>& state, std::vector<int>& unexpanded_actions) {
+    ActionIdx choose_next_action(const StateInterface<S>& state) {
         const HypothesisStateInterface<S>& impl = state.impl();
         hypothesis_id_current_iteration_ = impl.get_current_hypothesis(agent_idx_);
         /* Init hypothesis node count and Q-Values if not visited under this hypothesis yet */

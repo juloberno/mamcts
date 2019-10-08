@@ -29,16 +29,20 @@ public:
              return map;
              }()),
              total_node_visits_(0),
+             unexpanded_actions_(num_actions),
              upper_bound(mcts::MctsParameters::UctStatistic::UPPER_BOUND),
              lower_bound(mcts::MctsParameters::UctStatistic::LOWER_BOUND),
              k_discount_factor(mcts::MctsParameters::DISCOUNT_FACTOR), 
-             k_exploration_constant(mcts::MctsParameters::UctStatistic::EXPLORATION_CONSTANT) {};
+             k_exploration_constant(mcts::MctsParameters::UctStatistic::EXPLORATION_CONSTANT) {
+                 // initialize action indexes from 0 to (number of actions -1)
+                 std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
+             }
 
     ~UctStatistic() {};
 
     template <class S>
-    ActionIdx choose_next_action(const S& state, std::vector<int>& unexpanded_actions) {
-        if(unexpanded_actions.empty())
+    ActionIdx choose_next_action(const S& state) {
+        if(unexpanded_actions_.empty())
         {
             // Select an action based on the UCB formula
             std::vector<double> values;
@@ -50,10 +54,10 @@ public:
         } else
         {
             // Select randomly an unexpanded action
-            std::uniform_int_distribution<ActionIdx> random_action_selection(0,unexpanded_actions.size()-1);
+            std::uniform_int_distribution<ActionIdx> random_action_selection(0,unexpanded_actions_.size()-1);
             ActionIdx array_idx = random_action_selection(random_generator_);
-            ActionIdx selected_action = unexpanded_actions[array_idx];
-            unexpanded_actions.erase(unexpanded_actions.begin()+array_idx);
+            ActionIdx selected_action = unexpanded_actions_[array_idx];
+            unexpanded_actions_.erase(unexpanded_actions_.begin()+array_idx);
             return selected_action;
         }
     }
@@ -142,6 +146,7 @@ private:
     double latest_return_;   // tracks the return during backpropagation
     std::map<ActionIdx, UcbPair> ucb_statistics_; // first: action selection count, action-value
     unsigned int total_node_visits_;
+    std::vector<int> unexpanded_actions_; // contains all action indexes which have not been expanded yet
 
     // PARAMS
     const double upper_bound;

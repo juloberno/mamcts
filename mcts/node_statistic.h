@@ -23,7 +23,7 @@ public:
 
     NodeStatistic(ActionIdx num_actions, AgentIdx agent_idx) : num_actions_(num_actions), agent_idx_(agent_idx) {}
     template <class S>
-    ActionIdx choose_next_action(const StateInterface<S>& state, std::vector<int>& unexpanded_actions);
+    ActionIdx choose_next_action(const StateInterface<S>& state);
     void update_statistic(const NodeStatistic<Implementation>& changed_child_statistic); // update statistic during backpropagation from child node
     void update_from_heuristic(const NodeStatistic<Implementation>& heuristic_statistic); // update statistic during backpropagation from heuristic estimate
     ActionIdx get_best_action();
@@ -59,8 +59,8 @@ const Implementation& NodeStatistic<Implementation>::impl() const {
 
 template <class Implementation>
 template <class S>
-ActionIdx NodeStatistic<Implementation>::choose_next_action(const StateInterface<S>& state, std::vector<int>& unexpanded_actions)  {
-    return impl().choose_next_action(state, unexpanded_actions);
+ActionIdx NodeStatistic<Implementation>::choose_next_action(const StateInterface<S>& state)  {
+    return impl().choose_next_action(state);
 }
 
 template <class Implementation>
