@@ -121,7 +121,7 @@ public:
         if (agent_idx == ego_agent_idx) {
             return ego_state_.last_action;
         } else {
-            return other_agent_states_[agent_idx-1].last_action;
+            return static_cast<int>(other_agent_states_[agent_idx-1].last_action);
         }
     }
 

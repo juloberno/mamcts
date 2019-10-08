@@ -90,9 +90,8 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
 { 
     // This test checks if hypothesis probability is split up correctly between two overlapping hypothesis
     RandomGenerator::random_generator_ = std::mt19937(1000);
-    HypothesisBeliefTracker<HypothesisCrossingState> belief_tracker(2, 1, HypothesisBeliefTracker<HypothesisCrossingState>::SUM);
+    HypothesisBeliefTracker<HypothesisCrossingState> belief_tracker(4, 1, HypothesisBeliefTracker<HypothesisCrossingState>::PRODUCT);
     auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
-    state->add_hypothesis(AgentPolicyCrossingState({0,1}));
     state->add_hypothesis(AgentPolicyCrossingState({4,5}));
     state->add_hypothesis(AgentPolicyCrossingState({5,6}));
     belief_tracker.belief_update(*state);
@@ -123,11 +122,12 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
     }
 
     const auto beliefs = belief_tracker.get_beliefs();
-    EXPECT_NEAR(beliefs.at(1)[0], 0, 0.1);
+    //EXPECT_NEAR(beliefs.at(1)[0], 0, 0.1);
 
     // Both hypothesis should have same belief as true behavior
     // employs desired gap in each of them with equal probability
-    EXPECT_NEAR(beliefs.at(1)[2], beliefs.at(1)[1], 0.01);
+    EXPECT_NEAR(beliefs.at(1)[0], 0.5*1*1*1*1/(0.5+ 0.5*0.5*0.5*0.5*0.5), 0.001);
+    EXPECT_NEAR(beliefs.at(1)[1], 0.5*0.5*0.5*0.5*0.5/(0.5+ 0.5*0.5*0.5*0.5*0.5), 0.01);
 }
 
 
