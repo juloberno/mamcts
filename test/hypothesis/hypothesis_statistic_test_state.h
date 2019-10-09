@@ -20,8 +20,12 @@ public:
                      HypothesisStateInterface<HypothesisStatisticTestState>(current_agents_hypothesis) {}
     ~HypothesisStatisticTestState() {};
 
-
-    HypothesisId get_num_hypothesis(const AgentIdx& agent_idx) const {return 2;}
+    ActionIdx plan_action_current_hypothesis(const AgentIdx& agent_idx) const {
+        switch(current_agents_hypothesis_.at(agent_idx)) {
+            case 0: return 5;
+            case 1: return 2;
+        }
+    }
 
     const std::vector<AgentIdx> get_agent_idx() const {
         return std::vector<AgentIdx>{0,1};

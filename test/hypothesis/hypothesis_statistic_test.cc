@@ -5,6 +5,7 @@
 // ========================================================
 
 #include "gtest/gtest.h"
+#include <gtest/gtest_prod.h>
 
 #define UNIT_TESTING
 #define DEBUG
@@ -20,12 +21,27 @@ using namespace mcts;
 
 std::mt19937  mcts::RandomGenerator::random_generator_;
 
-TEST(Hypothesis_statistic, backprop) {
-  HypothesisStatistic stat_parent(5,0);
-  //stat_parent.choose_next_action()
+TEST(hypothesis_statistic, backprop_heuristic) {
+  const std::unordered_map<AgentIdx, HypothesisId> current_agents_hypothesis = {
+      {1,0}, {2,1}
+  };
+  HypothesisStatisticTestState state(current_agents_hypothesis);
+  HypothesisStatistic stat_parent(5,1); // agents 1 statistic 
+  auto action_idx = stat_parent.choose_next_action(state);
+  stat_parent.collect( 1, 2.3f, action_idx);
 
-  HypothesisStatistic stat_child(5,0);
+  HypothesisStatistic heuristic(5,1);
+  heuristic.set_heuristic_estimate(10.0f , 20.0f);
 
+  HypothesisStatistic stat_child(5,1);
+  stat_child.update_from_heuristic(heuristic);
+  stat_parent.update_statistic(stat_child);
+
+  const auto ucb_stats =stat_parent.get_ucb_statistics();
+
+  EXPECT_NEAR(ucb_stats.at(0).at(action_idx).action_ego_cost_, 2.3f
+                    +mcts::MctsParameters::DISCOUNT_FACTOR*20.0f, 0.001);
+  EXPECT_EQ(ucb_stats.at(0).at(action_idx).action_count_, 1);
 }
 
 int main(int argc, char **argv) {

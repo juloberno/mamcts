@@ -147,7 +147,16 @@ public:
         return worst_action;
     }
 
+    std::unordered_map<HypothesisId, std::unordered_map<ActionIdx, UcbPair>> get_ucb_statistics() const {
+        return ucb_statistics_;
+    }
+
+    std::unordered_map<HypothesisId, unsigned int> get_total_node_visits() const {
+        return total_node_visits_;
+    }
+
 private: // methods
+
     inline bool require_progressive_widening(const HypothesisId& hypothesis_id) const {
         const auto num_expanded = num_expanded_actions(hypothesis_id);
         const auto widening_term = progressive_widening_k * std::pow(num_node_visits(hypothesis_id),
