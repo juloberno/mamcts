@@ -91,7 +91,7 @@ void NodeStatistic<Implementation>::update_from_heuristic(const NodeStatistic<Im
 template <class Implementation>
 void NodeStatistic<Implementation>::collect(const mcts::Reward &reward, const mcts::Cost& cost, const ActionIdx& action_idx) {
     collected_reward_= std::pair<ActionIdx, Reward>(action_idx, reward);
-    collected_cost_= std::pair<ActionIdx, Reward>(action_idx, reward);
+    collected_cost_= std::pair<ActionIdx, Reward>(action_idx, cost);
 }
 
 template <class Implementation>
