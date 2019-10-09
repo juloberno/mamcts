@@ -93,14 +93,14 @@ typedef struct AgentState {
 } AgentState;
 
 // A simple environment with a 1D state, only if both agents select different actions, they get nearer to the terminal state
-class HypothesisCrossingState : public mcts::HypothesisStateInterface<HypothesisCrossingState>
+class CrossingState : public mcts::HypothesisStateInterface<CrossingState>
 {
 private:
   static const unsigned int num_other_agents = 2;
 
 public:
-    HypothesisCrossingState(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis) :
-                            HypothesisStateInterface<HypothesisCrossingState>(current_agents_hypothesis),
+    CrossingState(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis) :
+                            HypothesisStateInterface<CrossingState>(current_agents_hypothesis),
                             hypothesis_(),
                             other_agent_states_(),
                             ego_state_(),
@@ -110,21 +110,21 @@ public:
                                 }
                             }
 
-    HypothesisCrossingState(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis,
+    CrossingState(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis,
                             const std::array<AgentState, num_other_agents>& other_agent_states,
                             const AgentState& ego_state,
                             const bool& terminal,
                             const std::vector<AgentPolicyCrossingState>& hypothesis) : // add hypothesis to execute copying
-                            HypothesisStateInterface<HypothesisCrossingState>(current_agents_hypothesis),
+                            HypothesisStateInterface<CrossingState>(current_agents_hypothesis),
                             hypothesis_(hypothesis),
                             other_agent_states_(other_agent_states),
                             ego_state_(ego_state),
                             terminal_(terminal) {};
-    ~HypothesisCrossingState() {};
+    ~CrossingState() {};
 
-    std::shared_ptr<HypothesisCrossingState> clone() const
+    std::shared_ptr<CrossingState> clone() const
     {
-        return std::make_shared<HypothesisCrossingState>(*this);
+        return std::make_shared<CrossingState>(*this);
     }
 
     ActionIdx plan_action_current_hypothesis(const AgentIdx& agent_idx) const {
@@ -150,7 +150,7 @@ public:
 
     HypothesisId get_num_hypothesis(const AgentIdx& agent_idx) const {return hypothesis_.size();}
 
-    std::shared_ptr<HypothesisCrossingState> execute(const JointAction& joint_action, std::vector<Reward>& rewards, Cost& ego_cost) const {
+    std::shared_ptr<CrossingState> execute(const JointAction& joint_action, std::vector<Reward>& rewards, Cost& ego_cost) const {
         // normally we map each single action value in joint action with a map to the floating point action. Here, not required
         int new_x_ego = ego_state_.x_pos + static_cast<int>(aconv(joint_action[ego_agent_idx]));
         bool ego_out_of_map = false;
@@ -179,7 +179,7 @@ public:
         rewards[0] = goal_reached * 100.0f - 1000.0f * collision - 1000.0f * ego_out_of_map;
         ego_cost = collision * 1.0f;
 
-        return std::make_shared<HypothesisCrossingState>(current_agents_hypothesis_, next_other_agent_states, next_ego_state, terminal, hypothesis_);
+        return std::make_shared<CrossingState>(current_agents_hypothesis_, next_other_agent_states, next_ego_state, terminal, hypothesis_);
     }
 
     ActionIdx get_num_actions(AgentIdx agent_idx) const {

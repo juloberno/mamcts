@@ -1,9 +1,34 @@
 cc_test(
-    name = "hypothesis_test",
+    name = "crossing_state_test",
     srcs = [
-        "hypothesis_test.cc",
-        "hypothesis_crossing_state.h",
+        "crossing_state_test.cc",
+        "crossing_state.h",
+    ],
+    copts = ["-Iexternal/gtest/include"],
+    deps = [
+        "//mcts:mcts",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
+    name = "belief_tracker_test",
+    srcs = [
+        "belief_tracker_test.cc",
         "belief_tracker_test_state.h"
+    ],
+    copts = ["-Iexternal/gtest/include"],
+    deps = [
+        "//mcts:mcts",
+        "@gtest//:main",
+    ],
+)
+
+cc_test(
+    name = "hypothesis_statistic_test",
+    srcs = [
+        "hypothesis_statistic_test.cc",
+        "hypothesis_statistic_test_state.h"
     ],
     copts = ["-Iexternal/gtest/include"],
     deps = [

@@ -12,8 +12,7 @@
 #include "mcts/heuristics/random_heuristic.h"
 #include "mcts/hypothesis/hypothesis_statistic.h"
 #include "mcts/statistics/uct_statistic.h"
-#include "test/hypothesis/hypothesis_crossing_state.h"
-#include "test/hypothesis/belief_tracker_test_state.h"
+#include "test/hypothesis/crossing_state.h"
 #include "mcts/hypothesis/hypothesis_belief_tracker.h"
 #include <cstdio>
 
@@ -28,7 +27,7 @@ TEST(hypothesis_crossing_state, collision )
 {
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(100, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
+    auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
     state->add_hypothesis(AgentPolicyCrossingState({5,5}));
     belief_tracker.belief_update(*state);
 
@@ -52,7 +51,7 @@ TEST(hypothesis_crossing_state, hypothesis_friendly)
 {
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(100, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
+    auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
     state->add_hypothesis(AgentPolicyCrossingState({5,5}));
     belief_tracker.belief_update(*state);
 
@@ -65,7 +64,7 @@ TEST(hypothesis_crossing_state, hypothesis_friendly)
       belief_tracker.sample_current_hypothesis();
       auto jointaction = JointAction(state->get_agent_idx().size());
       for (auto agent_idx : state->get_agent_idx()) {
-        if (agent_idx == HypothesisCrossingState::ego_agent_idx ) {
+        if (agent_idx == CrossingState::ego_agent_idx ) {
           jointaction[agent_idx] = aconv(Actions::FORWARD);
         } else {
           const auto action = state->plan_action_current_hypothesis(agent_idx);
@@ -91,7 +90,7 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
     // This test checks if hypothesis probability is split up correctly between two overlapping hypothesis
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
+    auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
     state->add_hypothesis(AgentPolicyCrossingState({4,5}));
     state->add_hypothesis(AgentPolicyCrossingState({5,6}));
     belief_tracker.belief_update(*state);
@@ -106,7 +105,7 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
       belief_tracker.sample_current_hypothesis();
       auto jointaction = JointAction(state->get_agent_idx().size());
       for (auto agent_idx : state->get_agent_idx()) {
-        if (agent_idx == HypothesisCrossingState::ego_agent_idx ) {
+        if (agent_idx == CrossingState::ego_agent_idx ) {
           jointaction[agent_idx] =  aconv(Actions::FORWARD);
         } else {
           const auto action = true_agents_policy.act(state->distance_to_ego(agent_idx-1));
@@ -131,7 +130,6 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
 }
 
 
-
 TEST(crossing_state, mcts_goal_reached)
 {
     MctsParameters::DISCOUNT_FACTOR = 0.9;
@@ -150,7 +148,7 @@ TEST(crossing_state, mcts_goal_reached)
 
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<HypothesisCrossingState>(belief_tracker.sample_current_hypothesis());
+    auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
     //state->add_hypothesis(AgentPolicyCrossingState({4,5}));
     state->add_hypothesis(AgentPolicyCrossingState({5,5}));
     belief_tracker.belief_update(*state);
@@ -164,9 +162,9 @@ TEST(crossing_state, mcts_goal_reached)
     for(int i = 0; i< 100; ++i) {
       auto jointaction = JointAction(state->get_agent_idx().size());
       for (auto agent_idx : state->get_agent_idx()) {
-        if (agent_idx == HypothesisCrossingState::ego_agent_idx ) {
+        if (agent_idx == CrossingState::ego_agent_idx ) {
           // Plan for ego agent with hypothesis-based search
-          Mcts<HypothesisCrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
+          Mcts<CrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
           mcts.search(*state, belief_tracker, 100000, 2000);
           jointaction[agent_idx] = mcts.returnBestAction();
           std::cout << "best uct action: " << jointaction[agent_idx] << std::endl;
@@ -176,7 +174,7 @@ TEST(crossing_state, mcts_goal_reached)
           jointaction[agent_idx] = aconv(action);
         }
       }
-      EXPECT_EQ(jointaction[HypothesisCrossingState::ego_agent_idx], 
+      EXPECT_EQ(jointaction[CrossingState::ego_agent_idx], 
                 aconv(Actions::FORWARD));
       std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;
       state = state->execute(jointaction, rewards, cost);
@@ -186,49 +184,6 @@ TEST(crossing_state, mcts_goal_reached)
       belief_tracker.belief_update(*state);
     }
 
-}
-
-TEST(belief_tracker, simple_tracking_state)
-{
-    RandomGenerator::random_generator_ = std::mt19937(1000);
-    HypothesisBeliefTracker tracker(10, 1, HypothesisBeliefTracker::PRODUCT);
-
-    // Inits reference to current sampled hypothesis
-    BeliefTrackerTestState state(tracker.sample_current_hypothesis()); 
-    tracker.belief_update(state);
-    auto beliefs = tracker.get_beliefs();
-    EXPECT_NEAR(beliefs[0][0], 0.5*0.3/(0.5*0.3 +  0.7*0.7), 0.001); // prior x prob(last_action) / normalize by total agent belief
-    EXPECT_NEAR(beliefs[1][0], 0.6*0.2/( 0.6*0.2 + 0.4*0.4), 0.001); //  -- "" --
-    EXPECT_NEAR(beliefs[0][1], 0.7*0.7/(0.5*0.3 +  0.7*0.7), 0.001); //  -- "" --
-    EXPECT_NEAR(beliefs[1][1], 0.4*0.4/( 0.6*0.2 + 0.4*0.4), 0.001); //  -- "" --
-
-    const auto& sampled_hypothesis = tracker.sample_current_hypothesis();
-
-    tracker.belief_update(state);
-    beliefs = tracker.get_beliefs();
-    EXPECT_NEAR(beliefs[0][0], 0.5*0.3*0.3/(0.5*0.3*0.3 +  0.7*0.7*0.7), 0.001); // prior x prob(last_action)
-    EXPECT_NEAR(beliefs[1][0], 0.6*0.2*0.2/( 0.6*0.2*0.2 + 0.4*0.4*0.4), 0.001); //  -- "" --
-    EXPECT_NEAR(beliefs[0][1], 0.7*0.7*0.7/(0.5*0.3*0.3 +  0.7*0.7*0.7), 0.001); //  -- "" --
-    EXPECT_NEAR(beliefs[1][1], 0.4*0.4*0.4/( 0.6*0.2*0.2 + 0.4*0.4*0.4), 0.001); //  -- "" --
-
-    // Check if hypothesis are accurately sampled from belief
-    beliefs = tracker.get_beliefs();
-    std::unordered_map<AgentIdx, std::unordered_map<HypothesisId,uint>> counts;
-
-    const uint num_samples = 10000;
-    for(uint i = 0; i < num_samples; ++i) {
-      const auto& sampled = tracker.sample_current_hypothesis();
-      for (auto agent_it : sampled) {
-        auto& count_agent =  counts[agent_it.first];
-        count_agent[sampled.at(agent_it.first)]++;
-      }
-    }
-
-    EXPECT_NEAR(counts[0][0]/float(num_samples), beliefs[0][0], 0.01);
-    EXPECT_NEAR(counts[1][0]/float(num_samples), beliefs[1][0], 0.01);
-    EXPECT_NEAR(counts[0][1]/float(num_samples), beliefs[0][1], 0.01);
-    EXPECT_NEAR(counts[1][1]/float(num_samples), beliefs[1][1], 0.01);
-    
 }
 
 int main(int argc, char **argv) {
