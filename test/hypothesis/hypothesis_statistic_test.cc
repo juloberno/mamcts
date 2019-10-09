@@ -44,6 +44,7 @@ TEST(hypothesis_statistic, backprop_heuristic) {
   EXPECT_EQ(ucb_stats.at(0).at(action_idx).action_count_, 1);
 }
 
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
 
