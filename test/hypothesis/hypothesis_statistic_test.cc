@@ -38,10 +38,30 @@ TEST(hypothesis_statistic, backprop_heuristic_hyp0) {
   stat_parent.update_statistic(stat_child);
 
   const auto ucb_stats =stat_parent.get_ucb_statistics();
+  const auto node_counts = stat_parent.get_total_node_visits();
 
   EXPECT_NEAR(ucb_stats.at(0).at(action_idx).action_ego_cost_, 2.3f
                     +mcts::MctsParameters::DISCOUNT_FACTOR*20.0f, 0.001);
   EXPECT_EQ(ucb_stats.at(0).at(action_idx).action_count_, 1);
+  EXPECT_EQ(node_counts.at(0), 1);
+
+  HypothesisStatistic heuristic2(5,1);
+  heuristic2.set_heuristic_estimate(15.0f , 24.5f);
+
+  HypothesisStatistic stat_child2(5,1);
+  stat_child2.update_from_heuristic(heuristic2);
+  auto action_idx2 = stat_parent.choose_next_action(state);
+  stat_parent.collect( 1, 4.3f, action_idx2);
+  stat_parent.update_statistic(stat_child2);
+
+  const auto ucb_stats2 =stat_parent.get_ucb_statistics();
+  const auto node_counts2 = stat_parent.get_total_node_visits();
+
+  EXPECT_NEAR(ucb_stats2.at(0).at(action_idx).action_ego_cost_, (2.3f+4.3
+                    +mcts::MctsParameters::DISCOUNT_FACTOR*20.0f+
+                    mcts::MctsParameters::DISCOUNT_FACTOR*24.5f)/2, 0.001);
+  EXPECT_EQ(ucb_stats2.at(0).at(action_idx2).action_count_, 2);
+  EXPECT_EQ(node_counts2.at(0), 2);
 }
 
 TEST(hypothesis_statistic, backprop_heuristic_hyp1) {
@@ -61,10 +81,12 @@ TEST(hypothesis_statistic, backprop_heuristic_hyp1) {
   stat_parent.update_statistic(stat_child);
 
   const auto ucb_stats =stat_parent.get_ucb_statistics();
+  const auto node_counts = stat_parent.get_total_node_visits();
 
   EXPECT_NEAR(ucb_stats.at(1).at(action_idx).action_ego_cost_, 5.3f
                     +mcts::MctsParameters::DISCOUNT_FACTOR*22.0f, 0.001);
   EXPECT_EQ(ucb_stats.at(1).at(action_idx).action_count_, 1);
+  EXPECT_EQ(node_counts.at(1), 1);
 }
 
 
