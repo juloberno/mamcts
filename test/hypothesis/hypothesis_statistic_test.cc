@@ -141,6 +141,39 @@ TEST(hypothesis_statistic, backprop_heuristic_hyp1) {
   EXPECT_EQ(node_counts.at(1), 1);
 }
 
+TEST(hypothesis_statistic, worst_case_action_selection) {
+  // Now test something for agent 2
+  const std::unordered_map<AgentIdx, HypothesisId> current_agents_hypothesis = {
+      {1,0}, {2,1}
+  };
+
+  MctsParameters::HypothesisStatistic::COST_BASED_ACTION_SELECTION = true;
+  MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_ALPHA = 0.9;
+  MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_K = 1;
+
+  HypothesisStatisticTestState state(current_agents_hypothesis);
+  HypothesisStatistic stat_parent(2,2); // agents 2 statistic 
+  auto action_idx = stat_parent.choose_next_action(state);
+  stat_parent.collect( 1, 5.3f, action_idx);
+
+  HypothesisStatistic heuristic(2,2);
+  heuristic.set_heuristic_estimate(10.0f , 22.0f);
+
+  HypothesisStatistic stat_child(2,2);
+  stat_child.update_from_heuristic(heuristic);
+  stat_parent.update_statistic(stat_child);
+
+  state.change_actions();
+
+  auto action_idx2 = stat_parent.choose_next_action(state);
+  stat_parent.collect( 1, 12.3f, action_idx);
+  stat_parent.update_statistic(stat_child);
+
+  // Worst case action
+  auto action_worst_case = stat_parent.choose_next_action(state);
+  EXPECT_EQ(action_worst_case, action_idx2);
+
+}
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
