@@ -36,7 +36,7 @@ TEST(hypothesis_crossing_state, collision )
     bool collision = false;
 
     // All agents move forward 
-    const auto action = JointAction(state->get_agent_idx().size(), aconv(Actions::FORWARD));
+    const auto action = JointAction(state->get_agent_idx().size(), aconv(1));
     for(int i = 0; i< 100; ++i) {
       state = state->execute(action, rewards, cost);
       if (cost > 0 && state->is_terminal()) {
@@ -65,7 +65,7 @@ TEST(hypothesis_crossing_state, hypothesis_friendly)
       auto jointaction = JointAction(state->get_agent_idx().size());
       for (auto agent_idx : state->get_agent_idx()) {
         if (agent_idx == CrossingState::ego_agent_idx ) {
-          jointaction[agent_idx] = aconv(Actions::FORWARD);
+          jointaction[agent_idx] = aconv(1);
         } else {
           const auto action = state->plan_action_current_hypothesis(agent_idx);
           jointaction[agent_idx] = action;
@@ -106,9 +106,10 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
       auto jointaction = JointAction(state->get_agent_idx().size());
       for (auto agent_idx : state->get_agent_idx()) {
         if (agent_idx == CrossingState::ego_agent_idx ) {
-          jointaction[agent_idx] =  aconv(Actions::FORWARD);
+          jointaction[agent_idx] =  aconv(1);
         } else {
-          const auto action = true_agents_policy.act(state->distance_to_ego(agent_idx-1));
+          const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
+                                                     state->get_ego_state().x_pos);
           jointaction[agent_idx] = aconv(action);
         }
       }
@@ -121,12 +122,9 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
     }
 
     const auto beliefs = belief_tracker.get_beliefs();
-    //EXPECT_NEAR(beliefs.at(1)[0], 0, 0.1);
 
-    // Both hypothesis should have same belief as true behavior
-    // employs desired gap in each of them with equal probability
-    EXPECT_NEAR(beliefs.at(1)[0], 0.5*1*1*1*1/(0.5+ 0.5*0.5*0.5*0.5*0.5), 0.001);
-    EXPECT_NEAR(beliefs.at(1)[1], 0.5*0.5*0.5*0.5*0.5/(0.5+ 0.5*0.5*0.5*0.5*0.5), 0.01);
+    // Both beliefs should be equal as they cover the same amount of true policy behavior space
+    EXPECT_EQ(beliefs.at(1)[0], beliefs.at(1)[1]);
 }
 
 
@@ -170,7 +168,8 @@ TEST(crossing_state, mcts_goal_reached)
           std::cout << "best uct action: " << jointaction[agent_idx] << std::endl;
         } else {
           // Other agents act according to unknown true agents policy
-          const auto action = true_agents_policy.act(state->distance_to_ego(agent_idx-1));
+          const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
+                                                     state->get_ego_state().x_pos);
           jointaction[agent_idx] = aconv(action);
         }
       }

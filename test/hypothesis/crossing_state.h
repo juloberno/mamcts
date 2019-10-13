@@ -14,63 +14,66 @@
 using namespace mcts;
 
 
-enum class Actions {
-        WAIT = 0,
-        FORWARD = 1,
-        BACKWARD = -1,
-        NUM = 3
-    };
+typedef int CrossingStateAction;
+const int NUM_OTHER_ACTIONS = 5;
+const int MAX_VELOCITY_OTHER = 3;
+const int MIN_VELOCITY_OTHER = -3;
+const int NUM_EGO_ACTIONS = 3;
+const int state_x_length = 41; /* 21 is crossing point (41-1)/2+1 */
+const int ego_goal_reached_position = 35;
+const int crossing_point = (state_x_length-1)/2+1;
 
 
-const std::unordered_map<ActionIdx, Actions> idx_to_action = {
-    {0, Actions::WAIT},
-    {1, Actions::FORWARD},
-    {2, Actions::BACKWARD}
-};
-
-const std::unordered_map<Actions, ActionIdx> action_to_idx = {
-    {Actions::WAIT, 0},
-    {Actions::FORWARD, 1},
-    {Actions::BACKWARD, 2}
-};
-
-Actions aconv(const ActionIdx& action) {
-    return idx_to_action.at(action);
+CrossingStateAction aconv(const ActionIdx& action) {
+    return ((union { CrossingStateAction i; ActionIdx u; }){ .u = action }).i;
 }
 
-ActionIdx aconv(const Actions& action) {
-    return action_to_idx.at(action);
+ActionIdx aconv(const CrossingStateAction& action) {
+    return ((union { CrossingStateAction i; ActionIdx u; }){ .i = action }).u;
 }
+
+typedef struct AgentState {
+    AgentState() : x_pos(0), last_action(0) {}
+    AgentState(const int& x, const CrossingStateAction& last_action) : 
+            x_pos(x), last_action(last_action) {}
+    int x_pos;
+    CrossingStateAction last_action;
+} AgentState;
 
 class AgentPolicyCrossingState : public RandomGenerator {
   public:
     AgentPolicyCrossingState(const std::pair<int, int>& desired_gap_range) : 
                             desired_gap_range_(desired_gap_range) {}
-    Actions act(const int& ego_distance) const {
+    CrossingStateAction act(const AgentState& agent_state, const int& ego_pos) const {
         // sample desired gap parameter
         std::uniform_int_distribution<int> dis(desired_gap_range_.first, desired_gap_range_.second);
         int desired_gap_dst = dis(random_generator_);
 
-        return calculate_action(ego_distance, desired_gap_dst);
+        return calculate_action(agent_state, ego_pos, desired_gap_dst);
     }
 
-    Actions calculate_action(const int& ego_distance, int desired_gap_dst) const {
-        const auto gap_error = static_cast<int>(ego_distance) - desired_gap_dst;
-        if (gap_error > 0) {
-            return Actions::FORWARD;
-        } else if (gap_error == 0) {
-            return Actions::WAIT;
+    CrossingStateAction calculate_action(const AgentState& agent_state, const int& ego_pos, const int& desired_gap_dst) const {
+        // If past crossing point, use last execute action
+        if(agent_state.x_pos < crossing_point) {        
+            const auto gap_error = ego_pos - agent_state.x_pos - desired_gap_dst;
+            // gap_error < 0 -> brake to increase distance
+            if(gap_error < 0) {
+                return std::max(gap_error, MIN_VELOCITY_OTHER);
+            } else {
+                return std::min(gap_error, MAX_VELOCITY_OTHER);
+            }
         } else {
-            return Actions::BACKWARD;
+            return agent_state.last_action;
         }
+
     }
 
-    Probability get_probability(const int& ego_distance, const Actions& action) const {
+    Probability get_probability(const AgentState& agent_state, const int& ego_pos, const CrossingStateAction& action) const {
         std::vector<int> gap_distances(desired_gap_range_.second - desired_gap_range_.first+1);
         std::iota(gap_distances.begin(), gap_distances.end(),desired_gap_range_.first);
         unsigned int action_selected = 0;
         for(const auto& desired_gap_dst : gap_distances) {
-            const auto calculated = calculate_action(ego_distance, desired_gap_dst);
+            const auto calculated = calculate_action(agent_state, ego_pos, desired_gap_dst);
             if(calculated == action ) {
                 action_selected++;
             }
@@ -82,15 +85,6 @@ class AgentPolicyCrossingState : public RandomGenerator {
   private: 
         const std::pair<int, int> desired_gap_range_;
 };
-
-    
-typedef struct AgentState {
-    AgentState() : x_pos(0), last_action(Actions::WAIT) {}
-    AgentState(const int& x, const Actions& last_action) : 
-            x_pos(x), last_action(last_action) {}
-    int x_pos;
-    Actions last_action;
-} AgentState;
 
 // A simple environment with a 1D state, only if both agents select different actions, they get nearer to the terminal state
 class CrossingState : public mcts::HypothesisStateInterface<CrossingState>
@@ -129,15 +123,16 @@ public:
 
     ActionIdx plan_action_current_hypothesis(const AgentIdx& agent_idx) const {
         const HypothesisId agt_hyp_id = current_agents_hypothesis_.at(agent_idx);
-        return aconv(hypothesis_.at(agt_hyp_id).act(distance_to_ego(agent_idx-1)));
+        return aconv(hypothesis_.at(agt_hyp_id).act(other_agent_states_[agent_idx-1],
+                                                    ego_state_.x_pos));
     };
 
-    template<typename ActionType = Actions>
-    Probability get_probability(const HypothesisId& hypothesis, const AgentIdx& agent_idx, const Actions& action) const { 
-        return hypothesis_.at(hypothesis).get_probability(distance_to_ego(agent_idx-1), action);
+    template<typename ActionType = CrossingStateAction>
+    Probability get_probability(const HypothesisId& hypothesis, const AgentIdx& agent_idx, const CrossingStateAction& action) const { 
+        return hypothesis_.at(hypothesis).get_probability(other_agent_states_[agent_idx-1], ego_state_.x_pos, action);
     ;}
 
-    template<typename ActionType = Actions>
+    template<typename ActionType = CrossingStateAction>
     ActionType get_last_action(const AgentIdx& agent_idx) const {
         if (agent_idx == ego_agent_idx) {
             return ego_state_.last_action;
@@ -152,27 +147,32 @@ public:
 
     std::shared_ptr<CrossingState> execute(const JointAction& joint_action, std::vector<Reward>& rewards, Cost& ego_cost) const {
         // normally we map each single action value in joint action with a map to the floating point action. Here, not required
+        
+        const int old_x_ego = ego_state_.x_pos;
         int new_x_ego = ego_state_.x_pos + static_cast<int>(aconv(joint_action[ego_agent_idx]));
         bool ego_out_of_map = false;
         if(new_x_ego < 0) {
             ego_out_of_map = true;
         }
-        const AgentState next_ego_state(ego_state_.x_pos + static_cast<int>(aconv(joint_action[ego_agent_idx])), aconv(joint_action[ego_agent_idx]));
+        const AgentState next_ego_state(new_x_ego, aconv(joint_action[ego_agent_idx]));
 
         std::array<AgentState, num_other_agents> next_other_agent_states;
+        bool collision = false;
         for(size_t i = 0; i < other_agent_states_.size(); ++i) {
             const auto& old_state = other_agent_states_[i];
             int new_x = old_state.x_pos + static_cast<int>(aconv(joint_action[i+1]));
             next_other_agent_states[i] = AgentState( (new_x>= 0) ? new_x : 0, aconv(joint_action[i+1]));
-        }
 
-        const bool goal_reached = next_ego_state.x_pos >= ego_goal_reached_position;
-        bool collision = false;
-        for (const auto& state: next_other_agent_states) {
-            if(next_ego_state.x_pos == crossing_point && state.x_pos == crossing_point) {
+            // if ego state history encloses crossing point and other state history encloses crossing point
+            // a collision occurs
+            if(next_ego_state.x_pos >= crossing_point &&  old_x_ego<= crossing_point &&
+              next_other_agent_states[i].x_pos >= crossing_point && 
+              other_agent_states_[i].x_pos <= crossing_point ) {
                 collision = true;
             }
         }
+
+        const bool goal_reached = next_ego_state.x_pos >= ego_goal_reached_position;
 
         const bool terminal = goal_reached || collision || ego_out_of_map;
         rewards.resize(num_other_agents+1);
@@ -183,7 +183,10 @@ public:
     }
 
     ActionIdx get_num_actions(AgentIdx agent_idx) const {
-        return static_cast<size_t>(Actions::NUM); // WAIT, FORWARD, BACKWARD
+        switch(agent_idx) {
+            ego_agent_idx: return NUM_EGO_ACTIONS;
+            default: return NUM_OTHER_ACTIONS;
+        }
     }
 
     bool is_terminal() const {
@@ -232,17 +235,19 @@ public:
         return min_dist;
     }
 
+    inline AgentState get_agent_state(const AgentIdx& agent_idx) const {
+        return other_agent_states_[agent_idx-1];
+    }
+
+    inline AgentState get_ego_state() const {
+        return ego_state_;
+    }
+
     inline int distance_to_ego(const AgentIdx& other_agent_idx) const {
         return ego_state_.x_pos - other_agent_states_[other_agent_idx].x_pos;
     }
 
-    typedef Actions ActionType;
-
-private:
-  
-    const int state_x_length = 41; /* 21 is crossing point (41-1)/2+1 */
-    const int ego_goal_reached_position = 35;
-    const int crossing_point = (state_x_length-1)/2+1;
+    typedef CrossingStateAction ActionType;
 
     std::vector<AgentPolicyCrossingState> hypothesis_;
 
