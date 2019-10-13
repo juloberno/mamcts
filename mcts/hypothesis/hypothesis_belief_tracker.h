@@ -37,7 +37,8 @@ class HypothesisBeliefTracker : public mcts::RandomGenerator {
                             current_sampled_hypothesis_() {};
 
     template <typename S>
-    void belief_update(const HypothesisStateInterface<S>& state);
+    void belief_update(const HypothesisStateInterface<S>& state,
+                      const HypothesisStateInterface<S>& next_state);
 
     const std::unordered_map<AgentIdx, HypothesisId>& sample_current_hypothesis(); // shared across all states
 
@@ -55,7 +56,8 @@ private:
 
 
 template <typename S>
-void HypothesisBeliefTracker::belief_update(const HypothesisStateInterface<S>& state) {
+void HypothesisBeliefTracker::belief_update(const HypothesisStateInterface<S>& state, 
+                                            const HypothesisStateInterface<S>& next_state) {
   for(auto agent_idx : state.get_agent_idx() ) {
     auto belief_track_it = tracked_beliefs_.find(agent_idx);
     if(belief_track_it == tracked_beliefs_.end()) {
@@ -75,7 +77,7 @@ void HypothesisBeliefTracker::belief_update(const HypothesisStateInterface<S>& s
     float belief_sum = 0.0f;
     for (HypothesisId hid = 0; hid < belief_track_agent.size(); ++hid) {
         // add latest hypothesis probability 
-        const auto& last_action = state.template get_last_action<typename S::ActionType>(agent_idx);
+        const auto& last_action = next_state.template get_last_action<typename S::ActionType>(agent_idx);
         probability_track_agent[hid].push_back(state.template get_probability<typename S::ActionType>(hid, agent_idx, last_action));
         if (probability_track_agent[hid].size()>history_length_) {
           probability_track_agent[hid].pop_front();

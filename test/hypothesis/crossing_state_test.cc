@@ -29,7 +29,7 @@ TEST(hypothesis_crossing_state, collision )
     HypothesisBeliefTracker belief_tracker(100, 1, HypothesisBeliefTracker::PRODUCT);
     auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
     state->add_hypothesis(AgentPolicyCrossingState({5,5}));
-    belief_tracker.belief_update(*state);
+    belief_tracker.belief_update(*state, *state);
 
     std::vector<Reward> rewards;
     Cost cost;
@@ -61,7 +61,7 @@ TEST(hypothesis_crossing_state, hypothesis_friendly)
     HypothesisBeliefTracker belief_tracker(100, 1, HypothesisBeliefTracker::PRODUCT);
     auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
     state->add_hypothesis(AgentPolicyCrossingState({5,5}));
-    belief_tracker.belief_update(*state);
+    belief_tracker.belief_update(*state, *state);
 
     std::vector<Reward> rewards;
     Cost cost;
@@ -100,7 +100,7 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
     auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
     state->add_hypothesis(AgentPolicyCrossingState({4,5}));
     state->add_hypothesis(AgentPolicyCrossingState({5,6}));
-    belief_tracker.belief_update(*state);
+    auto next_state = state;
 
     AgentPolicyCrossingState true_agents_policy({5,5});
 
@@ -121,11 +121,13 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
         }
       }
       std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;
-      state = state->execute(jointaction, rewards, cost);
+      next_state = state->execute(jointaction, rewards, cost);
+      belief_tracker.belief_update(*state, *next_state);
+      state = next_state;
       if (state->is_terminal()) {
         break;
       }
-      belief_tracker.belief_update(*state);
+      
     }
 
     const auto beliefs = belief_tracker.get_beliefs();
@@ -135,7 +137,7 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
 }
 
 
-TEST(crossing_state, mcts_goal_reached)
+TEST(crossing_state, mcts_goal_reached_true_hypothesis)
 {
     MctsParameters::DISCOUNT_FACTOR = 0.9;
     MctsParameters::RandomHeuristic::MAX_SEARCH_TIME = 10;
@@ -154,9 +156,9 @@ TEST(crossing_state, mcts_goal_reached)
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
     auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
-    //state->add_hypothesis(AgentPolicyCrossingState({4,5}));
     state->add_hypothesis(AgentPolicyCrossingState({5,5}));
-    belief_tracker.belief_update(*state);
+    auto next_state = state;
+    belief_tracker.belief_update(*state, *next_state);
 
     AgentPolicyCrossingState true_agents_policy({5,5});
 
@@ -181,13 +183,77 @@ TEST(crossing_state, mcts_goal_reached)
         }
       }
       std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;
-      state = state->execute(jointaction, rewards, cost);
-      if (state->is_terminal()) {
+      next_state = state->execute(jointaction, rewards, cost);
+      belief_tracker.belief_update(*state, *next_state);
+      state = next_state;
+      if (next_state->is_terminal()) {
         break;
       }
-      belief_tracker.belief_update(*state);
     }
     EXPECT_TRUE(state->ego_goal_reached());
+
+}
+
+TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
+{
+    MctsParameters::DISCOUNT_FACTOR = 0.9;
+    MctsParameters::RandomHeuristic::MAX_SEARCH_TIME = 10;
+    MctsParameters::RandomHeuristic::MAX_NUMBER_OF_ITERATIONS = 1000;
+    MctsParameters::UctStatistic::LOWER_BOUND = -1010;
+    MctsParameters::UctStatistic::UPPER_BOUND = 95;
+    MctsParameters::UctStatistic::EXPLORATION_CONSTANT = 0.7;
+    MctsParameters::HypothesisStatistic::COST_BASED_ACTION_SELECTION = false;
+    MctsParameters::HypothesisStatistic::LOWER_COST_BOUND = 0;
+    MctsParameters::HypothesisStatistic::UPPER_COST_BOUND = 1;
+    MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_ALPHA = 0.5;
+    MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_K = 1;
+    MctsParameters::HypothesisStatistic::EXPLORATION_CONSTANT = 0.7;
+
+
+    RandomGenerator::random_generator_ = std::mt19937(1000);
+    HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
+    auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
+    state->add_hypothesis(AgentPolicyCrossingState({-2,-1}));
+    state->add_hypothesis(AgentPolicyCrossingState({0,3}));
+    state->add_hypothesis(AgentPolicyCrossingState({4,5}));
+    auto next_state = state;
+    belief_tracker.belief_update(*state, *next_state);
+
+    AgentPolicyCrossingState true_agents_policy({-2,-2});
+
+    std::vector<Reward> rewards;
+    Cost cost;
+    bool collision = false;
+
+    for(int i = 0; i< 30; ++i) {
+      auto jointaction = JointAction(state->get_agent_idx().size());
+      for (auto agent_idx : state->get_agent_idx()) {
+        if (agent_idx == CrossingState::ego_agent_idx ) {
+          // Plan for ego agent with hypothesis-based search
+          Mcts<CrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
+          mcts.search(*state, belief_tracker, 5000, 10000);
+          jointaction[agent_idx] = mcts.returnBestAction();
+          std::cout << "best uct action: " << idx_to_ego_crossing_action(jointaction[agent_idx]) << std::endl;
+        } else {
+          // Other agents act according to unknown true agents policy
+          const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
+                                                     state->get_ego_state().x_pos);
+          jointaction[agent_idx] = aconv(action);
+        }
+      }
+      std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;
+      next_state = state->execute(jointaction, rewards, cost);
+      belief_tracker.belief_update(*state, *next_state);
+      state = next_state;
+      if(cost > 0) {
+        collision=true;
+      }
+      if (next_state->is_terminal()) {
+        break;
+      }
+    }
+    EXPECT_TRUE(state->ego_goal_reached());
+    EXPECT_FALSE(collision);
 
 }
 

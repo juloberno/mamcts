@@ -21,8 +21,8 @@ const int NUM_OTHER_ACTIONS = MAX_VELOCITY_OTHER-MIN_VELOCITY_OTHER + 1;
 const int MAX_VELOCITY_EGO = 2;
 const int MIN_VELOCITY_EGO = -1;
 const int NUM_EGO_ACTIONS = MAX_VELOCITY_EGO - MIN_VELOCITY_EGO +1;
-const int state_x_length = 41; /* 21 is crossing point (41-1)/2+1 */
-const int ego_goal_reached_position = 35;
+const int state_x_length = 21; /* 10 is crossing point (21-1)/2+1 */
+const int ego_goal_reached_position = 12;
 const int crossing_point = (state_x_length-1)/2+1;
 
 CrossingStateAction idx_to_ego_crossing_action(const ActionIdx& action) {
@@ -64,10 +64,15 @@ class AgentPolicyCrossingState : public RandomGenerator {
         if(agent_state.x_pos < crossing_point) {        
             const auto gap_error = ego_pos - agent_state.x_pos - desired_gap_dst;
             // gap_error < 0 -> brake to increase distance
-            if(gap_error < 0) {
-                return std::max(gap_error, MIN_VELOCITY_OTHER);
+            if (desired_gap_dst > 0) {
+                if(gap_error < 0) {
+                    return std::max(gap_error, MIN_VELOCITY_OTHER);
+                } else {
+                    return std::min(gap_error, MAX_VELOCITY_OTHER);
+                }
             } else {
-                return std::min(gap_error, MAX_VELOCITY_OTHER);
+                // Dont brake again if agents is already ahead of ego agent, but continue with same velocity
+                return std::max(std::min(gap_error, MAX_VELOCITY_OTHER), agent_state.last_action);
             }
         } else {
             return agent_state.last_action;
