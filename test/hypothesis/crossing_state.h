@@ -15,13 +15,20 @@ using namespace mcts;
 
 
 typedef int CrossingStateAction;
-const int NUM_OTHER_ACTIONS = 5;
 const int MAX_VELOCITY_OTHER = 3;
 const int MIN_VELOCITY_OTHER = -3;
-const int NUM_EGO_ACTIONS = 3;
+const int NUM_OTHER_ACTIONS = MAX_VELOCITY_OTHER-MIN_VELOCITY_OTHER + 1;
+const int MAX_VELOCITY_EGO = 2;
+const int MIN_VELOCITY_EGO = -1;
+const int NUM_EGO_ACTIONS = MAX_VELOCITY_EGO - MIN_VELOCITY_EGO +1;
 const int state_x_length = 41; /* 21 is crossing point (41-1)/2+1 */
 const int ego_goal_reached_position = 35;
 const int crossing_point = (state_x_length-1)/2+1;
+
+CrossingStateAction idx_to_ego_crossing_action(const ActionIdx& action) {
+    // First action indices are for braking starting from zero
+    return action + MIN_VELOCITY_EGO;
+}
 
 
 CrossingStateAction aconv(const ActionIdx& action) {
@@ -149,7 +156,7 @@ public:
         // normally we map each single action value in joint action with a map to the floating point action. Here, not required
         
         const int old_x_ego = ego_state_.x_pos;
-        int new_x_ego = ego_state_.x_pos + static_cast<int>(aconv(joint_action[ego_agent_idx]));
+        int new_x_ego = ego_state_.x_pos + idx_to_ego_crossing_action(joint_action[ego_agent_idx]);
         bool ego_out_of_map = false;
         if(new_x_ego < 0) {
             ego_out_of_map = true;
@@ -183,9 +190,10 @@ public:
     }
 
     ActionIdx get_num_actions(AgentIdx agent_idx) const {
-        switch(agent_idx) {
-            ego_agent_idx: return NUM_EGO_ACTIONS;
-            default: return NUM_OTHER_ACTIONS;
+        if(agent_idx == ego_agent_idx) {
+            return NUM_EGO_ACTIONS;
+        } else {
+            return NUM_OTHER_ACTIONS;
         }
     }
 

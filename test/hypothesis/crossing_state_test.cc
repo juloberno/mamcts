@@ -165,7 +165,7 @@ TEST(crossing_state, mcts_goal_reached)
           Mcts<CrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
           mcts.search(*state, belief_tracker, 200, 2000);
           jointaction[agent_idx] = mcts.returnBestAction();
-          std::cout << "best uct action: " << jointaction[agent_idx] << std::endl;
+          std::cout << "best uct action: " << idx_to_ego_crossing_action(jointaction[agent_idx]) << std::endl;
         } else {
           // Other agents act according to unknown true agents policy
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
