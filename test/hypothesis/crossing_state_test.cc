@@ -36,9 +36,17 @@ TEST(hypothesis_crossing_state, collision )
     bool collision = false;
 
     // All agents move forward 
-    const auto action = JointAction(state->get_agent_idx().size(), aconv(1));
+    auto jointaction = JointAction(state->get_agent_idx().size());
+    for (auto agent_idx : state->get_agent_idx()) {
+      if (agent_idx == CrossingState::ego_agent_idx ) {
+        jointaction[agent_idx] = 2;
+      } else {
+        const auto action = aconv(1);
+        jointaction[agent_idx] = action;
+      }
+    }
     for(int i = 0; i< 100; ++i) {
-      state = state->execute(action, rewards, cost);
+      state = state->execute(jointaction, rewards, cost);
       if (cost > 0 && state->is_terminal()) {
         collision = true;
         break;
@@ -65,13 +73,12 @@ TEST(hypothesis_crossing_state, hypothesis_friendly)
       auto jointaction = JointAction(state->get_agent_idx().size());
       for (auto agent_idx : state->get_agent_idx()) {
         if (agent_idx == CrossingState::ego_agent_idx ) {
-          jointaction[agent_idx] = aconv(1);
+          jointaction[agent_idx] = 2;
         } else {
           const auto action = state->plan_action_current_hypothesis(agent_idx);
           jointaction[agent_idx] = action;
         }
       }
-      const auto action_other = 
       state = state->execute(jointaction, rewards, cost);
       if (cost > 0) {
         collision=true;
@@ -106,7 +113,7 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
       auto jointaction = JointAction(state->get_agent_idx().size());
       for (auto agent_idx : state->get_agent_idx()) {
         if (agent_idx == CrossingState::ego_agent_idx ) {
-          jointaction[agent_idx] =  aconv(1);
+          jointaction[agent_idx] =  2;
         } else {
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
                                                      state->get_ego_state().x_pos);
