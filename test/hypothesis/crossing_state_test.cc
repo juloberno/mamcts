@@ -12,7 +12,7 @@
 #include "mcts/heuristics/random_heuristic.h"
 #include "mcts/hypothesis/hypothesis_statistic.h"
 #include "mcts/statistics/uct_statistic.h"
-#include "test/hypothesis/crossing_state.h"
+#include "environments/crossing_state.h"
 #include "mcts/hypothesis/hypothesis_belief_tracker.h"
 #include <cstdio>
 
