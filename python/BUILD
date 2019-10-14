@@ -7,7 +7,9 @@ cc_binary(
   srcs = ["module.cpp",
           "common.hpp",
           "define_mamcts.hpp",
-          "define_mamcts.cpp"
+          "define_mamcts.cpp",
+          "define_environments.hpp",
+          "define_environments.cpp",
   ],
   deps = [
     "//mcts:mamcts",

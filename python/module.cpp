@@ -5,9 +5,11 @@
 // ========================================================
 
 #include "python/define_mamcts.hpp"
+#include "python/define_environments.hpp"
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(mamcts, m) {
   define_mamcts(m);
+  define_environments(m);
 }

@@ -5,12 +5,12 @@
 // ========================================================
 
 
-#ifndef PYTHON_DEFINE_MAMCTS_HPP_
-#define PYTHON_DEFINE_MAMCTS_HPP_
+#ifndef PYTHON_DEFINE_ENVIRONMENTS_HPP_
+#define PYTHON_DEFINE_ENVIRONMENTS_HPP_
 #include "python/common.hpp"
 
 namespace py = pybind11;
 
-void define_mamcts(py::module m);
+void define_environments(py::module m);
 
-#endif   // PYTHON_DEFINE_MAMCTS_HPP_
+#endif   // PYTHON_DEFINE_ENVIRONMENTS_HPP_
