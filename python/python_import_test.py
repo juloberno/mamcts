@@ -7,4 +7,4 @@
 import sys
 print(sys.path)
 
-from mamcts import *
+from mamcts import MctsCrossingStateUctUct
