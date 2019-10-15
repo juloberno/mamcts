@@ -3,6 +3,9 @@ cc_library(
     hdrs = [
         "crossing_state.h",
     ],
+    srcs = [
+        "crossing_state.cpp",
+    ],
     deps = [
         "//mcts:mamcts",
     ],

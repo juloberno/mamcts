@@ -9,25 +9,31 @@
 
 #include <iostream>
 #include <random>
+#include <unordered_map>
 #include "mcts/hypothesis/hypothesis_state.h"
 
 using namespace mcts;
 
 
 typedef int CrossingStateAction;
-const int MAX_VELOCITY_OTHER = 3;
-const int MIN_VELOCITY_OTHER = -3;
-const int NUM_OTHER_ACTIONS = MAX_VELOCITY_OTHER-MIN_VELOCITY_OTHER + 1;
-const int MAX_VELOCITY_EGO = 2;
-const int MIN_VELOCITY_EGO = -1;
-const int NUM_EGO_ACTIONS = MAX_VELOCITY_EGO - MIN_VELOCITY_EGO +1;
-const int state_x_length = 21; /* 10 is crossing point (21-1)/2+1 */
-const int ego_goal_reached_position = 12;
-const int crossing_point = (state_x_length-1)/2+1;
+
+struct CrossingStateParameters {
+    static int MAX_VELOCITY_OTHER;
+    static int MIN_VELOCITY_OTHER;
+    static int NUM_OTHER_ACTIONS() { return MAX_VELOCITY_OTHER-MIN_VELOCITY_OTHER + 1; }
+    static int MAX_VELOCITY_EGO;
+    static int MIN_VELOCITY_EGO;
+    static int NUM_EGO_ACTIONS() { return MAX_VELOCITY_EGO - MIN_VELOCITY_EGO + 1; }
+    static int CHAIN_LENGTH; 
+    static int EGO_GOAL_POS;
+    static int CROSSING_POINT() { return (CHAIN_LENGTH-1)/2+1; }
+};
+
+using CSP = CrossingStateParameters;
 
 inline CrossingStateAction idx_to_ego_crossing_action(const ActionIdx& action) {
     // First action indices are for braking starting from zero
-    return action + MIN_VELOCITY_EGO;
+    return action + CSP::MIN_VELOCITY_EGO;
 }
 
 
@@ -61,18 +67,18 @@ class AgentPolicyCrossingState : public RandomGenerator {
 
     CrossingStateAction calculate_action(const AgentState& agent_state, const int& ego_pos, const int& desired_gap_dst) const {
         // If past crossing point, use last execute action
-        if(agent_state.x_pos < crossing_point) {        
+        if(agent_state.x_pos < CSP::CROSSING_POINT() ) {        
             const auto gap_error = ego_pos - agent_state.x_pos - desired_gap_dst;
             // gap_error < 0 -> brake to increase distance
             if (desired_gap_dst > 0) {
                 if(gap_error < 0) {
-                    return std::max(gap_error, MIN_VELOCITY_OTHER);
+                    return std::max(gap_error, CSP::MIN_VELOCITY_OTHER);
                 } else {
-                    return std::min(gap_error, MAX_VELOCITY_OTHER);
+                    return std::min(gap_error, CSP::MAX_VELOCITY_OTHER);
                 }
             } else {
                 // Dont brake again if agents is already ahead of ego agent, but continue with same velocity
-                return std::max(std::min(gap_error, MAX_VELOCITY_OTHER), agent_state.last_action);
+                return std::max(std::min(gap_error, CSP::MAX_VELOCITY_OTHER), agent_state.last_action);
             }
         } else {
             return agent_state.last_action;
@@ -177,14 +183,14 @@ public:
 
             // if ego state history encloses crossing point and other state history encloses crossing point
             // a collision occurs
-            if(next_ego_state.x_pos >= crossing_point &&  old_x_ego<= crossing_point &&
-              next_other_agent_states[i].x_pos >= crossing_point && 
-              other_agent_states_[i].x_pos <= crossing_point ) {
+            if(next_ego_state.x_pos >= CSP::CROSSING_POINT() &&  old_x_ego<= CSP::CROSSING_POINT() &&
+              next_other_agent_states[i].x_pos >= CSP::CROSSING_POINT() && 
+              other_agent_states_[i].x_pos <= CSP::CROSSING_POINT() ) {
                 collision = true;
             }
         }
 
-        const bool goal_reached = next_ego_state.x_pos >= ego_goal_reached_position;
+        const bool goal_reached = next_ego_state.x_pos >= CSP::EGO_GOAL_POS;
 
         const bool terminal = goal_reached || collision || ego_out_of_map;
         rewards.resize(num_other_agents+1);
@@ -196,9 +202,9 @@ public:
 
     ActionIdx get_num_actions(AgentIdx agent_idx) const {
         if(agent_idx == ego_agent_idx) {
-            return NUM_EGO_ACTIONS;
+            return CSP::NUM_EGO_ACTIONS();
         } else {
-            return NUM_OTHER_ACTIONS;
+            return CSP::NUM_OTHER_ACTIONS();
         }
     }
 
@@ -234,7 +240,7 @@ public:
     }
 
     bool ego_goal_reached() const {
-        return ego_state_.x_pos >= ego_goal_reached_position;
+        return ego_state_.x_pos >= CSP::CROSSING_POINT();
     }
 
     int min_distance_to_ego() const {
