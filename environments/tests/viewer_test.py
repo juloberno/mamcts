@@ -8,6 +8,7 @@ class PickleTests(unittest.TestCase):
         viewer = PyViewer()
         state = CrossingState({})
         state.draw(viewer)
+        viewer.show(block=True)
 
 
 if __name__ == '__main__':

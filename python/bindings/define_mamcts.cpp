@@ -20,7 +20,6 @@ std::mt19937 mcts::RandomGenerator::random_generator_;
 
 void define_mamcts(py::module m)
 {
-    std::cout << "importing" << std::endl;
     using mcts1 = Mcts<CrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic>;
     py::class_<mcts1,
              std::shared_ptr<mcts1>>(m, "MctsCrossingStateUctUct")
