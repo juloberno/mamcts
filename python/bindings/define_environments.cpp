@@ -7,6 +7,7 @@
 #include "python/bindings/define_environments.hpp"
 #include "mcts/mcts.h"
 #include "environments/crossing_state.h"
+#include "environments/crossing_state_episode_runner.h"
 
 namespace py = pybind11;
 using namespace mcts;
@@ -60,4 +61,15 @@ void define_environments(py::module m)
       .def_property_readonly("other_agents_states", &CrossingState::get_agent_states)
       .def_property_readonly("ego_agent_state", &CrossingState::get_ego_state)
       .def("add_hypothesis", &CrossingState::add_hypothesis);
+
+    py::class_<CrossingStateEpisodeRunner,
+             std::shared_ptr<CrossingStateEpisodeRunner>>(m, "CrossingStateEpisodeRunner")
+      .def(py::init<const std::unordered_map<AgentIdx, AgentPolicyCrossingState>&,
+                             const std::vector<AgentPolicyCrossingState>&,
+                             const& unsigned int,
+                             mcts::Viewer*>())
+      .def("__repr__", [](const CrossingStateEpisodeRunner &m) {
+        return "mamcts.CrossingStateEpisodeRunner";
+      })
+      .def("step", &CrossingStateEpisodeRunner::step);
 }

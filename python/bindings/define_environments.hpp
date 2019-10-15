@@ -9,7 +9,7 @@
 #define PYTHON_DEFINE_ENVIRONMENTS_HPP_
 
 #include "python/bindings/common.hpp"
-#include "environments/viewer.hpp"
+#include "environments/viewer.h"
 
 namespace py = pybind11;
 

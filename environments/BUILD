@@ -2,7 +2,8 @@ cc_library(
     name = "crossing_state",
     hdrs = [
         "crossing_state.h",
-        "viewer.hpp"
+        "viewer.h",
+        "crossing_state_episode_runner.h"
     ],
     srcs = [
         "crossing_state.cpp",

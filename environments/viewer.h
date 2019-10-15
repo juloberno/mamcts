@@ -3,6 +3,7 @@
 // This work is licensed under the terms of the MIT license.
 // For a copy, see <https://opensource.org/licenses/MIT>.
 // ========================================================
+
 #ifndef MCTS_VIEWER_HPP_
 #define MCTS_VIEWER_HPP_
 
@@ -19,7 +20,6 @@ class Viewer {
     virtual void drawPoint(float x, float y, float size,  Color color) = 0;
     virtual void drawLine(std::pair<float,float> x, std::pair<float,float> y, float linewidth,  Color color) = 0;
 };
-
 
 }
 

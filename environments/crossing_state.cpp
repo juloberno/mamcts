@@ -6,7 +6,7 @@
 
 #include "mcts/mcts.h"
 #include "environments/crossing_state.h"
-#include "environments/viewer.hpp"
+#include "environments/viewer.h"
 
 
 int CrossingStateParameters::MAX_VELOCITY_OTHER = 3;
