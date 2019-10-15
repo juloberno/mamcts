@@ -5,16 +5,18 @@
 # ========================================================
 
 import matplotlib.pyplot as plt
+from mamcts import Viewer
 
 
-class Viewer(PyViewer):
+class PyViewer(Viewer):
     def __init__(self, **kwargs):
+        super(PyViewer, self).__init__()
         self.axes = kwargs.pop("axes", plt.subplots(figsize=(20,20))[1])
 
-    def drawPoint(self, x,y, size, color, alpha):
-        pass
-    def drawLine(self, x, y, linewidth, color, alpha):
-        pass
+    def drawPoint(self, x,y, size, color):
+        self.axes.scatter(x,y, s=size,color=color)
+    def drawLine(self, x, y, linewidth, color):
+        self.axes.plot(x,y, linewidth=linewidth, color=color)
 
     def show(self, block=False):
         plt.draw()

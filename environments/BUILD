@@ -12,3 +12,11 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
 )
+
+py_library(
+    name = "pyviewer",
+    srcs = ["pyviewer.py"],
+    data = ['//python/bindings:mamcts.so'],
+    imports = ['../../python/bindings'],
+    visibility = ["//visibility:public"],
+)
