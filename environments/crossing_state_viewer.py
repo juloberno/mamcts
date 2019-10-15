@@ -7,20 +7,14 @@
 import matplotlib.pyplot as plt
 
 
-class CrossingStateViewer:
+class Viewer(PyViewer):
     def __init__(self, **kwargs):
         self.axes = kwargs.pop("axes", plt.subplots(figsize=(20,20))[1])
 
-    def drawAgent(self, agent_state):
-
-    def drawState(self, crossing_state):
-        for agent_state in crossing_state.agents:
-            self.drawAgent(agent_state)
-
-        self.drawCrossings(crossing_state)
-
-    def drawCrossings(self, crossing_state):
-
+    def drawPoint(self, x,y, size, color, alpha):
+        pass
+    def drawLine(self, x, y, linewidth, color, alpha):
+        pass
 
     def show(self, block=False):
         plt.draw()

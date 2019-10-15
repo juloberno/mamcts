@@ -7,7 +7,7 @@
 
 #ifndef PYTHON_DEFINE_MAMCTS_HPP_
 #define PYTHON_DEFINE_MAMCTS_HPP_
-#include "python/common.hpp"
+#include "python/bindings/common.hpp"
 
 namespace py = pybind11;
 

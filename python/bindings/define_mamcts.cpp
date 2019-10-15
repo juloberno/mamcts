@@ -6,7 +6,7 @@
 
 #include "mcts/mcts.h"
 #include "mcts/random_generator.h"
-#include "python/define_mamcts.hpp"
+#include "python/bindings/define_mamcts.hpp"
 #include "environments/crossing_state.h"
 #include "mcts/statistics/uct_statistic.h"
 #include "mcts/hypothesis/hypothesis_statistic.h"
@@ -20,6 +20,7 @@ std::mt19937 mcts::RandomGenerator::random_generator_;
 
 void define_mamcts(py::module m)
 {
+    std::cout << "importing" << std::endl;
     using mcts1 = Mcts<CrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic>;
     py::class_<mcts1,
              std::shared_ptr<mcts1>>(m, "MctsCrossingStateUctUct")

@@ -262,6 +262,10 @@ public:
         return ego_state_;
     }
 
+    inline const std::array<AgentState, num_other_agents>& get_agent_states() const {
+        return other_agent_states_;
+    }
+
     inline int distance_to_ego(const AgentIdx& other_agent_idx) const {
         return ego_state_.x_pos - other_agent_states_[other_agent_idx].x_pos;
     }

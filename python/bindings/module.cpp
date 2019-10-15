@@ -4,8 +4,8 @@
 // For a copy, see <https://opensource.org/licenses/MIT>.
 // ========================================================
 
-#include "python/define_mamcts.hpp"
-#include "python/define_environments.hpp"
+#include "python/bindings/define_mamcts.hpp"
+#include "python/bindings/define_environments.hpp"
 
 namespace py = pybind11;
 
