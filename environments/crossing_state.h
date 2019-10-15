@@ -14,6 +14,10 @@
 
 using namespace mcts;
 
+namespace mcts {
+    class Viewer;
+}
+
 
 typedef int CrossingStateAction;
 
@@ -270,8 +274,10 @@ public:
         return ego_state_.x_pos - other_agent_states_[other_agent_idx].x_pos;
     }
 
-    typedef CrossingStateAction ActionType;
+    void draw(Viewer* viewer) const;
 
+    typedef CrossingStateAction ActionType;
+private:
     std::vector<AgentPolicyCrossingState> hypothesis_;
 
     std::array<AgentState, num_other_agents> other_agent_states_;

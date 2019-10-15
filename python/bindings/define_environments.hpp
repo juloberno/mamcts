@@ -28,7 +28,7 @@ class PyViewer : public mcts::Viewer {
         color);
   }
 
-  void drawLine(float x, float y, float linewidth,  mcts::Color color) override {
+  void drawLine(std::pair<float,float> x, std::pair<float,float> y, float linewidth,  mcts::Color color) override {
     PYBIND11_OVERLOAD_PURE(
         void,
         mcts::Viewer,
