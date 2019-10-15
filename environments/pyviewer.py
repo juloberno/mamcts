@@ -15,11 +15,9 @@ class PyViewer(Viewer):
         self.axes.set_aspect('equal', 'box')
 
     def drawPoint(self, x,y, size, color):
-        self.axes.scatter(x,y, s=50,color="black")
-        print("drawing point: {}, {}".format(x,y))
+        self.axes.scatter(x,y, s=size,color=(color[0],color[1], color[2]))
     def drawLine(self, x, y, linewidth, color):
-        print("drawing line: {}, {}".format(x,y))
-        self.axes.plot(x,y, linewidth=2, color="black")
+        self.axes.plot(x,y, linewidth=linewidth, color=(color[0],color[1], color[2]))
 
     def show(self, block=False):
         plt.draw()

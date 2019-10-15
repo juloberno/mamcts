@@ -20,9 +20,9 @@ int CrossingStateParameters::EGO_GOAL_POS = 12;
 void CrossingState::draw(mcts::Viewer* viewer) const {
     // draw map ( crossing point is always at zero)
     const float state_draw_dst = 1.0f;
-    const float linewidth = 0.5;
+    const float linewidth = 2;
     const float state_draw_size = 50;
-    const float factor_draw_current_state = 1.5;
+    const float factor_draw_current_state = 4;
 
     // draw lines equally spaced angles with small points
     // indicating states and larger points indicating the current state
@@ -34,7 +34,6 @@ void CrossingState::draw(mcts::Viewer* viewer) const {
         std::pair<float, float> line_x{cos(start_angle)*line_radius, cos(end_angle)*line_radius };
         std::pair<float, float> line_y{sin(start_angle)*line_radius, sin(end_angle)*line_radius};
         std::tuple<float,float,float,float> color{0,0,0,0};
-
 
         // Differentiate between ego and other agents
         AgentState state;
