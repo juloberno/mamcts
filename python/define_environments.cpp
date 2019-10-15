@@ -4,9 +4,9 @@
 // For a copy, see <https://opensource.org/licenses/MIT>.
 // ========================================================
 
+#include "python/define_environments.hpp"
 #include "mcts/mcts.h"
 #include "mcts/random_generator.h"
-#include "python/define_mamcts.hpp"
 #include "environments/crossing_state.h"
 #include "mcts/statistics/uct_statistic.h"
 #include "mcts/hypothesis/hypothesis_statistic.h"
@@ -14,9 +14,6 @@
 
 namespace py = pybind11;
 using namespace mcts;
-
-std::mt19937 mcts::RandomGenerator::random_generator_;
-
 
 void define_environments(py::module m)
 {

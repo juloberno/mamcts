@@ -4,8 +4,8 @@
 // For a copy, see <https://opensource.org/licenses/MIT>.
 // ========================================================
 
-#ifndef SIMPLESTATE_H
-#define SIMPLESTATE_H
+#ifndef CROSSING_STATE_H
+#define CROSSING_STATE_H
 
 #include <iostream>
 #include <random>
@@ -25,17 +25,17 @@ const int state_x_length = 21; /* 10 is crossing point (21-1)/2+1 */
 const int ego_goal_reached_position = 12;
 const int crossing_point = (state_x_length-1)/2+1;
 
-CrossingStateAction idx_to_ego_crossing_action(const ActionIdx& action) {
+inline CrossingStateAction idx_to_ego_crossing_action(const ActionIdx& action) {
     // First action indices are for braking starting from zero
     return action + MIN_VELOCITY_EGO;
 }
 
 
-CrossingStateAction aconv(const ActionIdx& action) {
+inline CrossingStateAction aconv(const ActionIdx& action) {
     return ((union { CrossingStateAction i; ActionIdx u; }){ .u = action }).i;
 }
 
-ActionIdx aconv(const CrossingStateAction& action) {
+inline ActionIdx aconv(const CrossingStateAction& action) {
     return ((union { CrossingStateAction i; ActionIdx u; }){ .i = action }).u;
 }
 
@@ -271,4 +271,4 @@ public:
 
 
 
-#endif 
+#endif //CROSSING_STATE_H

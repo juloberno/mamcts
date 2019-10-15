@@ -110,7 +110,7 @@ void HypothesisBeliefTracker::belief_update(const HypothesisStateInterface<S>& s
   }
 }
 
-const std::unordered_map<AgentIdx, HypothesisId>& HypothesisBeliefTracker::sample_current_hypothesis() {
+inline const std::unordered_map<AgentIdx, HypothesisId>& HypothesisBeliefTracker::sample_current_hypothesis() {
   for (const auto& it : tracked_beliefs_) {
     // Sample one hypothesis for each agent
     std::discrete_distribution<HypothesisId> hypothesis_distribution(it.second.begin(), it.second.end());
