@@ -9,6 +9,10 @@
 #define MCTS_EPISODE_RUNNER_H_
 
 #include "environments/crossing_state.h"
+#include "mcts/heuristics/random_heuristic.h"
+#include "mcts/statistics/uct_statistic.h"
+#include "mcts/hypothesis/hypothesis_statistic.h"
+#include "mcts/hypothesis/hypothesis_belief_tracker.h"
 #include "environments/viewer.h"
 
 namespace mcts {
@@ -17,7 +21,7 @@ class CrossingStateEpisodeRunner {
   public:
     CrossingStateEpisodeRunner(const std::unordered_map<AgentIdx, AgentPolicyCrossingState>& agents_true_policies,
                               const std::vector<AgentPolicyCrossingState>& hypothesis,
-                              const unsigned int max_steps,
+                              const unsigned int& max_steps,
                               Viewer* viewer) :
                   agents_true_policies_(agents_true_policies),
                   current_state_(),
@@ -56,15 +60,15 @@ class CrossingStateEpisodeRunner {
           jointaction[agent_idx] = aconv(action);
         }
       }
-      std::cout << "Step " << i << ", Action = " << jointaction << ", " << current_state_->sprintf() << std::endl;
+      std::cout << "Step " << current_step_ << ", Action = " << jointaction << ", " << current_state_->sprintf() << std::endl;
       last_state_ = current_state_;
       current_state_ = current_state_->execute(jointaction, rewards, cost);
       belief_tracker_.belief_update(*last_state_, *current_state_);
       
-      const bool collision = current_state_->is_terminal() && !current_state_->ego_goal_reached();
-      const bool goal_reached = current_state_->ego_goal_reached();
+      bool collision = current_state_->is_terminal() && !current_state_->ego_goal_reached();
+      bool goal_reached = current_state_->ego_goal_reached();
       current_step_ += 1;
-      const bool max_steps = current_step_ > MAX_STEPS;
+      bool max_steps = current_step_ > MAX_STEPS;
 
       if(viewer_) {
         current_state_->draw(viewer_);
@@ -72,9 +76,9 @@ class CrossingStateEpisodeRunner {
 
       return std::make_tuple<float, float, bool, bool, bool> (rewards[CrossingState::ego_agent_idx], 
                                                               cost,
-                                                              collision,
-                                                              goal_reached,
-                                                              max_steps);
+                                                              std::move(collision),
+                                                              std::move(goal_reached),
+                                                              std::move(max_steps));
     }
 
   private:
@@ -82,7 +86,7 @@ class CrossingStateEpisodeRunner {
     std::shared_ptr<CrossingState> current_state_;
     std::shared_ptr<CrossingState> last_state_;
     HypothesisBeliefTracker belief_tracker_; // todo: pass params
-    const std::unordered_map<AgentIdx,AgentPolicyCrossingState> agents_true_policies_;
+    const std::unordered_map<AgentIdx, AgentPolicyCrossingState> agents_true_policies_;
     const unsigned int MAX_STEPS;
     unsigned int current_step_;
 };

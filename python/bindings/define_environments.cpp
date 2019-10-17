@@ -23,12 +23,12 @@ void define_environments(py::module m)
 
     py::class_<CrossingStateParameters,
              std::shared_ptr<CrossingStateParameters>>(m, "CrossingStateParameters")
-      .def_readonly_static("MAX_VELOCITY_EGO", &CrossingStateParameters::MAX_VELOCITY_EGO)
-      .def_readonly_static("MIN_VELOCITY_EGO",&CrossingStateParameters::MIN_VELOCITY_EGO)
-      .def_readonly_static("MIN_VELOCITY_OTHER",&CrossingStateParameters::MIN_VELOCITY_OTHER)
-      .def_readonly_static("MIN_VELOCITY_OTHER",&CrossingStateParameters::MIN_VELOCITY_OTHER)
-      .def_readonly_static("EGO_GOAL_POS",&CrossingStateParameters::EGO_GOAL_POS)
-      .def_readonly_static("CHAIN_LENGTH",&CrossingStateParameters::CHAIN_LENGTH)
+      .def_readwrite_static("MAX_VELOCITY_EGO", &CrossingStateParameters::MAX_VELOCITY_EGO)
+      .def_readwrite_static("MIN_VELOCITY_EGO",&CrossingStateParameters::MIN_VELOCITY_EGO)
+      .def_readwrite_static("MIN_VELOCITY_OTHER",&CrossingStateParameters::MIN_VELOCITY_OTHER)
+      .def_readwrite_static("MIN_VELOCITY_OTHER",&CrossingStateParameters::MIN_VELOCITY_OTHER)
+      .def_readwrite_static("EGO_GOAL_POS",&CrossingStateParameters::EGO_GOAL_POS)
+      .def_readwrite_static("CHAIN_LENGTH",&CrossingStateParameters::CHAIN_LENGTH)
       .def_property_readonly("CROSSING_POINT",&CrossingStateParameters::CROSSING_POINT)
       .def_property_readonly("NUM_EGO_ACTIONS",&CrossingStateParameters::NUM_EGO_ACTIONS)
       .def_property_readonly("NUM_OTHER_ACTIONS",&CrossingStateParameters::NUM_OTHER_ACTIONS)
@@ -66,7 +66,7 @@ void define_environments(py::module m)
              std::shared_ptr<CrossingStateEpisodeRunner>>(m, "CrossingStateEpisodeRunner")
       .def(py::init<const std::unordered_map<AgentIdx, AgentPolicyCrossingState>&,
                              const std::vector<AgentPolicyCrossingState>&,
-                             const& unsigned int,
+                             const unsigned int&,
                              mcts::Viewer*>())
       .def("__repr__", [](const CrossingStateEpisodeRunner &m) {
         return "mamcts.CrossingStateEpisodeRunner";

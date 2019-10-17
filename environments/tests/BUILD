@@ -7,3 +7,16 @@ py_test(
     "//environments:pyviewer"
   ]
 )
+
+cc_test(
+    name = "crossing_state_test",
+    srcs = [
+        "crossing_state_test.cc",
+    ],
+    copts = ["-Iexternal/gtest/include"],
+    deps = [
+        "//environments:crossing_state",
+        "//mcts:mamcts",
+        "@gtest//:main",
+    ],
+)
