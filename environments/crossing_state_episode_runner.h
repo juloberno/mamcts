@@ -17,7 +17,6 @@
 
 namespace mcts {
 
-static const std::vector<std::string> EVAL_RESULT_COLUMN_DESC = {"Reward", "Cost", "Terminal", "Collision", "GoalReached", "MaxSteps"};
 
 class CrossingStateEpisodeRunner {
   public:
@@ -96,6 +95,7 @@ class CrossingStateEpisodeRunner {
                                                               std::move(max_steps));
     }
 
+    static const std::vector<std::string> EVAL_RESULT_COLUMN_DESC;
     typedef std::vector<StepResult> EpisodeResult;
     EpisodeResult run() {
       EpisodeResult episode_result;
