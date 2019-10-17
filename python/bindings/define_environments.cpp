@@ -76,5 +76,6 @@ void define_environments(py::module m)
       .def("__repr__", [](const CrossingStateEpisodeRunner &m) {
         return "mamcts.CrossingStateEpisodeRunner";
       })
-      .def("step", &CrossingStateEpisodeRunner::step);
+      .def("step", &CrossingStateEpisodeRunner::step)
+      .def("run", &CrossingStateEpisodeRunner::run);
 }

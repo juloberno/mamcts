@@ -50,7 +50,8 @@ class CrossingStateEpisodeRunner {
                   }
 
     // Reward, Cost, Terminal, Collision, GoalReached, MaxSteps
-    std::tuple<float, float, bool, bool, bool, bool> step() {
+    typedef std::tuple<float, float, bool, bool, bool, bool> StepResult;
+    StepResult step() {
       if(current_state_->is_terminal()) {
         std::cout << "Step " << current_step_ << "!!! terminal state reached  " << current_state_->sprintf() << std::endl;
         return std::tuple<float, float, bool, bool, bool, bool>();
@@ -93,6 +94,20 @@ class CrossingStateEpisodeRunner {
                                                               std::move(collision),
                                                               std::move(goal_reached),
                                                               std::move(max_steps));
+    }
+
+    typedef std::vector<StepResult> EpisodeResult;
+    EpisodeResult run() {
+      EpisodeResult episode_result;
+      bool done = false;
+      while(!done) {
+        const auto step_result = step();
+        episode_result.push_back(step_result);
+        if(std::get<2>(step_result) || std::get<5>(step_result) ) {
+          break;
+        }
+      }
+    return std::move(episode_result);
     }
 
   private:
