@@ -1,15 +1,4 @@
-cc_test(
-    name = "crossing_state_test",
-    srcs = [
-        "crossing_state_test.cc",
-    ],
-    copts = ["-Iexternal/gtest/include"],
-    deps = [
-        "//environments:crossing_state",
-        "//mcts:mamcts",
-        "@gtest//:main",
-    ],
-)
+
 
 cc_test(
     name = "belief_tracker_test",

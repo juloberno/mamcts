@@ -40,8 +40,12 @@ class CrossingStateEpisodeRunner {
                   belief_tracker_.belief_update(*last_state_, *current_state_);
                   }
 
-
-    std::tuple<float, float, bool, bool, bool> step() {
+    // Reward, Cost, Terminal, Collision, GoalReached, MaxSteps
+    std::tuple<float, float, bool, bool, bool, bool> step() {
+      if(current_state_->is_terminal()) {
+        std::cout << "Step " << current_step_ << "!!! terminal state reached  " << current_state_->sprintf() << std::endl;
+        return std::tuple<float, float, bool, bool, bool, bool>();
+      }
       std::vector<Reward> rewards;
       Cost cost;
 
@@ -62,7 +66,7 @@ class CrossingStateEpisodeRunner {
       }
       std::cout << "Step " << current_step_ << ", Action = " << jointaction << ", " << current_state_->sprintf() << std::endl;
       last_state_ = current_state_;
-      current_state_ = current_state_->execute(jointaction, rewards, cost);
+      current_state_ = last_state_->execute(jointaction, rewards, cost);
       belief_tracker_.belief_update(*last_state_, *current_state_);
       
       bool collision = current_state_->is_terminal() && !current_state_->ego_goal_reached();
@@ -74,8 +78,9 @@ class CrossingStateEpisodeRunner {
         current_state_->draw(viewer_);
       }
 
-      return std::make_tuple<float, float, bool, bool, bool> (rewards[CrossingState::ego_agent_idx], 
+      return std::make_tuple<float, float,bool, bool, bool, bool> (rewards[CrossingState::ego_agent_idx], 
                                                               cost,
+                                                              std::move(current_state_->is_terminal()),
                                                               std::move(collision),
                                                               std::move(goal_reached),
                                                               std::move(max_steps));

@@ -9,11 +9,15 @@
 #define UNIT_TESTING
 #define DEBUG
 #define PLAN_DEBUG_INFO
+
 #include "mcts/heuristics/random_heuristic.h"
 #include "mcts/hypothesis/hypothesis_statistic.h"
 #include "mcts/statistics/uct_statistic.h"
-#include "environments/crossing_state.h"
 #include "mcts/hypothesis/hypothesis_belief_tracker.h"
+
+#include "environments/crossing_state.h"
+#include "environments/crossing_state_episode_runner.h"
+
 #include <cstdio>
 
 using namespace std;
@@ -255,6 +259,21 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
     EXPECT_TRUE(state->ego_goal_reached());
     EXPECT_FALSE(collision);
 
+}
+
+TEST(episode_runner, run_some_steps) {
+  CrossingStateParameters::CHAIN_LENGTH = 3;
+  CrossingStateParameters::EGO_GOAL_POS = 1;
+  auto runner = CrossingStateEpisodeRunner(
+      { {1 , AgentPolicyCrossingState({5,5})},
+        {2 , AgentPolicyCrossingState({5,5})}},
+      {AgentPolicyCrossingState({4,5}), 
+        AgentPolicyCrossingState({5,6})},
+        30,
+        nullptr);
+  for (int i =0; i< 50; ++i) {
+    runner.step();
+  }
 }
 
 int main(int argc, char **argv) {
