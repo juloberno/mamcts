@@ -7,6 +7,7 @@ cc_library(
     ],
     srcs = [
         "crossing_state.cpp",
+        "crossing_state_episode_runner.cpp",
     ],
     deps = [
         "//mcts:mamcts",
