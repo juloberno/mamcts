@@ -270,6 +270,11 @@ TEST(episode_runner, run_some_steps) {
       {AgentPolicyCrossingState({4,5}), 
         AgentPolicyCrossingState({5,6})},
         30,
+        4,
+        1,
+        HypothesisBeliefTracker::PRODUCT,
+        10000,
+        10000,
         nullptr);
   for (int i =0; i< 50; ++i) {
     runner.step();

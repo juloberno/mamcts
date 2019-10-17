@@ -17,17 +17,26 @@
 
 namespace mcts {
 
+static const std::vector<std::string> EVAL_RESULT_COLUMN_DESC = {"Reward", "Cost", "Terminal", "Collision", "GoalReached", "MaxSteps"};
+
 class CrossingStateEpisodeRunner {
   public:
     CrossingStateEpisodeRunner(const std::unordered_map<AgentIdx, AgentPolicyCrossingState>& agents_true_policies,
                               const std::vector<AgentPolicyCrossingState>& hypothesis,
                               const unsigned int& max_steps,
+                              const unsigned int& belief_tracking_hist_len,
+                              const float& belief_tracking_discount,
+                              const HypothesisBeliefTracker::PosteriorType& posterior_type,
+                              const unsigned int& mcts_max_search_time,
+                              const unsigned int& mcts_max_iterations,
                               Viewer* viewer) :
                   agents_true_policies_(agents_true_policies),
                   current_state_(),
                   last_state_(),
-                  belief_tracker_(4,1, HypothesisBeliefTracker::PRODUCT),
-                  MAX_STEPS(max_steps),
+                  belief_tracker_(belief_tracking_hist_len,belief_tracking_discount, posterior_type),
+                  max_steps_(max_steps),
+                  mcts_max_search_time_(mcts_max_search_time),
+                  mcts_max_iterations_(mcts_max_iterations),
                   current_step_(0),
                   viewer_(viewer)  {
                   RandomGenerator::random_generator_ = std::mt19937(1000);
@@ -72,7 +81,7 @@ class CrossingStateEpisodeRunner {
       bool collision = current_state_->is_terminal() && !current_state_->ego_goal_reached();
       bool goal_reached = current_state_->ego_goal_reached();
       current_step_ += 1;
-      bool max_steps = current_step_ > MAX_STEPS;
+      bool max_steps = current_step_ > max_steps_;
 
       if(viewer_) {
         current_state_->draw(viewer_);
@@ -92,7 +101,9 @@ class CrossingStateEpisodeRunner {
     std::shared_ptr<CrossingState> last_state_;
     HypothesisBeliefTracker belief_tracker_; // todo: pass params
     const std::unordered_map<AgentIdx, AgentPolicyCrossingState> agents_true_policies_;
-    const unsigned int MAX_STEPS;
+    const unsigned int max_steps_;
+    const unsigned int mcts_max_search_time_;
+    const unsigned int mcts_max_iterations_;
     unsigned int current_step_;
 };
 

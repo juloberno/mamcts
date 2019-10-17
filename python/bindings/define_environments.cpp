@@ -65,8 +65,13 @@ void define_environments(py::module m)
     py::class_<CrossingStateEpisodeRunner,
              std::shared_ptr<CrossingStateEpisodeRunner>>(m, "CrossingStateEpisodeRunner")
       .def(py::init<const std::unordered_map<AgentIdx, AgentPolicyCrossingState>&,
-                             const std::vector<AgentPolicyCrossingState>&,
-                             const unsigned int&,
+                            const std::vector<AgentPolicyCrossingState>&,
+                            const unsigned int&,
+                            const unsigned int&,
+                            const float&,
+                            const HypothesisBeliefTracker::PosteriorType&,
+                            const unsigned int&,
+                            const unsigned int&,
                              mcts::Viewer*>())
       .def("__repr__", [](const CrossingStateEpisodeRunner &m) {
         return "mamcts.CrossingStateEpisodeRunner";

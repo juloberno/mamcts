@@ -8,6 +8,7 @@
 #include "mcts/random_generator.h"
 #include "python/bindings/define_mamcts.hpp"
 #include "environments/crossing_state.h"
+#include "mcts/hypothesis/hypothesis_belief_tracker.h"
 #include "mcts/statistics/uct_statistic.h"
 #include "mcts/hypothesis/hypothesis_statistic.h"
 #include "mcts/heuristics/random_heuristic.h"
@@ -27,4 +28,11 @@ void define_mamcts(py::module m)
       .def("__repr__", [](const mcts1 &m) {
         return "mamcts.MctsCrossingStateUctUct";
       });
+
+    py::class_<HypothesisBeliefTracker> belief_tracker(m, "HypothesisBeliefTracker");
+
+    py::enum_<HypothesisBeliefTracker::PosteriorType>(belief_tracker , "PosteriorType")
+      .value("PRODUCT", HypothesisBeliefTracker::PosteriorType::PRODUCT)
+      .value("SUM", HypothesisBeliefTracker::PosteriorType::SUM)
+      .export_values();
 }

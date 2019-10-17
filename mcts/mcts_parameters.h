@@ -14,8 +14,6 @@ namespace mcts{
 
         //MCTS
         static double DISCOUNT_FACTOR;
-        
-
         static double RANDOM_GENERATOR_SEED;
         static double MAX_NUMBER_OF_ITERATIONS;
 
