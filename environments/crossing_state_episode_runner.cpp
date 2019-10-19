@@ -7,4 +7,8 @@
 #include "mcts/mcts.h"
 #include "environments/crossing_state_episode_runner.h"
 
-const std::vector<std::string> mcts::CrossingStateEpisodeRunner::EVAL_RESULT_COLUMN_DESC = {"Reward", "Cost", "Terminal", "Collision", "GoalReached", "MaxSteps"};
+template <>
+const std::vector<std::string> mcts::CrossingStateEpisodeRunner<int>::EVAL_RESULT_COLUMN_DESC = {"Reward", "Cost", "Terminal", "Collision", "GoalReached", "MaxSteps"};
+
+template <>
+const std::vector<std::string> mcts::CrossingStateEpisodeRunner<float>::EVAL_RESULT_COLUMN_DESC = mcts::CrossingStateEpisodeRunner<int>::EVAL_RESULT_COLUMN_DESC;

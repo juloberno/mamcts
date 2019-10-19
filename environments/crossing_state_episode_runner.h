@@ -17,11 +17,11 @@
 
 namespace mcts {
 
-
+template<typename Domain>
 class CrossingStateEpisodeRunner {
   public:
-    CrossingStateEpisodeRunner(const std::unordered_map<AgentIdx, AgentPolicyCrossingState>& agents_true_policies,
-                              const std::vector<AgentPolicyCrossingState>& hypothesis,
+    CrossingStateEpisodeRunner(const std::unordered_map<AgentIdx, AgentPolicyCrossingState<Domain>>& agents_true_policies,
+                              const std::vector<AgentPolicyCrossingState<Domain>>& hypothesis,
                               const unsigned int& max_steps,
                               const unsigned int& belief_tracking_hist_len,
                               const float& belief_tracking_discount,
@@ -39,7 +39,7 @@ class CrossingStateEpisodeRunner {
                   current_step_(0),
                   viewer_(viewer)  {
                   RandomGenerator::random_generator_ = std::mt19937(1000);
-                  current_state_ = std::make_shared<CrossingState>(belief_tracker_.sample_current_hypothesis());
+                  current_state_ = std::make_shared<CrossingState<Domain>>(belief_tracker_.sample_current_hypothesis());
                   for(const auto& hp : hypothesis) {
                     current_state_->add_hypothesis(hp);
                   }
@@ -60,12 +60,12 @@ class CrossingStateEpisodeRunner {
 
       JointAction jointaction(current_state_->get_agent_idx().size());
       for (auto agent_idx : current_state_->get_agent_idx()) {
-        if (agent_idx == CrossingState::ego_agent_idx ) {
+        if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
           // Plan for ego agent with hypothesis-based search
-          Mcts<CrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
+          Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
           mcts.search(*current_state_, belief_tracker_, 5000, 10000);
           jointaction[agent_idx] = mcts.returnBestAction();
-          std::cout << "best uct action: " << idx_to_ego_crossing_action(jointaction[agent_idx]) << std::endl;
+          std::cout << "best uct action: " << idx_to_ego_crossing_action<Domain>(jointaction[agent_idx]) << std::endl;
         } else {
           // Other agents act according to unknown true agents policy
           const auto action = agents_true_policies_.at(agent_idx).act(current_state_->get_agent_state(agent_idx),
@@ -87,7 +87,7 @@ class CrossingStateEpisodeRunner {
         current_state_->draw(viewer_);
       }
 
-      return std::make_tuple<float, float,bool, bool, bool, bool> (rewards[CrossingState::ego_agent_idx], 
+      return std::make_tuple<float, float,bool, bool, bool, bool> (rewards[CrossingState<Domain>::ego_agent_idx], 
                                                               cost,
                                                               std::move(current_state_->is_terminal()),
                                                               std::move(collision),
@@ -112,10 +112,10 @@ class CrossingStateEpisodeRunner {
 
   private:
     Viewer* viewer_;
-    std::shared_ptr<CrossingState> current_state_;
-    std::shared_ptr<CrossingState> last_state_;
+    std::shared_ptr<CrossingState<Domain>> current_state_;
+    std::shared_ptr<CrossingState<Domain>> last_state_;
     HypothesisBeliefTracker belief_tracker_; // todo: pass params
-    const std::unordered_map<AgentIdx, AgentPolicyCrossingState> agents_true_policies_;
+    const std::unordered_map<AgentIdx, AgentPolicyCrossingState<Domain>> agents_true_policies_;
     const unsigned int max_steps_;
     const unsigned int mcts_max_search_time_;
     const unsigned int mcts_max_iterations_;

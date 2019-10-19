@@ -8,15 +8,33 @@
 #include "environments/crossing_state.h"
 #include "environments/viewer.h"
 
+template <>
+int CrossingStateParameters<int>::MAX_VELOCITY_OTHER = 3;
+template <>
+int CrossingStateParameters<int>::MIN_VELOCITY_OTHER = -3;
+template <>
+int CrossingStateParameters<int>::MAX_VELOCITY_EGO = 2;
+template <>
+int CrossingStateParameters<int>::MIN_VELOCITY_EGO = -1;
+template <>
+int CrossingStateParameters<int>::CHAIN_LENGTH = 21; /* 10 is crossing point (21-1)/2+1 */
+template <>
+int CrossingStateParameters<int>::EGO_GOAL_POS = 12;
 
-int CrossingStateParameters::MAX_VELOCITY_OTHER = 3;
-int CrossingStateParameters::MIN_VELOCITY_OTHER = -3;
-int CrossingStateParameters::MAX_VELOCITY_EGO = 2;
-int CrossingStateParameters::MIN_VELOCITY_EGO = -1;
-int CrossingStateParameters::CHAIN_LENGTH = 21; /* 10 is crossing point (21-1)/2+1 */
-int CrossingStateParameters::EGO_GOAL_POS = 12;
+template <>
+float CrossingStateParameters<float>::MAX_VELOCITY_OTHER = 3;
+template <>
+float CrossingStateParameters<float>::MIN_VELOCITY_OTHER = -3;
+template <>
+float CrossingStateParameters<float>::MAX_VELOCITY_EGO = 2;
+template <>
+float CrossingStateParameters<float>::MIN_VELOCITY_EGO = -1;
+template <>
+float CrossingStateParameters<float>::CHAIN_LENGTH = 21; /* 10 is crossing point (21-1)/2+1 */
+template <>
+float CrossingStateParameters<float>::EGO_GOAL_POS = 12;
 
-
+/*
 void CrossingState::draw(mcts::Viewer* viewer) const {
     // draw map ( crossing point is always at zero)
     const float state_draw_dst = 1.0f;
@@ -65,4 +83,4 @@ void CrossingState::draw(mcts::Viewer* viewer) const {
         }
     }
 
-}
+}*/

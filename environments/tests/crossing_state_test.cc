@@ -31,8 +31,8 @@ TEST(hypothesis_crossing_state, collision )
 {
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(100, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
-    state->add_hypothesis(AgentPolicyCrossingState({5,5}));
+    auto state = std::make_shared<CrossingState<int>>(belief_tracker.sample_current_hypothesis());
+    state->add_hypothesis(AgentPolicyCrossingState<int>({5,5}));
     belief_tracker.belief_update(*state, *state);
 
     std::vector<Reward> rewards;
@@ -42,10 +42,10 @@ TEST(hypothesis_crossing_state, collision )
     // All agents move forward 
     auto jointaction = JointAction(state->get_agent_idx().size());
     for (auto agent_idx : state->get_agent_idx()) {
-      if (agent_idx == CrossingState::ego_agent_idx ) {
+      if (agent_idx == CrossingState<int>::ego_agent_idx ) {
         jointaction[agent_idx] = 2;
       } else {
-        const auto action = aconv(1);
+        const auto action = aconv<int>(1);
         jointaction[agent_idx] = action;
       }
     }
@@ -63,8 +63,8 @@ TEST(hypothesis_crossing_state, hypothesis_friendly)
 {
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(100, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
-    state->add_hypothesis(AgentPolicyCrossingState({5,5}));
+    auto state = std::make_shared<CrossingState<int>>(belief_tracker.sample_current_hypothesis());
+    state->add_hypothesis(AgentPolicyCrossingState<int>({5,5}));
     belief_tracker.belief_update(*state, *state);
 
     std::vector<Reward> rewards;
@@ -76,7 +76,7 @@ TEST(hypothesis_crossing_state, hypothesis_friendly)
       belief_tracker.sample_current_hypothesis();
       auto jointaction = JointAction(state->get_agent_idx().size());
       for (auto agent_idx : state->get_agent_idx()) {
-        if (agent_idx == CrossingState::ego_agent_idx ) {
+        if (agent_idx == CrossingState<int>::ego_agent_idx ) {
           jointaction[agent_idx] = 2;
         } else {
           const auto action = state->plan_action_current_hypothesis(agent_idx);
@@ -101,12 +101,12 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
     // This test checks if hypothesis probability is split up correctly between two overlapping hypothesis
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
-    state->add_hypothesis(AgentPolicyCrossingState({4,5}));
-    state->add_hypothesis(AgentPolicyCrossingState({5,6}));
+    auto state = std::make_shared<CrossingState<int>>(belief_tracker.sample_current_hypothesis());
+    state->add_hypothesis(AgentPolicyCrossingState<int>({4,5}));
+    state->add_hypothesis(AgentPolicyCrossingState<int>({5,6}));
     auto next_state = state;
 
-    AgentPolicyCrossingState true_agents_policy({5,5});
+    AgentPolicyCrossingState<int> true_agents_policy({5,5});
 
     std::vector<Reward> rewards;
     Cost cost;
@@ -116,12 +116,12 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
       belief_tracker.sample_current_hypothesis();
       auto jointaction = JointAction(state->get_agent_idx().size());
       for (auto agent_idx : state->get_agent_idx()) {
-        if (agent_idx == CrossingState::ego_agent_idx ) {
+        if (agent_idx == CrossingState<int>::ego_agent_idx ) {
           jointaction[agent_idx] =  2;
         } else {
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
                                                      state->get_ego_state().x_pos);
-          jointaction[agent_idx] = aconv(action);
+          jointaction[agent_idx] = aconv<int>(action);
         }
       }
       std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;
@@ -159,12 +159,12 @@ TEST(crossing_state, mcts_goal_reached_true_hypothesis)
 
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
-    state->add_hypothesis(AgentPolicyCrossingState({5,5}));
+    auto state = std::make_shared<CrossingState<int>>(belief_tracker.sample_current_hypothesis());
+    state->add_hypothesis(AgentPolicyCrossingState<int>({5,5}));
     auto next_state = state;
     belief_tracker.belief_update(*state, *next_state);
 
-    AgentPolicyCrossingState true_agents_policy({5,5});
+    AgentPolicyCrossingState<int> true_agents_policy({5,5});
 
     std::vector<Reward> rewards;
     Cost cost;
@@ -173,17 +173,17 @@ TEST(crossing_state, mcts_goal_reached_true_hypothesis)
     for(int i = 0; i< 100; ++i) {
       auto jointaction = JointAction(state->get_agent_idx().size());
       for (auto agent_idx : state->get_agent_idx()) {
-        if (agent_idx == CrossingState::ego_agent_idx ) {
+        if (agent_idx == CrossingState<int>::ego_agent_idx ) {
           // Plan for ego agent with hypothesis-based search
-          Mcts<CrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
+          Mcts<CrossingState<int>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
           mcts.search(*state, belief_tracker, 200, 2000);
           jointaction[agent_idx] = mcts.returnBestAction();
-          std::cout << "best uct action: " << idx_to_ego_crossing_action(jointaction[agent_idx]) << std::endl;
+          std::cout << "best uct action: " << idx_to_ego_crossing_action<int>(jointaction[agent_idx]) << std::endl;
         } else {
           // Other agents act according to unknown true agents policy
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
                                                      state->get_ego_state().x_pos);
-          jointaction[agent_idx] = aconv(action);
+          jointaction[agent_idx] = aconv<int>(action);
         }
       }
       std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;
@@ -216,14 +216,14 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
 
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<CrossingState>(belief_tracker.sample_current_hypothesis());
-    state->add_hypothesis(AgentPolicyCrossingState({-2,-1}));
-    state->add_hypothesis(AgentPolicyCrossingState({0,3}));
-    state->add_hypothesis(AgentPolicyCrossingState({4,5}));
+    auto state = std::make_shared<CrossingState<int>>(belief_tracker.sample_current_hypothesis());
+    state->add_hypothesis(AgentPolicyCrossingState<int>({-2,-1}));
+    state->add_hypothesis(AgentPolicyCrossingState<int>({0,3}));
+    state->add_hypothesis(AgentPolicyCrossingState<int>({4,5}));
     auto next_state = state;
     belief_tracker.belief_update(*state, *next_state);
 
-    AgentPolicyCrossingState true_agents_policy({-2,-2});
+    AgentPolicyCrossingState<int> true_agents_policy({-2,-2});
 
     std::vector<Reward> rewards;
     Cost cost;
@@ -232,17 +232,17 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
     for(int i = 0; i< 30; ++i) {
       auto jointaction = JointAction(state->get_agent_idx().size());
       for (auto agent_idx : state->get_agent_idx()) {
-        if (agent_idx == CrossingState::ego_agent_idx ) {
+        if (agent_idx == CrossingState<int>::ego_agent_idx ) {
           // Plan for ego agent with hypothesis-based search
-          Mcts<CrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
+          Mcts<CrossingState<int>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
           mcts.search(*state, belief_tracker, 5000, 10000);
           jointaction[agent_idx] = mcts.returnBestAction();
-          std::cout << "best uct action: " << idx_to_ego_crossing_action(jointaction[agent_idx]) << std::endl;
+          std::cout << "best uct action: " << idx_to_ego_crossing_action<int>(jointaction[agent_idx]) << std::endl;
         } else {
           // Other agents act according to unknown true agents policy
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
                                                      state->get_ego_state().x_pos);
-          jointaction[agent_idx] = aconv(action);
+          jointaction[agent_idx] = aconv<int>(action);
         }
       }
       std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;
@@ -262,13 +262,13 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
 }
 
 TEST(episode_runner, run_some_steps) {
-  CrossingStateParameters::CHAIN_LENGTH = 3;
-  CrossingStateParameters::EGO_GOAL_POS = 1;
-  auto runner = CrossingStateEpisodeRunner(
-      { {1 , AgentPolicyCrossingState({5,5})},
-        {2 , AgentPolicyCrossingState({5,5})}},
-      {AgentPolicyCrossingState({4,5}), 
-        AgentPolicyCrossingState({5,6})},
+  CrossingStateParameters<int>::CHAIN_LENGTH = 3;
+  CrossingStateParameters<int>::EGO_GOAL_POS = 1;
+  auto runner = CrossingStateEpisodeRunner<int>(
+      { {1 , AgentPolicyCrossingState<int>({5,5})},
+        {2 , AgentPolicyCrossingState<int>({5,5})}},
+      {AgentPolicyCrossingState<int>({4,5}), 
+        AgentPolicyCrossingState<int>({5,6})},
         30,
         4,
         1,
