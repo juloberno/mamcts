@@ -4,13 +4,12 @@ from environments.pyviewer import PyViewer
 
 
 class PickleTests(unittest.TestCase):
-    @unittest.skip
     def test_draw_state(self):
         viewer = PyViewer()
-        state = CrossingState({})
+        state = CrossingStateInt({})
         state.draw(viewer)
         viewer.show(block=True)
-    @unittest.skip
+
     def test_episode_runner_step(self):
         CrossingStateParameters.CHAIN_LENGTH = 21
         viewer = PyViewer()

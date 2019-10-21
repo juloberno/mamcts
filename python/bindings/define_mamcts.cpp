@@ -21,12 +21,12 @@ std::mt19937 mcts::RandomGenerator::random_generator_;
 
 void define_mamcts(py::module m)
 {
-    using mcts1 = Mcts<CrossingState, UctStatistic, HypothesisStatistic, RandomHeuristic>;
+    using mcts1 = Mcts<CrossingState<int>, UctStatistic, HypothesisStatistic, RandomHeuristic>;
     py::class_<mcts1,
-             std::shared_ptr<mcts1>>(m, "MctsCrossingStateUctUct")
+             std::shared_ptr<mcts1>>(m, "MctsCrossingStateIntUctUct")
       .def(py::init<>())
       .def("__repr__", [](const mcts1 &m) {
-        return "mamcts.MctsCrossingStateUctUct";
+        return "mamcts.MctsCrossingStateIntUctUct";
       });
 
     py::class_<HypothesisBeliefTracker> belief_tracker(m, "HypothesisBeliefTracker");
