@@ -59,6 +59,12 @@ TEST(hypothesis_crossing_state_float, policy_probability )
   p = policy_test_helper(1, 2, 3.0f, {3, 5}, -3);
   EXPECT_NEAR(p, 1.0/(5-3) , 0.001f);
 
+  p = policy_test_helper(1, 2, 0.0f, {3, 5}, -4.5);
+  EXPECT_NEAR(p, 1.0/(5-3) , 0.001f);
+
+  p = policy_test_helper(1, 2, 0.0f, {0, 5}, -3.0f);
+  EXPECT_NEAR(p, 3.0/(5-0) , 0.001f);
+
   // One gap bound yields positive, one gap bound negative error
   p = policy_test_helper(1, 2, 2.5f, {1, 5}, 0.3f);
   EXPECT_NEAR(p, 1.0/(5.0-1.0) , 0.001f);

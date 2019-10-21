@@ -142,7 +142,7 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
         const auto gap_error_max = ego_pos - agent_state.x_pos - desired_gap_range_.second;
 
         // gap_error < 0 -> brake to increase distance
-        if ( desired_gap_range_.first > 0 && desired_gap_range_.second > 0) {
+        if ( desired_gap_range_.first >= 0 && desired_gap_range_.second > 0) {
             // For both boundaries of gap range gap error is negative 
             if(gap_error_min < 0 && gap_error_max <= 0 &&
                 action <= std::max(gap_error_min, CSP<float>::MIN_VELOCITY_OTHER) &&
