@@ -64,9 +64,13 @@ template <typename Domain>
 class AgentPolicyCrossingState : public RandomGenerator {
   public:
     AgentPolicyCrossingState(const std::pair<Domain, Domain>& desired_gap_range) : 
-                            desired_gap_range_(desired_gap_range) {}
+                            desired_gap_range_(desired_gap_range) {
+                                MCTS_EXPECT_TRUE(desired_gap_range.first <= desired_gap_range.second)
+                            }
 
     Domain act(const AgentState<Domain>& agent_state, const Domain& ego_pos) const;
+
+    Probability get_probability(const AgentState<Domain>& agent_state, const Domain& ego_pos, const Domain& action) const;
 
     Domain calculate_action(const AgentState<Domain>& agent_state, const Domain& ego_pos, const Domain& desired_gap_dst) const {
         // If past crossing point, use last execute action
@@ -89,22 +93,8 @@ class AgentPolicyCrossingState : public RandomGenerator {
 
     }
 
-    Probability get_probability(const AgentState<Domain>& agent_state, const Domain& ego_pos, const Domain& action) const {
-        std::vector<Domain> gap_distances(desired_gap_range_.second - desired_gap_range_.first+1);
-        std::iota(gap_distances.begin(), gap_distances.end(),desired_gap_range_.first);
-        unsigned int action_selected = 0;
-        for(const auto& desired_gap_dst : gap_distances) {
-            const auto calculated = calculate_action(agent_state, ego_pos, desired_gap_dst);
-            if(calculated == action ) {
-                action_selected++;
-            }
-        }
-        const auto probability = static_cast<float>(action_selected)/static_cast<float>(gap_distances.size());
-        return probability;
-    }
-
   private: 
-        const std::pair<int, int> desired_gap_range_;
+        const std::pair<Domain, Domain> desired_gap_range_;
 };
 
 template <>
@@ -123,6 +113,106 @@ inline float AgentPolicyCrossingState<float>::act(const AgentState<float>& agent
     int desired_gap_dst = dis(random_generator_);
 
     return calculate_action(agent_state, ego_pos, desired_gap_dst);
+}
+
+
+template <>
+inline Probability AgentPolicyCrossingState<int>::get_probability(const AgentState<int>& agent_state, const int& ego_pos, const int& action) const {
+    std::vector<int> gap_distances(desired_gap_range_.second - desired_gap_range_.first+1);
+    std::iota(gap_distances.begin(), gap_distances.end(),desired_gap_range_.first);
+    unsigned int action_selected = 0;
+    for(const auto& desired_gap_dst : gap_distances) {
+        const auto calculated = calculate_action(agent_state, ego_pos, desired_gap_dst);
+        if(calculated == action ) {
+            action_selected++;
+        }
+    }
+    const auto probability = static_cast<float>(action_selected)/static_cast<float>(gap_distances.size());
+    return probability;
+}
+
+template <>
+inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentState<float>& agent_state, const float& ego_pos, const float& action) const {
+    const float uniform_prob = 1/(desired_gap_range_.second-desired_gap_range_.first);
+    const float zero_prob = 0.0f;
+    const float one_prob = 1.0f;
+
+    if(agent_state.x_pos < CSP<float>::CROSSING_POINT() ) {        
+        const auto gap_error_min = ego_pos - agent_state.x_pos - desired_gap_range_.first;
+        const auto gap_error_max = ego_pos - agent_state.x_pos - desired_gap_range_.second;
+
+        // gap_error < 0 -> brake to increase distance
+        if ( desired_gap_range_.first > 0 && desired_gap_range_.second > 0) {
+            // For both boundaries of gap range gap error is negative 
+            if(gap_error_min < 0 && gap_error_max <= 0 &&
+                action <= std::max(gap_error_min, CSP<float>::MIN_VELOCITY_OTHER) &&
+                 action >= std::max(gap_error_max, CSP<float>::MIN_VELOCITY_OTHER) ) {
+                     // Consider boundaries due to maximum and minimum operations
+                    if(gap_error_max < CSP<float>::MIN_VELOCITY_OTHER &&
+                    gap_error_min < CSP<float>::MIN_VELOCITY_OTHER &&
+                        action == CSP<float>::MIN_VELOCITY_OTHER) {
+                        return one_prob;
+                    } else if(gap_error_max < CSP<float>::MIN_VELOCITY_OTHER &&
+                        action == CSP<float>::MIN_VELOCITY_OTHER) {
+                            return (CSP<float>::MIN_VELOCITY_OTHER-gap_error_max)*uniform_prob;
+                     } else if(gap_error_min < CSP<float>::MIN_VELOCITY_OTHER &&
+                        action == CSP<float>::MIN_VELOCITY_OTHER) {
+                            return (CSP<float>::MIN_VELOCITY_OTHER-gap_error_min)*uniform_prob;
+                    } else {
+                            return uniform_prob;
+                    }
+            // For only the higher desired gap the gap error is negative -> 
+            } else if(gap_error_min >= 0 && gap_error_max <= 0 &&
+                action <= std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) &&
+                action >= std::max(gap_error_max, CSP<float>::MIN_VELOCITY_OTHER) ) 
+            {
+                // Consider boundaries due to maximum and minimum operations
+                if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
+                   action == CSP<float>::MAX_VELOCITY_OTHER) {
+                   return (gap_error_min - CSP<float>::MAX_VELOCITY_OTHER)*uniform_prob;
+                } else if(gap_error_max < CSP<float>::MIN_VELOCITY_OTHER &&
+                          action == CSP<float>::MIN_VELOCITY_OTHER ) {
+                    return (CSP<float>::MIN_VELOCITY_OTHER - gap_error_max)*uniform_prob;
+                } else {
+                    return uniform_prob;
+                }
+            // For both desired gap boundaries the gap error is positive (gap boundaries are ordered)
+            } else if (gap_error_min < 0 && gap_error_max < 0 &&
+                action <= std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) &&
+                action >= std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) ) {
+                // Consider boundaries due to maximum and minimum operations
+                if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
+                        gap_error_max > CSP<float>::MAX_VELOCITY_OTHER &&
+                        action == CSP<float>::MAX_VELOCITY_OTHER) {
+                    return one_prob;
+                } else if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
+                        action == CSP<float>::MAX_VELOCITY_OTHER) {
+                    return (CSP<float>::MAX_VELOCITY_OTHER - gap_error_min)*uniform_prob;
+                } else if(gap_error_max > CSP<float>::MAX_VELOCITY_OTHER &&
+                        action == CSP<float>::MAX_VELOCITY_OTHER) {
+                    return (gap_error_max - CSP<float>::MAX_VELOCITY_OTHER)*uniform_prob;
+                } else {
+                    return uniform_prob;
+
+                }
+            } else {
+                return zero_prob;
+            }
+        } else if(desired_gap_range_.first < 0 && desired_gap_range_.second < 0 &&
+            action >= std::max(std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER), agent_state.last_action) &&
+            action <= std::max(std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER), agent_state.last_action) ) {
+            // Dont brake again if agents is already ahead of ego agent, but continue with same velocity
+            throw "not implemented. resolve max, min operation";
+        } else {
+            throw "probability calculation for mixed positive/negative gap range not implemented.";
+        }
+    } else {
+        if(action == agent_state.last_action) {
+            return one_prob;
+        } else {
+            return zero_prob;
+        }
+    }
 }
 
 // A simple environment with a 1D state, only if both agents select different actions, they get nearer to the terminal state
