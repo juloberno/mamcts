@@ -1,5 +1,8 @@
 import unittest
-from mamcts import CrossingState, CrossingStateEpisodeRunner, AgentPolicyCrossingState, CrossingStateParameters, HypothesisBeliefTracker
+from mamcts import CrossingStateInt, CrossingStateEpisodeRunnerInt
+from mamcts import AgentPolicyCrossingStateInt, CrossingStateParametersInt
+from mamcts import CrossingStateParametersInt
+from mamcts import HypothesisBeliefTracker
 from environments.pyviewer import PyViewer
 
 
@@ -11,13 +14,13 @@ class PickleTests(unittest.TestCase):
         viewer.show(block=True)
 
     def test_episode_runner_step(self):
-        CrossingStateParameters.CHAIN_LENGTH = 21
+        CrossingStateParametersInt.CHAIN_LENGTH = 21
         viewer = PyViewer()
-        runner = CrossingStateEpisodeRunner(
-            {1 : AgentPolicyCrossingState((5,5)),
-             2 : AgentPolicyCrossingState((5,5)) },
-            [AgentPolicyCrossingState((4,5)), 
-             AgentPolicyCrossingState((5,6))],
+        runner = CrossingStateEpisodeRunnerInt(
+            {1 : AgentPolicyCrossingStateInt((5,5)),
+             2 : AgentPolicyCrossingStateInt((5,5)) },
+            [AgentPolicyCrossingStateInt((4,5)), 
+             AgentPolicyCrossingStateInt((5,6))],
              30,
              4,
              1.0,
@@ -31,12 +34,12 @@ class PickleTests(unittest.TestCase):
             viewer.show()
 
     def test_episode_runner_run(self):
-        CrossingStateParameters.CHAIN_LENGTH = 21
-        runner = CrossingStateEpisodeRunner(
-            {1 : AgentPolicyCrossingState((5,5)),
-             2 : AgentPolicyCrossingState((5,5)) },
-            [AgentPolicyCrossingState((4,5)), 
-             AgentPolicyCrossingState((5,6))],
+        CrossingStateParametersInt.CHAIN_LENGTH = 21
+        runner = CrossingStateEpisodeRunnerInt(
+            {1 : AgentPolicyCrossingStateInt((5,5)),
+             2 : AgentPolicyCrossingStateInt((5,5)) },
+            [AgentPolicyCrossingStateInt((4,5)), 
+             AgentPolicyCrossingStateInt((5,6))],
              30,
              4,
              1.0,

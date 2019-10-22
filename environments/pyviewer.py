@@ -4,7 +4,13 @@
 # For a copy, see <https://opensource.org/licenses/MIT>.
 # ========================================================
 
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except:
+    import matplotlib
+    matplotlib.use('agg')
+    import matplotlib.pyplot as plt
+
 from mamcts import Viewer
 
 

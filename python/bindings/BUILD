@@ -10,6 +10,7 @@ cc_binary(
           "define_mamcts.cpp",
           "define_environments.hpp",
           "define_environments.cpp",
+          "define_crossing_state.hpp"
   ],
   deps = [
     "//mcts:mamcts",

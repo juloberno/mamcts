@@ -1,6 +1,16 @@
 py_test(
-  name = "py_crossing_state_test",
-  srcs = ["py_crossing_state_test.py"],
+  name = "py_crossing_state_int_test",
+  srcs = ["py_crossing_state_int_test.py"],
+  data = ['//python/bindings:mamcts.so'],
+  imports = ['../../python/bindings'],
+  deps=[
+    "//environments:pyviewer"
+  ]
+)
+
+py_test(
+  name = "py_crossing_state_float_test",
+  srcs = ["py_crossing_state_float_test.py"],
   data = ['//python/bindings:mamcts.so'],
   imports = ['../../python/bindings'],
   deps=[

@@ -10,13 +10,12 @@
 #include <iostream>
 #include <random>
 #include <unordered_map>
+#include "mcts/random_generator.h"
 #include "mcts/hypothesis/hypothesis_state.h"
+#include "environments/viewer.h"
 
 using namespace mcts;
 
-namespace mcts {
-    class Viewer;
-}
 
 
 template <typename Domain>
@@ -101,7 +100,7 @@ template <>
 inline int AgentPolicyCrossingState<int>::act(const AgentState<int>& agent_state, const int& ego_pos) const {
     // sample desired gap parameter
     std::uniform_int_distribution<int> dis(desired_gap_range_.first, desired_gap_range_.second);
-    int desired_gap_dst = dis(random_generator_);
+    int desired_gap_dst = dis(RandomGenerator::random_generator_);
 
     return calculate_action(agent_state, ego_pos, desired_gap_dst);
 }
@@ -110,7 +109,7 @@ template <>
 inline float AgentPolicyCrossingState<float>::act(const AgentState<float>& agent_state, const float& ego_pos) const {
     // sample desired gap parameter
     std::uniform_real_distribution<float> dis(desired_gap_range_.first, desired_gap_range_.second);
-    int desired_gap_dst = dis(random_generator_);
+    int desired_gap_dst = dis(RandomGenerator::random_generator_);
 
     return calculate_action(agent_state, ego_pos, desired_gap_dst);
 }
@@ -382,7 +381,68 @@ public:
         return ego_state_.x_pos - other_agent_states_[other_agent_idx].x_pos;
     }
 
-    void draw(Viewer* viewer) const {}
+    
+    void draw(mcts::Viewer* viewer) const {
+        // draw map ( crossing point is always at zero)
+        const float state_draw_dst = 1.0f;
+        const float linewidth = 2;
+        const float state_draw_size = 50;
+        const float factor_draw_current_state = 4;
+
+        // draw lines equally spaced angles with small points
+        // indicating states and larger points indicating the current state
+        const float angle_delta = M_PI/(num_other_agents+2); // one for ego 
+        const float line_radius = state_draw_dst*(CrossingStateParameters<Domain>::CHAIN_LENGTH-1)/2.0f;
+        for(int i = 0; i < num_other_agents+1; ++i) {
+            float start_angle = 1.5*M_PI - (i+1)*angle_delta;
+            float end_angle = start_angle + M_PI;
+            std::pair<float, float> line_x{cos(start_angle)*line_radius, cos(end_angle)*line_radius };
+            std::pair<float, float> line_y{sin(start_angle)*line_radius, sin(end_angle)*line_radius};
+            std::tuple<float,float,float,float> color{0,0,0,0};
+
+            // Differentiate between ego and other agents
+            AgentState<Domain> state;
+            if(i == std::floor(num_other_agents/2)) {
+                state = ego_state_;
+                color = {0.8,0,0,0}; 
+            } else {
+                AgentIdx agt_idx = i;
+                if (i > std::floor(num_other_agents/2)) {
+                    agt_idx  = i-1;
+                }
+                state = other_agent_states_[agt_idx];
+            }
+            viewer->drawLine(line_x, line_y,
+                linewidth, color);
+
+            // Draw current states
+            if(std::is_same<Domain, int>::value) {
+                for (int y = 0; y < CrossingStateParameters<Domain>::CHAIN_LENGTH; ++y) {
+                    const auto px = line_x.first + (line_x.second - line_x.first) * static_cast<float>(y) /
+                                                                    static_cast<float>(CrossingStateParameters<Domain>::CHAIN_LENGTH-1);
+                    const auto py = line_y.first + (line_y.second - line_y.first) * static_cast<float>(y) /
+                                                                    static_cast<float>(CrossingStateParameters<Domain>::CHAIN_LENGTH-1);
+                    float pointsize_temp = state_draw_size; 
+                    if (state.x_pos == y) {
+                        pointsize_temp *= factor_draw_current_state;
+                    }
+                    viewer->drawPoint(px, py,
+                                pointsize_temp, color);
+                }
+            } else if (std::is_same<Domain, float>::value) {
+                const auto px = line_x.first + (line_x.second - line_x.first) * state.x_pos /
+                                                                    static_cast<float>(CrossingStateParameters<Domain>::CHAIN_LENGTH-1);
+                const auto py = line_y.first + (line_y.second - line_y.first) * state.x_pos /
+                                                                static_cast<float>(CrossingStateParameters<Domain>::CHAIN_LENGTH-1);
+                float pointsize_temp = state_draw_size*factor_draw_current_state; 
+                viewer->drawPoint(px, py,
+                            pointsize_temp, color);
+            } else {
+                std::cout << "Unable to draw state information for non-float and non-int state type." << std::endl;
+            }
+        }
+
+    }
 
     typedef Domain ActionType;
 private:
