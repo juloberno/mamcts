@@ -247,6 +247,8 @@ TEST(hypothesis_crossing_state_float, hypothesis_belief_correct)
 
 TEST(crossing_state, mcts_goal_reached_true_hypothesis)
 {
+    CrossingStateParameters<float>::CHAIN_LENGTH = 41.0;
+    CrossingStateParameters<float>::EGO_GOAL_POS = 25.0;
     MctsParameters::DISCOUNT_FACTOR = 0.9;
     MctsParameters::RandomHeuristic::MAX_SEARCH_TIME = 2;
     MctsParameters::RandomHeuristic::MAX_NUMBER_OF_ITERATIONS = 10;
@@ -280,7 +282,7 @@ TEST(crossing_state, mcts_goal_reached_true_hypothesis)
         if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
           // Plan for ego agent with hypothesis-based search
           Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
-          mcts.search(*state, belief_tracker, 200, 20000);
+          mcts.search(*state, belief_tracker, 200, 10000);
           jointaction[agent_idx] = mcts.returnBestAction();
           std::cout << "best uct action: " << idx_to_ego_crossing_action<Domain>(jointaction[agent_idx]) << ", num iterations: " << mcts.numIterations() << std::endl;
         } else {
@@ -304,6 +306,8 @@ TEST(crossing_state, mcts_goal_reached_true_hypothesis)
 
 TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
 {
+    CrossingStateParameters<float>::CHAIN_LENGTH = 41.0;
+    CrossingStateParameters<float>::EGO_GOAL_POS = 25.0;
     MctsParameters::DISCOUNT_FACTOR = 0.9;
     MctsParameters::RandomHeuristic::MAX_SEARCH_TIME = 10;
     MctsParameters::RandomHeuristic::MAX_NUMBER_OF_ITERATIONS = 1000;
