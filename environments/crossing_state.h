@@ -197,11 +197,53 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
             } else {
                 return zero_prob;
             }
-        } else if(desired_gap_range_.first < 0 && desired_gap_range_.second < 0 &&
-            action >= std::max(std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER), agent_state.last_action) &&
+        // hypothesis with both negative gap boundaries
+        } else if(desired_gap_range_.first < 0 && desired_gap_range_.second < 0) {
+            if(action >= std::max(std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER), agent_state.last_action) &&
             action <= std::max(std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER), agent_state.last_action) ) {
-            // Dont brake again if agents is already ahead of ego agent, but continue with same velocity
-            throw "not implemented. resolve max, min operation";
+            // resolve outer max operation, first if we took the last action ...
+                if (agent_state.last_action == action) {
+                    // ... which was meaningful for both boundaries
+                    if (std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) <= agent_state.last_action &&
+                    std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) <= agent_state.last_action) {
+                        return one_prob;
+                    // ... which was meaningful only for the smaller gap error
+                    } else if (std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) <= agent_state.last_action &&
+                            std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) >= agent_state.last_action) {
+                        return (agent_state.last_action - gap_error_max) * uniform_prob;
+                    } else {
+                        throw "gap_error_min should be larger than gap error max.";
+                    }
+                // We did not take the last action ...,
+                } else if (agent_state.last_action < action) {
+                    //... but should have taken it
+                    if(std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) < agent_state.last_action &&
+                    std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) < agent_state.last_action) {
+                        return zero_prob;
+                    }
+                    // ... because both boundaries are above
+                    else if (std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) > agent_state.last_action &&
+                    std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) > agent_state.last_action) {
+                        return one_prob;
+                    // ... because larger boundary is above
+                    } else if(std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) > agent_state.last_action &&
+                    std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) < agent_state.last_action) {
+                        // action is the limit case of max velocity
+                        if(action == CSP<float>::MAX_VELOCITY_OTHER &&
+                                gap_error_min > CSP<float>::MAX_VELOCITY_OTHER) {
+                                    return (gap_error_min - CSP<float>::MAX_VELOCITY_OTHER) * uniform_prob;
+                            }
+                            //action is not the limit case
+                            else {
+                                return uniform_prob;
+                            }
+                    } else {
+                        throw "gap_error_min should be larger than gap error max.";
+                    }
+                }
+            } else {
+                return zero_prob;
+            }
         } else {
             throw "probability calculation for mixed positive/negative gap range not implemented.";
         }
