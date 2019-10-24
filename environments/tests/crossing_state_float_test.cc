@@ -82,11 +82,47 @@ TEST(hypothesis_crossing_state_float, policy_probability )
   EXPECT_NEAR(p, 1.0f/(4.5-1.0)*0.001 , 0.001f);
 
   // Both gap bounds yield positive error
-  p = policy_test_helper(1, 1, 0.5f, {-2.5f, -3.0f}, 1.5f);
+
+  // -- last action not used -------
+  p = policy_test_helper(1, 1, 0.5f, {-3.0f, -2.5f}, 1.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 1, 0.5f, {-2.5f, -3.0f}, 2.5f);
+  p = policy_test_helper(1, 1, 0.5f, {-3.0f, -2.5f}, 2.5f);
   EXPECT_NEAR(p, 1.0f/(-2.5+3)*0.001 , 0.001f);
+
+  p = policy_test_helper(1, 1, 0.5f, {-4.0f, -3.5f}, 3.0f);
+  EXPECT_NEAR(p, 1.0f/(4-3.5)*0.001 , 0.001f);
+
+  p = policy_test_helper(1, 1, 0.5f, {-4.0f, -3.5f}, 2.5f);
+  EXPECT_NEAR(p, 0.0f , 0.001f);
+
+  p = policy_test_helper(1, 1, 0.5f, {-4.0f, -3.5f}, 5.5f);
+  EXPECT_NEAR(p, 0.0f , 0.001f);
+
+  p = policy_test_helper(1, 1, 0.5f, {-3.0f, -2.5f}, 5.5f);
+  EXPECT_NEAR(p, 0.0f , 0.001f);
+
+  p = policy_test_helper(1, 2.5, 0.5f, {-5.0f, -2.5f}, 3.0f);
+  EXPECT_NEAR(p, 1.5/(5-2.5) , 0.001f);
+
+  // -- last action used---
+  p = policy_test_helper(1, 1, 0.5f, {-3.0f, -2.5f}, 1.0f);
+  EXPECT_NEAR(p, 0.0f , 0.001f);
+
+  p = policy_test_helper(1, 3.5, 0.5f, {-3.0f, -2.5f}, 2.5f);
+  EXPECT_NEAR(p, 0.0f , 0.001f);
+
+  p = policy_test_helper(1, 3.5, 0.5f, {-3.0f, -2.5f}, 2.5f);
+  EXPECT_NEAR(p, 0.0f , 0.001f);
+
+  p = policy_test_helper(1, 2.5, 0.5f, {-5.0f, -2.5f}, 2.8f);
+  EXPECT_NEAR(p, 1.0/(5-2.5)*0.001 , 0.001f);
+
+  p = policy_test_helper(1, 2.5, 0.5f, {-5.0f, -4.5f}, 3.0f);
+  EXPECT_NEAR(p, 1.0, 0.001f);
+
+  p = policy_test_helper(1, 1.5, 0.5f, {-5.0f, -1.5f}, 1.5f);
+  EXPECT_NEAR(p, 1.0/(5-1.5)*0.001, 0.001f);
 }
 
 TEST(hypothesis_crossing_state_float, collision )
