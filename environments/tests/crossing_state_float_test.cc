@@ -123,6 +123,9 @@ TEST(hypothesis_crossing_state_float, policy_probability )
 
   p = policy_test_helper(1, 1.5, 0.5f, {-5.0f, -1.5f}, 1.5f);
   EXPECT_NEAR(p, 1.0/(5-1.5)*0.001, 0.001f);
+
+  p = policy_test_helper(1, 3.5, 0.5f, {-1.5f, -0.5f}, 3.5f);
+  EXPECT_NEAR(p, 1.0, 0.001f);
 }
 
 TEST(hypothesis_crossing_state_float, collision )

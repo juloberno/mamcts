@@ -207,38 +207,27 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
         } else if(desired_gap_range_.first < 0 && desired_gap_range_.second < 0) {
             if(action >= std::max(std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER), agent_state.last_action) &&
             action <= std::max(std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER), agent_state.last_action) ) {
-            // resolve outer max operation, first if we took the last action ...
-                if (agent_state.last_action == action) {
-                    // ... which was meaningful for both boundaries
-                    if (std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) <= agent_state.last_action &&
-                    std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) <= agent_state.last_action) {
-                        return one_prob;
-                    // ... which was meaningful only for the smaller gap error
-                    } else if (std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) <= agent_state.last_action &&
-                            std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) >= agent_state.last_action) {
-                        return prob_between(gap_error_max, agent_state.last_action);
-                    } else {
-                        throw "gap_error_min should be larger than gap error max.";
-                    }
-                // We did not take the last action ...,
-                } else if (agent_state.last_action < action) {
-                    if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
-                        gap_error_max > CSP<float>::MAX_VELOCITY_OTHER &&
+                // first check if action can only come up by using last action
+                if (agent_state.last_action == action &&
+                        std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) <= agent_state.last_action &&
+                        std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) <= agent_state.last_action) {
+                    return one_prob;
+                }
+                // then resolve inner max operations, first if we took the last action ...
+                else if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
+                    gap_error_max > CSP<float>::MAX_VELOCITY_OTHER &&
+                    action == CSP<float>::MAX_VELOCITY_OTHER) {
+                    return one_prob;
+                } else if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
+                            gap_error_max < CSP<float>::MAX_VELOCITY_OTHER &&
                         action == CSP<float>::MAX_VELOCITY_OTHER) {
-                        return one_prob;
-                    } else if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
-                              gap_error_max < CSP<float>::MAX_VELOCITY_OTHER &&
-                            action == CSP<float>::MAX_VELOCITY_OTHER) {
-                        return prob_between(CSP<float>::MAX_VELOCITY_OTHER, gap_error_min);
-                    } else if(gap_error_max > CSP<float>::MAX_VELOCITY_OTHER &&
-                              gap_error_min < CSP<float>::MAX_VELOCITY_OTHER &&
-                            action == CSP<float>::MAX_VELOCITY_OTHER) {
-                        return prob_between(CSP<float>::MAX_VELOCITY_OTHER, gap_error_max);
-                    } else {
-                        return single_sample_prob;  
-                    }
+                    return prob_between(CSP<float>::MAX_VELOCITY_OTHER, gap_error_min);
+                } else if(gap_error_max > CSP<float>::MAX_VELOCITY_OTHER &&
+                            gap_error_min < CSP<float>::MAX_VELOCITY_OTHER &&
+                        action == CSP<float>::MAX_VELOCITY_OTHER) {
+                    return prob_between(CSP<float>::MAX_VELOCITY_OTHER, gap_error_max);
                 } else {
-                    return zero_prob;
+                    return single_sample_prob;  
                 }
             } else {
                     return zero_prob;
