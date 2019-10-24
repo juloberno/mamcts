@@ -132,7 +132,14 @@ inline Probability AgentPolicyCrossingState<int>::get_probability(const AgentSta
 
 template <>
 inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentState<float>& agent_state, const float& ego_pos, const float& action) const {
-    const float uniform_prob = 1/(desired_gap_range_.second-desired_gap_range_.first);
+    const float gap_discretization = 0.001f;
+    MCTS_EXPECT_TRUE((desired_gap_range_.second-desired_gap_range_.first) > gap_discretization);
+    MCTS_EXPECT_TRUE((desired_gap_range_.second-desired_gap_range_.first) % gap_discretization == 0);
+    const float uniform_prob = 1/std::abs(desired_gap_range_.second-desired_gap_range_.first);
+    const float single_sample_prob = uniform_prob * gap_discretization;
+    auto prob_between = [&](float left, float right) {
+        return std::max(right - left, gap_discretization) * uniform_prob;
+    };
     const float zero_prob = 0.0f;
     const float one_prob = 1.0f;
 
@@ -153,12 +160,12 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
                         return one_prob;
                     } else if(gap_error_max < CSP<float>::MIN_VELOCITY_OTHER &&
                         action == CSP<float>::MIN_VELOCITY_OTHER) {
-                            return (CSP<float>::MIN_VELOCITY_OTHER-gap_error_max)*uniform_prob;
+                            return prob_between(gap_error_max, CSP<float>::MIN_VELOCITY_OTHER);
                      } else if(gap_error_min < CSP<float>::MIN_VELOCITY_OTHER &&
                         action == CSP<float>::MIN_VELOCITY_OTHER) {
-                            return (CSP<float>::MIN_VELOCITY_OTHER-gap_error_min)*uniform_prob;
+                            return prob_between(gap_error_min, CSP<float>::MIN_VELOCITY_OTHER);
                     } else {
-                            return uniform_prob;
+                            return single_sample_prob;
                     }
             // For only the higher desired gap the gap error is negative -> 
             } else if(gap_error_min >= 0 && gap_error_max <= 0 &&
@@ -168,12 +175,12 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
                 // Consider boundaries due to maximum and minimum operations
                 if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
                    action == CSP<float>::MAX_VELOCITY_OTHER) {
-                   return (gap_error_min - CSP<float>::MAX_VELOCITY_OTHER)*uniform_prob;
+                   return prob_between(CSP<float>::MAX_VELOCITY_OTHER, gap_error_min);
                 } else if(gap_error_max < CSP<float>::MIN_VELOCITY_OTHER &&
                           action == CSP<float>::MIN_VELOCITY_OTHER ) {
-                    return (CSP<float>::MIN_VELOCITY_OTHER - gap_error_max)*uniform_prob;
+                    return prob_between(gap_error_max, CSP<float>::MIN_VELOCITY_OTHER);
                 } else {
-                    return uniform_prob;
+                    return single_sample_prob;
                 }
             // For both desired gap boundaries the gap error is positive (gap boundaries are ordered)
             } else if (gap_error_min < 0 && gap_error_max < 0 &&
@@ -186,13 +193,12 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
                     return one_prob;
                 } else if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
                         action == CSP<float>::MAX_VELOCITY_OTHER) {
-                    return (CSP<float>::MAX_VELOCITY_OTHER - gap_error_min)*uniform_prob;
+                    return prob_between(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER);
                 } else if(gap_error_max > CSP<float>::MAX_VELOCITY_OTHER &&
                         action == CSP<float>::MAX_VELOCITY_OTHER) {
-                    return (gap_error_max - CSP<float>::MAX_VELOCITY_OTHER)*uniform_prob;
+                    return prob_between(CSP<float>::MAX_VELOCITY_OTHER, gap_error_max);
                 } else {
-                    return uniform_prob;
-
+                    return single_sample_prob;
                 }
             } else {
                 return zero_prob;
@@ -216,33 +222,22 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
                     }
                 // We did not take the last action ...,
                 } else if (agent_state.last_action < action) {
-                    //... but should have taken it
-                    if(std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) < agent_state.last_action &&
-                    std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) < agent_state.last_action) {
-                        return zero_prob;
-                    }
-                    // ... because both boundaries are above
-                    else if (std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) > agent_state.last_action &&
-                    std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) > agent_state.last_action) {
+                    if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
+                        gap_error_max > CSP<float>::MAX_VELOCITY_OTHER &&
+                        action == CSP<float>::MAX_VELOCITY_OTHER) {
                         return one_prob;
-                    // ... because larger boundary is above
-                    } else if(std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) > agent_state.last_action &&
-                    std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) < agent_state.last_action) {
-                        // action is the limit case of max velocity
-                        if(action == CSP<float>::MAX_VELOCITY_OTHER &&
-                                gap_error_min > CSP<float>::MAX_VELOCITY_OTHER) {
-                                    return (gap_error_min - CSP<float>::MAX_VELOCITY_OTHER) * uniform_prob;
-                            }
-                            //action is not the limit case
-                            else {
-                                return uniform_prob;
-                            }
+                    } else if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
+                            action == CSP<float>::MAX_VELOCITY_OTHER) {
+                        return (CSP<float>::MAX_VELOCITY_OTHER - gap_error_min)*uniform_prob;
+                    } else if(gap_error_max > CSP<float>::MAX_VELOCITY_OTHER &&
+                            action == CSP<float>::MAX_VELOCITY_OTHER) {
+                        return (gap_error_max - CSP<float>::MAX_VELOCITY_OTHER)*uniform_prob;
                     } else {
-                        throw "gap_error_min should be larger than gap error max.";
+                        return single_sample_prob;  
                     }
+                } else {
+                    return zero_prob;
                 }
-            } else {
-                return zero_prob;
             }
         } else {
             throw "probability calculation for mixed positive/negative gap range not implemented.";
