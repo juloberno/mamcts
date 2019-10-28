@@ -52,11 +52,12 @@ using Domain = int;
 
 
 TEST(hypothesis_crossing_state, collision )
-{
+{ 
+    const auto params = default_crossing_state_parameters<Domain>();
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(100, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis());
-    state->add_hypothesis(AgentPolicyCrossingState<Domain>({5,5}));
+    auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis(), params);
+    state->add_hypothesis(AgentPolicyCrossingState<Domain>({5,5}, params));
     belief_tracker.belief_update(*state, *state);
 
     std::vector<Reward> rewards;
@@ -85,10 +86,11 @@ TEST(hypothesis_crossing_state, collision )
 
 TEST(hypothesis_crossing_state, hypothesis_friendly)
 {
+    const auto params = default_crossing_state_parameters<Domain>();
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(100, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis());
-    state->add_hypothesis(AgentPolicyCrossingState<Domain>({5,5}));
+    auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis(), params);
+    state->add_hypothesis(AgentPolicyCrossingState<Domain>({5,5}, params));
     belief_tracker.belief_update(*state, *state);
 
     std::vector<Reward> rewards;
@@ -121,16 +123,17 @@ TEST(hypothesis_crossing_state, hypothesis_friendly)
 }
 
 TEST(hypothesis_crossing_state, hypothesis_belief_correct)
-{ 
+{  
     // This test checks if hypothesis probability is split up correctly between two overlapping hypothesis
+    const auto params = default_crossing_state_parameters<Domain>();
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis());
-    state->add_hypothesis(AgentPolicyCrossingState<Domain>({4,5}));
-    state->add_hypothesis(AgentPolicyCrossingState<Domain>({5,6}));
+    auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis(), params);
+    state->add_hypothesis(AgentPolicyCrossingState<Domain>({4,5}, params));
+    state->add_hypothesis(AgentPolicyCrossingState<Domain>({5,6}, params));
     auto next_state = state;
 
-    AgentPolicyCrossingState<Domain> true_agents_policy({5,5});
+    AgentPolicyCrossingState<Domain> true_agents_policy({5,5}, params);
 
     std::vector<Reward> rewards;
     Cost cost;
@@ -166,15 +169,16 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
 
 
 TEST(crossing_state, mcts_goal_reached_true_hypothesis)
-{
+{   
+    const auto params = default_crossing_state_parameters<Domain>();
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis());
-    state->add_hypothesis(AgentPolicyCrossingState<Domain>({5,5}));
+    auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis(), params);
+    state->add_hypothesis(AgentPolicyCrossingState<Domain>({5,5}, params));
     auto next_state = state;
     belief_tracker.belief_update(*state, *next_state);
 
-    AgentPolicyCrossingState<Domain> true_agents_policy({5,5});
+    AgentPolicyCrossingState<Domain> true_agents_policy({5,5}, params);
 
     std::vector<Reward> rewards;
     Cost cost;
@@ -188,7 +192,7 @@ TEST(crossing_state, mcts_goal_reached_true_hypothesis)
           Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts(default_hypo_params());
           mcts.search(*state, belief_tracker, 200, 2000);
           jointaction[agent_idx] = mcts.returnBestAction();
-          std::cout << "best uct action: " << idx_to_ego_crossing_action<Domain>(jointaction[agent_idx]) << std::endl;
+          std::cout << "best uct action: " << state->idx_to_ego_crossing_action(jointaction[agent_idx]) << std::endl;
         } else {
           // Other agents act according to unknown true agents policy
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
@@ -209,17 +213,18 @@ TEST(crossing_state, mcts_goal_reached_true_hypothesis)
 }
 
 TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
-{
+{   
+    const auto params = default_crossing_state_parameters<Domain>();
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
-    auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis());
-    state->add_hypothesis(AgentPolicyCrossingState<Domain>({-2,-1}));
-    state->add_hypothesis(AgentPolicyCrossingState<Domain>({0,3}));
-    state->add_hypothesis(AgentPolicyCrossingState<Domain>({4,5}));
+    auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis(), params);
+    state->add_hypothesis(AgentPolicyCrossingState<Domain>({-2,-1}, params));
+    state->add_hypothesis(AgentPolicyCrossingState<Domain>({0,3}, params));
+    state->add_hypothesis(AgentPolicyCrossingState<Domain>({4,5}, params));
     auto next_state = state;
     belief_tracker.belief_update(*state, *next_state);
 
-    AgentPolicyCrossingState<Domain> true_agents_policy({-2,-2});
+    AgentPolicyCrossingState<Domain> true_agents_policy({-2,-2}, params);
 
     std::vector<Reward> rewards;
     Cost cost;
@@ -233,7 +238,7 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
           Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts(default_hypo_params());
           mcts.search(*state, belief_tracker, 5000, 10000);
           jointaction[agent_idx] = mcts.returnBestAction();
-          std::cout << "best uct action: " << idx_to_ego_crossing_action<Domain>(jointaction[agent_idx]) << std::endl;
+          std::cout << "best uct action: " << state->idx_to_ego_crossing_action(jointaction[agent_idx]) << std::endl;
         } else {
           // Other agents act according to unknown true agents policy
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
@@ -258,20 +263,22 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
 }
 
 TEST(episode_runner, run_some_steps) {
-  CrossingStateParameters<Domain>::CHAIN_LENGTH = 3;
-  CrossingStateParameters<Domain>::EGO_GOAL_POS = 1;
+  auto params = default_crossing_state_parameters<Domain>();
+  params.CHAIN_LENGTH = 3;
+  params.EGO_GOAL_POS = 1;
   auto runner = CrossingStateEpisodeRunner<Domain>(
-      { {1 , AgentPolicyCrossingState<Domain>({5,5})},
-        {2 , AgentPolicyCrossingState<Domain>({5,5})}},
-      {AgentPolicyCrossingState<Domain>({4,5}), 
-        AgentPolicyCrossingState<Domain>({5,6})},
+      { {1 , AgentPolicyCrossingState<Domain>({5,5}, params)},
+        {2 , AgentPolicyCrossingState<Domain>({5,5}, params)}},
+      {AgentPolicyCrossingState<Domain>({4,5}, params), 
+        AgentPolicyCrossingState<Domain>({5,6}, params)},
+        default_hypo_params(),
+        params,
         30,
         4,
         1,
         HypothesisBeliefTracker::PRODUCT,
         10000,
         10000,
-        default_hypo_params(),
         nullptr);
   for (int i =0; i< 50; ++i) {
     runner.step();

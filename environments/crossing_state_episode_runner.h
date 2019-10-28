@@ -22,13 +22,14 @@ class CrossingStateEpisodeRunner {
   public:
     CrossingStateEpisodeRunner(const std::unordered_map<AgentIdx, AgentPolicyCrossingState<Domain>>& agents_true_policies,
                               const std::vector<AgentPolicyCrossingState<Domain>>& hypothesis,
+                              const MctsParameters& mcts_parameters,
+                              const CrossingStateParameters<Domain>& crossing_state_parameters,
                               const unsigned int& max_steps,
                               const unsigned int& belief_tracking_hist_len,
                               const float& belief_tracking_discount,
                               const HypothesisBeliefTracker::PosteriorType& posterior_type,
                               const unsigned int& mcts_max_search_time,
                               const unsigned int& mcts_max_iterations,
-                              const MctsParameters& mcts_parameters,
                               Viewer* viewer) :
                   agents_true_policies_(agents_true_policies),
                   current_state_(),
@@ -38,9 +39,11 @@ class CrossingStateEpisodeRunner {
                   mcts_max_search_time_(mcts_max_search_time),
                   mcts_max_iterations_(mcts_max_iterations),
                   mcts_parameters_(mcts_parameters),
+                  crossing_state_parameters_(crossing_state_parameters),
                   viewer_(viewer)  {
                   RandomGenerator::random_generator_ = std::mt19937(1000);
-                  current_state_ = std::make_shared<CrossingState<Domain>>(belief_tracker_.sample_current_hypothesis());
+                  current_state_ = std::make_shared<CrossingState<Domain>>(belief_tracker_.sample_current_hypothesis(),
+                                                                           crossing_state_parameters_);
                   for(const auto& hp : hypothesis) {
                     current_state_->add_hypothesis(hp);
                   }
@@ -65,7 +68,6 @@ class CrossingStateEpisodeRunner {
           Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts(mcts_parameters_);
           mcts.search(*current_state_, belief_tracker_, 5000, 10000);
           jointaction[agent_idx] = mcts.returnBestAction();
-          std::cout << "best uct action: " << idx_to_ego_crossing_action<Domain>(jointaction[agent_idx]) << std::endl;
         } else {
           // Other agents act according to unknown true agents policy
           const auto action = agents_true_policies_.at(agent_idx).act(current_state_->get_agent_state(agent_idx),
@@ -119,6 +121,7 @@ class CrossingStateEpisodeRunner {
     const unsigned int mcts_max_search_time_;
     const unsigned int mcts_max_iterations_;
     const MctsParameters mcts_parameters_;
+    const CrossingStateParameters<Domain> crossing_state_parameters_;
 };
 
 

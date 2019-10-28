@@ -4,7 +4,7 @@ from mamcts import AgentPolicyCrossingStateInt, CrossingStateParametersInt
 from mamcts import CrossingStateParametersInt
 from mamcts import HypothesisBeliefTracker
 from environments.pyviewer import PyViewer
-from mamcts import MctsParameters
+from mamcts import MctsParameters, CrossingStateDefaultParametersInt
 
 def default_mcts_parameters():
     parameters = MctsParameters()
@@ -26,26 +26,29 @@ def default_mcts_parameters():
     return parameters
 class PickleTests(unittest.TestCase):
     def test_draw_state(self):
+        crossing_state_params = CrossingStateDefaultParametersInt()
         viewer = PyViewer()
-        state = CrossingStateInt({})
+        state = CrossingStateInt({}, crossing_state_params)
         state.draw(viewer)
         viewer.show(block=True)
 
     def test_episode_runner_step(self):
+        crossing_state_params = CrossingStateDefaultParametersInt()
         CrossingStateParametersInt.CHAIN_LENGTH = 21
         viewer = PyViewer()
         runner = CrossingStateEpisodeRunnerInt(
-            {1 : AgentPolicyCrossingStateInt((5,5)),
-             2 : AgentPolicyCrossingStateInt((5,5)) },
-            [AgentPolicyCrossingStateInt((4,5)), 
-             AgentPolicyCrossingStateInt((5,6))],
+            {1 : AgentPolicyCrossingStateInt((5,5), crossing_state_params),
+             2 : AgentPolicyCrossingStateInt((5,5), crossing_state_params) },
+            [AgentPolicyCrossingStateInt((4,5), crossing_state_params), 
+             AgentPolicyCrossingStateInt((5,6), crossing_state_params)],
+             default_mcts_parameters(),
+             crossing_state_params,
              30,
              4,
              1.0,
              HypothesisBeliefTracker.PosteriorType.PRODUCT,
              10000,
              10000,
-             default_mcts_parameters(),
              viewer)
         for _ in range(0, 20):
             viewer.clear()
@@ -53,19 +56,21 @@ class PickleTests(unittest.TestCase):
             viewer.show()
 
     def test_episode_runner_run(self):
+        crossing_state_params = CrossingStateDefaultParametersInt()
         CrossingStateParametersInt.CHAIN_LENGTH = 21
         runner = CrossingStateEpisodeRunnerInt(
-            {1 : AgentPolicyCrossingStateInt((5,5)),
-             2 : AgentPolicyCrossingStateInt((5,5)) },
-            [AgentPolicyCrossingStateInt((4,5)), 
-             AgentPolicyCrossingStateInt((5,6))],
+            {1 : AgentPolicyCrossingStateInt((5,5), crossing_state_params),
+             2 : AgentPolicyCrossingStateInt((5,5), crossing_state_params) },
+            [AgentPolicyCrossingStateInt((4,5), crossing_state_params), 
+             AgentPolicyCrossingStateInt((5,6), crossing_state_params)],
+             default_mcts_parameters(),
+             crossing_state_params,
              30,
              4,
              1.0,
              HypothesisBeliefTracker.PosteriorType.PRODUCT,
              10000,
              10000,
-             default_mcts_parameters(),
              None)
 
         episode_result = runner.run()

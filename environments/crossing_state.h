@@ -13,32 +13,13 @@
 #include "mcts/random_generator.h"
 #include "mcts/hypothesis/hypothesis_state.h"
 #include "environments/viewer.h"
+#include "environments/crossing_state_parameters.h"
 
 using namespace mcts;
 
 
-
-template <typename Domain>
-struct CrossingStateParameters {
-    static Domain MAX_VELOCITY_OTHER;
-    static Domain MIN_VELOCITY_OTHER;
-    static Domain NUM_OTHER_ACTIONS() { return MAX_VELOCITY_OTHER-MIN_VELOCITY_OTHER + 1; }
-    static Domain MAX_VELOCITY_EGO;
-    static Domain MIN_VELOCITY_EGO;
-    static Domain NUM_EGO_ACTIONS() { return MAX_VELOCITY_EGO - MIN_VELOCITY_EGO + 1; }
-    static Domain CHAIN_LENGTH; 
-    static Domain EGO_GOAL_POS;
-    static Domain CROSSING_POINT() { return (CHAIN_LENGTH-1)/2+1; }
-};
-
 template <typename Domain>
 using CSP = CrossingStateParameters<Domain>;
-
-template <typename Domain>
-inline Domain idx_to_ego_crossing_action(const ActionIdx& action) {
-    // First action indices are for braking starting from zero
-    return action + CSP<Domain>::MIN_VELOCITY_EGO;
-}
 
 template <typename Domain>
 inline Domain aconv(const ActionIdx& action) {
@@ -62,8 +43,10 @@ struct AgentState {
 template <typename Domain>
 class AgentPolicyCrossingState : public RandomGenerator {
   public:
-    AgentPolicyCrossingState(const std::pair<Domain, Domain>& desired_gap_range) : 
-                            desired_gap_range_(desired_gap_range) {
+    AgentPolicyCrossingState(const std::pair<Domain, Domain>& desired_gap_range,
+                            const CrossingStateParameters<Domain>& parameters) : 
+                            desired_gap_range_(desired_gap_range),
+                            parameters_(parameters) {
                                 MCTS_EXPECT_TRUE(desired_gap_range.first <= desired_gap_range.second)
                             }
 
@@ -73,18 +56,18 @@ class AgentPolicyCrossingState : public RandomGenerator {
 
     Domain calculate_action(const AgentState<Domain>& agent_state, const Domain& ego_pos, const Domain& desired_gap_dst) const {
         // If past crossing point, use last execute action
-        if(agent_state.x_pos < CSP<Domain>::CROSSING_POINT() ) {        
+        if(agent_state.x_pos < parameters_.CROSSING_POINT() ) {        
             const auto gap_error = ego_pos - agent_state.x_pos - desired_gap_dst;
             // gap_error < 0 -> brake to increase distance
             if (desired_gap_dst > 0) {
                 if(gap_error < 0) {
-                    return std::max(gap_error, CSP<Domain>::MIN_VELOCITY_OTHER);
+                    return std::max(gap_error, parameters_.MIN_VELOCITY_OTHER);
                 } else {
-                    return std::min(gap_error, CSP<Domain>::MAX_VELOCITY_OTHER);
+                    return std::min(gap_error, parameters_.MAX_VELOCITY_OTHER);
                 }
             } else {
                 // Dont brake again if agents is already ahead of ego agent, but continue with same velocity
-                return std::max(std::min(gap_error, CSP<Domain>::MAX_VELOCITY_OTHER), agent_state.last_action);
+                return std::max(std::min(gap_error, parameters_.MAX_VELOCITY_OTHER), agent_state.last_action);
             }
         } else {
             return agent_state.last_action;
@@ -94,6 +77,7 @@ class AgentPolicyCrossingState : public RandomGenerator {
 
   private: 
         const std::pair<Domain, Domain> desired_gap_range_;
+        const CrossingStateParameters<Domain>& parameters_;
 };
 
 template <>
@@ -143,7 +127,7 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
     const float zero_prob = 0.0f;
     const float one_prob = 1.0f;
 
-    if(agent_state.x_pos < CSP<float>::CROSSING_POINT() ) {        
+    if(agent_state.x_pos < parameters_.CROSSING_POINT() ) {        
         const auto gap_error_min = ego_pos - agent_state.x_pos - desired_gap_range_.first;
         const auto gap_error_max = ego_pos - agent_state.x_pos - desired_gap_range_.second;
 
@@ -151,52 +135,52 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
         if ( desired_gap_range_.first >= 0 && desired_gap_range_.second > 0) {
             // For both boundaries of gap range gap error is negative 
             if(gap_error_min < 0 && gap_error_max <= 0 &&
-                action <= std::max(gap_error_min, CSP<float>::MIN_VELOCITY_OTHER) &&
-                 action >= std::max(gap_error_max, CSP<float>::MIN_VELOCITY_OTHER) ) {
+                action <= std::max(gap_error_min, parameters_.MIN_VELOCITY_OTHER) &&
+                 action >= std::max(gap_error_max, parameters_.MIN_VELOCITY_OTHER) ) {
                      // Consider boundaries due to maximum and minimum operations
-                    if(gap_error_max < CSP<float>::MIN_VELOCITY_OTHER &&
-                    gap_error_min < CSP<float>::MIN_VELOCITY_OTHER &&
-                        action == CSP<float>::MIN_VELOCITY_OTHER) {
+                    if(gap_error_max < parameters_.MIN_VELOCITY_OTHER &&
+                    gap_error_min < parameters_.MIN_VELOCITY_OTHER &&
+                        action == parameters_.MIN_VELOCITY_OTHER) {
                         return one_prob;
-                    } else if(gap_error_max < CSP<float>::MIN_VELOCITY_OTHER &&
-                        action == CSP<float>::MIN_VELOCITY_OTHER) {
-                            return prob_between(gap_error_max, CSP<float>::MIN_VELOCITY_OTHER);
-                     } else if(gap_error_min < CSP<float>::MIN_VELOCITY_OTHER &&
-                        action == CSP<float>::MIN_VELOCITY_OTHER) {
-                            return prob_between(gap_error_min, CSP<float>::MIN_VELOCITY_OTHER);
+                    } else if(gap_error_max < parameters_.MIN_VELOCITY_OTHER &&
+                        action == parameters_.MIN_VELOCITY_OTHER) {
+                            return prob_between(gap_error_max, parameters_.MIN_VELOCITY_OTHER);
+                     } else if(gap_error_min < parameters_.MIN_VELOCITY_OTHER &&
+                        action == parameters_.MIN_VELOCITY_OTHER) {
+                            return prob_between(gap_error_min, parameters_.MIN_VELOCITY_OTHER);
                     } else {
                             return single_sample_prob;
                     }
             // For only the higher desired gap the gap error is negative -> 
             } else if(gap_error_min >= 0 && gap_error_max <= 0 &&
-                action <= std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) &&
-                action >= std::max(gap_error_max, CSP<float>::MIN_VELOCITY_OTHER) ) 
+                action <= std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER) &&
+                action >= std::max(gap_error_max, parameters_.MIN_VELOCITY_OTHER) ) 
             {
                 // Consider boundaries due to maximum and minimum operations
-                if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
-                   action == CSP<float>::MAX_VELOCITY_OTHER) {
-                   return prob_between(CSP<float>::MAX_VELOCITY_OTHER, gap_error_min);
-                } else if(gap_error_max < CSP<float>::MIN_VELOCITY_OTHER &&
-                          action == CSP<float>::MIN_VELOCITY_OTHER ) {
-                    return prob_between(gap_error_max, CSP<float>::MIN_VELOCITY_OTHER);
+                if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
+                   action == parameters_.MAX_VELOCITY_OTHER) {
+                   return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min);
+                } else if(gap_error_max < parameters_.MIN_VELOCITY_OTHER &&
+                          action == parameters_.MIN_VELOCITY_OTHER ) {
+                    return prob_between(gap_error_max, parameters_.MIN_VELOCITY_OTHER);
                 } else {
                     return single_sample_prob;
                 }
             // For both desired gap boundaries the gap error is positive (gap boundaries are ordered)
             } else if (gap_error_min < 0 && gap_error_max < 0 &&
-                action <= std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) &&
-                action >= std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) ) {
+                action <= std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER) &&
+                action >= std::min(gap_error_max, parameters_.MAX_VELOCITY_OTHER) ) {
                 // Consider boundaries due to maximum and minimum operations
-                if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
-                        gap_error_max > CSP<float>::MAX_VELOCITY_OTHER &&
-                        action == CSP<float>::MAX_VELOCITY_OTHER) {
+                if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
+                        gap_error_max > parameters_.MAX_VELOCITY_OTHER &&
+                        action == parameters_.MAX_VELOCITY_OTHER) {
                     return one_prob;
-                } else if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
-                        action == CSP<float>::MAX_VELOCITY_OTHER) {
-                    return prob_between(CSP<float>::MAX_VELOCITY_OTHER, gap_error_min);
-                } else if(gap_error_max > CSP<float>::MAX_VELOCITY_OTHER &&
-                        action == CSP<float>::MAX_VELOCITY_OTHER) {
-                    return prob_between(CSP<float>::MAX_VELOCITY_OTHER, gap_error_max);
+                } else if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
+                        action == parameters_.MAX_VELOCITY_OTHER) {
+                    return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min);
+                } else if(gap_error_max > parameters_.MAX_VELOCITY_OTHER &&
+                        action == parameters_.MAX_VELOCITY_OTHER) {
+                    return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_max);
                 } else {
                     return single_sample_prob;
                 }
@@ -205,27 +189,27 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
             }
         // hypothesis with both negative gap boundaries
         } else if(desired_gap_range_.first < 0 && desired_gap_range_.second < 0) {
-            if(action >= std::max(std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER), agent_state.last_action) &&
-            action <= std::max(std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER), agent_state.last_action) ) {
+            if(action >= std::max(std::min(gap_error_max, parameters_.MAX_VELOCITY_OTHER), agent_state.last_action) &&
+            action <= std::max(std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER), agent_state.last_action) ) {
                 // first check if action can only come up by using last action
                 if (agent_state.last_action == action &&
-                        std::min(gap_error_min, CSP<float>::MAX_VELOCITY_OTHER) <= agent_state.last_action &&
-                        std::min(gap_error_max, CSP<float>::MAX_VELOCITY_OTHER) <= agent_state.last_action) {
+                        std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER) <= agent_state.last_action &&
+                        std::min(gap_error_max, parameters_.MAX_VELOCITY_OTHER) <= agent_state.last_action) {
                     return one_prob;
                 }
                 // then resolve inner max operations, first if we took the last action ...
-                else if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
-                    gap_error_max > CSP<float>::MAX_VELOCITY_OTHER &&
-                    action == CSP<float>::MAX_VELOCITY_OTHER) {
+                else if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
+                    gap_error_max > parameters_.MAX_VELOCITY_OTHER &&
+                    action == parameters_.MAX_VELOCITY_OTHER) {
                     return one_prob;
-                } else if(gap_error_min > CSP<float>::MAX_VELOCITY_OTHER &&
-                            gap_error_max < CSP<float>::MAX_VELOCITY_OTHER &&
-                        action == CSP<float>::MAX_VELOCITY_OTHER) {
-                    return prob_between(CSP<float>::MAX_VELOCITY_OTHER, gap_error_min);
-                } else if(gap_error_max > CSP<float>::MAX_VELOCITY_OTHER &&
-                            gap_error_min < CSP<float>::MAX_VELOCITY_OTHER &&
-                        action == CSP<float>::MAX_VELOCITY_OTHER) {
-                    return prob_between(CSP<float>::MAX_VELOCITY_OTHER, gap_error_max);
+                } else if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
+                            gap_error_max < parameters_.MAX_VELOCITY_OTHER &&
+                        action == parameters_.MAX_VELOCITY_OTHER) {
+                    return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min);
+                } else if(gap_error_max > parameters_.MAX_VELOCITY_OTHER &&
+                            gap_error_min < parameters_.MAX_VELOCITY_OTHER &&
+                        action == parameters_.MAX_VELOCITY_OTHER) {
+                    return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_max);
                 } else {
                     return single_sample_prob;  
                 }
@@ -252,27 +236,32 @@ private:
   static const unsigned int num_other_agents = 2;
 
 public:
-    CrossingState(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis) :
+    CrossingState(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis,
+                  const CrossingStateParameters<Domain>& parameters) :
                             HypothesisStateInterface<CrossingState<Domain>>(current_agents_hypothesis),
                             hypothesis_(),
                             other_agent_states_(),
                             ego_state_(),
-                            terminal_(false) {
+                            terminal_(false),
+                            parameters_(parameters) {
                                 for (auto& state : other_agent_states_) {
                                     state = AgentState<Domain>();
                                 }
                             }
 
     CrossingState(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis,
-                            const std::array<AgentState<Domain>, num_other_agents>& other_agent_states,
-                            const AgentState<Domain>& ego_state,
-                            const bool& terminal,
-                            const std::vector<AgentPolicyCrossingState<Domain>>& hypothesis) : // add hypothesis to execute copying
+                  const CrossingStateParameters<Domain>& parameters,
+                  const std::array<AgentState<Domain>, num_other_agents>& other_agent_states,
+                  const AgentState<Domain>& ego_state,
+                  const bool& terminal,
+                  const std::vector<AgentPolicyCrossingState<Domain>>& hypothesis
+                  ) : 
                             HypothesisStateInterface<CrossingState>(current_agents_hypothesis),
                             hypothesis_(hypothesis),
                             other_agent_states_(other_agent_states),
                             ego_state_(ego_state),
-                            terminal_(terminal) {};
+                            terminal_(terminal),
+                            parameters_(parameters) {};
     ~CrossingState() {};
 
     std::shared_ptr<CrossingState> clone() const
@@ -308,7 +297,7 @@ public:
         // normally we map each single action value in joint action with a map to the floating point action. Here, not required
         
         const auto old_x_ego = ego_state_.x_pos;
-        auto new_x_ego = ego_state_.x_pos + idx_to_ego_crossing_action<Domain>(joint_action[this->ego_agent_idx]);
+        auto new_x_ego = ego_state_.x_pos + idx_to_ego_crossing_action(joint_action[this->ego_agent_idx]);
         bool ego_out_of_map = false;
         if(new_x_ego < 0) {
             ego_out_of_map = true;
@@ -324,28 +313,33 @@ public:
 
             // if ego state history encloses crossing point and other state history encloses crossing point
             // a collision occurs
-            if(next_ego_state.x_pos >= CSP<Domain>::CROSSING_POINT() &&  old_x_ego<= CSP<Domain>::CROSSING_POINT() &&
-              next_other_agent_states[i].x_pos >= CSP<Domain>::CROSSING_POINT() && 
-              other_agent_states_[i].x_pos <= CSP<Domain>::CROSSING_POINT() ) {
+            if(next_ego_state.x_pos >= parameters_.CROSSING_POINT() &&  old_x_ego<= parameters_.CROSSING_POINT() &&
+              next_other_agent_states[i].x_pos >= parameters_.CROSSING_POINT() && 
+              other_agent_states_[i].x_pos <= parameters_.CROSSING_POINT() ) {
                 collision = true;
             }
         }
 
-        const bool goal_reached = next_ego_state.x_pos >= CSP<Domain>::EGO_GOAL_POS;
+        const bool goal_reached = next_ego_state.x_pos >= parameters_.EGO_GOAL_POS;
 
         const bool terminal = goal_reached || collision || ego_out_of_map;
         rewards.resize(num_other_agents+1);
         rewards[0] = goal_reached * 100.0f - 1000.0f * collision - 1000.0f * ego_out_of_map;
         ego_cost = collision * 1.0f;
 
-        return std::make_shared<CrossingState<Domain>>(this->current_agents_hypothesis_, next_other_agent_states, next_ego_state, terminal, hypothesis_);
+        return std::make_shared<CrossingState<Domain>>(this->current_agents_hypothesis_,
+                                                       parameters_,
+                                                       next_other_agent_states,
+                                                       next_ego_state,
+                                                       terminal,
+                                                       hypothesis_);
     }
 
     ActionIdx get_num_actions(AgentIdx agent_idx) const {
         if(agent_idx == this->ego_agent_idx) {
-            return CSP<Domain>::NUM_EGO_ACTIONS();
+            return parameters_.NUM_EGO_ACTIONS();
         } else {
-            return CSP<Domain>::NUM_OTHER_ACTIONS();
+            return parameters_.NUM_OTHER_ACTIONS();
         }
     }
 
@@ -381,7 +375,7 @@ public:
     }
 
     bool ego_goal_reached() const {
-        return ego_state_.x_pos >= CSP<Domain>::CROSSING_POINT();
+        return ego_state_.x_pos >= parameters_.CROSSING_POINT();
     }
 
     int min_distance_to_ego() const {
@@ -422,7 +416,7 @@ public:
         // draw lines equally spaced angles with small points
         // indicating states and larger points indicating the current state
         const float angle_delta = M_PI/(num_other_agents+2); // one for ego 
-        const float line_radius = state_draw_dst*(CrossingStateParameters<Domain>::CHAIN_LENGTH-1)/2.0f;
+        const float line_radius = state_draw_dst*(parameters_.CHAIN_LENGTH-1)/2.0f;
         for(int i = 0; i < num_other_agents+1; ++i) {
             float start_angle = 1.5*M_PI - (i+1)*angle_delta;
             float end_angle = start_angle + M_PI;
@@ -447,11 +441,11 @@ public:
 
             // Draw current states
             if(std::is_same<Domain, int>::value) {
-                for (int y = 0; y < CrossingStateParameters<Domain>::CHAIN_LENGTH; ++y) {
+                for (int y = 0; y < parameters_.CHAIN_LENGTH; ++y) {
                     const auto px = line_x.first + (line_x.second - line_x.first) * static_cast<float>(y) /
-                                                                    static_cast<float>(CrossingStateParameters<Domain>::CHAIN_LENGTH-1);
+                                                                    static_cast<float>(parameters_.CHAIN_LENGTH-1);
                     const auto py = line_y.first + (line_y.second - line_y.first) * static_cast<float>(y) /
-                                                                    static_cast<float>(CrossingStateParameters<Domain>::CHAIN_LENGTH-1);
+                                                                    static_cast<float>(parameters_.CHAIN_LENGTH-1);
                     float pointsize_temp = state_draw_size; 
                     if (state.x_pos == y) {
                         pointsize_temp *= factor_draw_current_state;
@@ -461,17 +455,22 @@ public:
                 }
             } else if (std::is_same<Domain, float>::value) {
                 const auto px = line_x.first + (line_x.second - line_x.first) * state.x_pos /
-                                                                    static_cast<float>(CrossingStateParameters<Domain>::CHAIN_LENGTH-1);
+                                                                    static_cast<float>(parameters_.CHAIN_LENGTH-1);
                 const auto py = line_y.first + (line_y.second - line_y.first) * state.x_pos /
-                                                                static_cast<float>(CrossingStateParameters<Domain>::CHAIN_LENGTH-1);
+                                                                static_cast<float>(parameters_.CHAIN_LENGTH-1);
                 float pointsize_temp = state_draw_size*factor_draw_current_state; 
                 viewer->drawPoint(px, py,
                             pointsize_temp, color);
             } else {
-                std::cout << "Unable to draw state information for non-float and non-int state type." << std::endl;
+                std::cout << "Unable to draw state information for a non-float and non-int state type." << std::endl;
             }
         }
 
+    }
+
+    Domain idx_to_ego_crossing_action(const ActionIdx& action) const {
+        // First action indices are for braking starting from zero
+        return action + parameters_.MIN_VELOCITY_EGO;
     }
 
     typedef Domain ActionType;
@@ -481,6 +480,8 @@ private:
     std::array<AgentState<Domain>, num_other_agents> other_agent_states_;
     AgentState<Domain> ego_state_;
     bool terminal_;
+
+    const CrossingStateParameters<Domain>& parameters_;
 };
 
 
