@@ -20,11 +20,58 @@ std::mt19937 mcts::RandomGenerator::random_generator_;
 
 
 void define_mamcts(py::module m)
-{
+{   
+    py::class_<MctsParameters>(m, "MctsParameters")
+      .def(py::init<>())
+      .def("__repr__", [](const MctsParameters &m) {
+        return "mamcts.MctsParameters";
+      })
+      .def_readwrite("DISCOUNT_FACTOR", &MctsParameters::DISCOUNT_FACTOR)
+      .def_readwrite("hypothesis_statistic", &MctsParameters::hypothesis_statistic)
+      .def_readwrite("uct_statistic", &MctsParameters::uct_statistic)
+      .def_readwrite("random_heuristic", &MctsParameters::random_heuristic);
+
+    py::class_<MctsParameters::RandomHeuristic>(m, "MctsParametersRandomHeuristic")
+      .def(py::init<>())
+      .def("__repr__", [](const MctsParameters::RandomHeuristic &m) {
+        return "mamcts.MctsParametersRandomHeuristic";
+      })
+      .def_readwrite("MAX_SEARCH_TIME", &MctsParameters::RandomHeuristic::MAX_SEARCH_TIME)
+      .def_readwrite("MAX_NUMBER_OF_ITERATIONS",
+               &MctsParameters::RandomHeuristic::MAX_NUMBER_OF_ITERATIONS);
+
+
+    py::class_<MctsParameters::UctStatistic>(m ,"MctsParametersUctStatistic")
+      .def(py::init<>())
+      .def("__repr__", [](const MctsParameters::UctStatistic &m) {
+        return "mamcts.MctsParametersUctStatistic";
+      })
+      .def_readwrite("LOWER_BOUND", &MctsParameters::UctStatistic::LOWER_BOUND)
+      .def_readwrite("UPPER_BOUND", &MctsParameters::UctStatistic::UPPER_BOUND)
+      .def_readwrite("EXPLORATION_CONSTANT", &MctsParameters::UctStatistic::EXPLORATION_CONSTANT);
+
+    py::class_<MctsParameters::HypothesisStatistic>(m, "MctsParametersHypothesisStatistic")
+      .def(py::init<>())
+      .def("__repr__", [](const MctsParameters::HypothesisStatistic &m) {
+        return "mamcts.MctsParametersHypothesisStatistic";
+      })
+      .def_readwrite("COST_BASED_ACTION_SELECTION",
+                 &MctsParameters::HypothesisStatistic::COST_BASED_ACTION_SELECTION)
+      .def_readwrite("UPPER_COST_BOUND",
+                 &MctsParameters::HypothesisStatistic::UPPER_COST_BOUND)
+      .def_readwrite("LOWER_COST_BOUND",
+                &MctsParameters::HypothesisStatistic::LOWER_COST_BOUND)
+      .def_readwrite("PROGRESSIVE_WIDENING_K",
+                &MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_K)
+      .def_readwrite("PROGRESSIVE_WIDENING_ALPHA",
+                &MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_ALPHA)
+      .def_readwrite("EXPLORATION_CONSTANT",
+                &MctsParameters::HypothesisStatistic::EXPLORATION_CONSTANT);
+
     using mcts1 = Mcts<CrossingState<int>, UctStatistic, HypothesisStatistic, RandomHeuristic>;
     py::class_<mcts1,
              std::shared_ptr<mcts1>>(m, "MctsCrossingStateIntUctUct")
-      .def(py::init<>())
+      .def(py::init<const MctsParameters&>())
       .def("__repr__", [](const mcts1 &m) {
         return "mamcts.MctsCrossingStateIntUctUct";
       });

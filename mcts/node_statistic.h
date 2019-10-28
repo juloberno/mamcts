@@ -10,6 +10,7 @@
 #include "state.h"
 #include <map>
 #include "common.h"
+#include "mcts_parameters.h"
 
 namespace mcts {
 
@@ -21,7 +22,12 @@ class NodeStatistic
 public:
     MCTS_TEST;
 
-    NodeStatistic(ActionIdx num_actions, AgentIdx agent_idx) : num_actions_(num_actions), agent_idx_(agent_idx) {}
+    NodeStatistic(ActionIdx num_actions,
+                 AgentIdx agent_idx, 
+                 const MctsParameters& mcts_parameters) : 
+                 num_actions_(num_actions),
+                 agent_idx_(agent_idx),
+                 mcts_parameters_(mcts_parameters) {}
     template <class S>
     ActionIdx choose_next_action(const StateInterface<S>& state);
     void update_statistic(const NodeStatistic<Implementation>& changed_child_statistic); // update statistic during backpropagation from child node
@@ -43,7 +49,7 @@ protected:
     std::pair<ActionIdx, Cost> collected_cost_;
     ActionIdx num_actions_;
     AgentIdx agent_idx_;
-
+    const MctsParameters& mcts_parameters_;
 };
 
 template <class Implementation>

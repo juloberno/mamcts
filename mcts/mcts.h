@@ -13,6 +13,7 @@
 #include "hypothesis/hypothesis_belief_tracker.h"
 #include <chrono>  // for high_resolution_clock
 #include "common.h"
+#include "mcts_parameters.h"
 #include <string>
  
 
@@ -33,7 +34,8 @@ public:
     using StageNodeSPtr = std::shared_ptr<StageNode<S,SE,SO, H>>;
     using StageNodeWPtr = std::weak_ptr<StageNode<S,SE,SO, H>>;
 
-    Mcts() : root_(), num_iterations(0), heuristic_() {};
+    Mcts(const MctsParameters& mcts_parameters) : root_(), num_iterations(0), heuristic_(mcts_parameters),
+                                                 mcts_parameters_(mcts_parameters) {};
 
     ~Mcts() {}
     
@@ -58,6 +60,8 @@ private:
 
     unsigned int num_iterations;
 
+    const MctsParameters mcts_parameters_;
+
     H heuristic_;
 
     std::string sprintf(const StageNodeSPtr& root_node) const;
@@ -74,7 +78,7 @@ Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker& beli
     StageNode<S,SE, SO, H>::reset_counter();
 
     root_ = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
-            const unsigned int&> (nullptr, current_state.clone(),JointAction(),0);
+            const unsigned int&> (nullptr, current_state.clone(),JointAction(),0,  mcts_parameters_);
     num_iterations = 0;
     while (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ms && num_iterations<max_iterations) {
         belief_tracker.sample_current_hypothesis();
@@ -91,7 +95,7 @@ void Mcts<S,SE,SO,H>::search(const S& current_state, unsigned int max_search_tim
     StageNode<S,SE, SO, H>::reset_counter();
 
     root_ = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
-            const unsigned int&> (nullptr, current_state.clone(), JointAction(),0);
+            const unsigned int&> (nullptr, current_state.clone(), JointAction(),0, mcts_parameters_);
     num_iterations = 0;
     while (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ms && num_iterations<max_iterations) {
         iterate(root_);

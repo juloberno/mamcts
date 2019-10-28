@@ -19,8 +19,8 @@ class UctStatistic : public mcts::NodeStatistic<UctStatistic>, mcts::RandomGener
 public:
     MCTS_TEST
 
-    UctStatistic(ActionIdx num_actions, AgentIdx agent_idx) :
-             NodeStatistic<UctStatistic>(num_actions, agent_idx),
+    UctStatistic(ActionIdx num_actions, AgentIdx agent_idx, const MctsParameters & mcts_parameters) :
+             NodeStatistic<UctStatistic>(num_actions, agent_idx, mcts_parameters),
              value_(0.0f),
              latest_return_(0.0),
              ucb_statistics_([&]() -> std::map<ActionIdx, UcbPair>{
@@ -30,10 +30,10 @@ public:
              }()),
              total_node_visits_(0),
              unexpanded_actions_(num_actions),
-             upper_bound(mcts::MctsParameters::UctStatistic::UPPER_BOUND),
-             lower_bound(mcts::MctsParameters::UctStatistic::LOWER_BOUND),
-             k_discount_factor(mcts::MctsParameters::DISCOUNT_FACTOR), 
-             k_exploration_constant(mcts::MctsParameters::UctStatistic::EXPLORATION_CONSTANT) {
+             upper_bound(mcts_parameters.uct_statistic.UPPER_BOUND),
+             lower_bound(mcts_parameters.uct_statistic.LOWER_BOUND),
+             k_discount_factor(mcts_parameters.DISCOUNT_FACTOR), 
+             k_exploration_constant(mcts_parameters.uct_statistic.EXPLORATION_CONSTANT) {
                  // initialize action indexes from 0 to (number of actions -1)
                  std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
              }

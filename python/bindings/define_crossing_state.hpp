@@ -72,6 +72,7 @@ void define_crossing_state(py::module m, std::string suffix) {
                             const HypothesisBeliefTracker::PosteriorType&,
                             const unsigned int&,
                             const unsigned int&,
+                            const mcts::MctsParameters&,
                              mcts::Viewer*>())
       .def("__repr__", [&](const CrossingStateEpisodeRunner<Domain> &m) {
         return "";// add_suffix("mamcts.CrossingStateEpisodeRunner");

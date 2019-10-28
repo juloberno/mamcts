@@ -13,6 +13,7 @@
 #include "mcts/mcts.h"
 #include "mcts/hypothesis/common.h"
 #include "mcts/hypothesis/hypothesis_state.h"
+#include "mcts/mcts_parameters.h"
 
 namespace mcts {
 
@@ -27,20 +28,20 @@ class HypothesisStatistic : public mcts::NodeStatistic<HypothesisStatistic>,
 public:
     MCTS_TEST;
 
-    HypothesisStatistic(ActionIdx num_actions, AgentIdx agent_idx) :
-                    NodeStatistic<HypothesisStatistic>(num_actions, agent_idx),
+    HypothesisStatistic(ActionIdx num_actions, AgentIdx agent_idx, const MctsParameters& mcts_parameters) :
+                    NodeStatistic<HypothesisStatistic>(num_actions, agent_idx, mcts_parameters),
                     ego_cost_value_(EGO_COST_VALUE_NOT_SET),
                     latest_ego_cost_(LATEST_EGO_COST_NOT_SET),
                     ucb_statistics_(),
                     total_node_visits_(),
                     hypothesis_id_current_iteration_(HYPOTHESIS_ID_NOT_SET),
-                    upper_cost_bound(mcts::MctsParameters::HypothesisStatistic::UPPER_COST_BOUND),
-                    lower_cost_bound(mcts::MctsParameters::HypothesisStatistic::LOWER_COST_BOUND),
-                    k_discount_factor(mcts::MctsParameters::DISCOUNT_FACTOR), 
-                    k_exploration_constant(mcts::MctsParameters::HypothesisStatistic::EXPLORATION_CONSTANT),
-                    cost_based_action_selection_(mcts::MctsParameters::HypothesisStatistic::COST_BASED_ACTION_SELECTION),
-                    progressive_widening_k(mcts::MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_K),
-                    progressive_widening_alpha(mcts::MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_ALPHA)
+                    upper_cost_bound(mcts_parameters.hypothesis_statistic.UPPER_COST_BOUND),
+                    lower_cost_bound(mcts_parameters.hypothesis_statistic.LOWER_COST_BOUND),
+                    k_discount_factor(mcts_parameters.DISCOUNT_FACTOR), 
+                    k_exploration_constant(mcts_parameters.hypothesis_statistic.EXPLORATION_CONSTANT),
+                    cost_based_action_selection_(mcts_parameters.hypothesis_statistic.COST_BASED_ACTION_SELECTION),
+                    progressive_widening_k(mcts_parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_K),
+                    progressive_widening_alpha(mcts_parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_ALPHA)
                     {}
 
     inline void init_hypothesis_variables(const HypothesisId hypothesis_id) {

@@ -11,31 +11,32 @@
 namespace mcts{
 
     struct MctsParameters{
-
         //MCTS
-        static double DISCOUNT_FACTOR;
-        static double RANDOM_GENERATOR_SEED;
-        static double MAX_NUMBER_OF_ITERATIONS;
+        double DISCOUNT_FACTOR;
 
         struct RandomHeuristic {
-            static double MAX_SEARCH_TIME;
-            static double MAX_NUMBER_OF_ITERATIONS;
+            double MAX_SEARCH_TIME;
+            unsigned int MAX_NUMBER_OF_ITERATIONS;
         };
 
         struct UctStatistic {
-            static double LOWER_BOUND;
-            static double UPPER_BOUND;
-            static double EXPLORATION_CONSTANT;
+            double LOWER_BOUND;
+            double UPPER_BOUND;
+            double EXPLORATION_CONSTANT;
         };
 
         struct HypothesisStatistic {
-            static bool COST_BASED_ACTION_SELECTION;
-            static double UPPER_COST_BOUND;
-            static double LOWER_COST_BOUND;
-            static double PROGRESSIVE_WIDENING_K;
-            static double PROGRESSIVE_WIDENING_ALPHA;
-            static double EXPLORATION_CONSTANT;
+            bool COST_BASED_ACTION_SELECTION;
+            double UPPER_COST_BOUND;
+            double LOWER_COST_BOUND;
+            double PROGRESSIVE_WIDENING_K;
+            double PROGRESSIVE_WIDENING_ALPHA;
+            double EXPLORATION_CONSTANT;
         };
+
+        HypothesisStatistic hypothesis_statistic;
+        UctStatistic uct_statistic;
+        RandomHeuristic random_heuristic;
     };
 } // namespace mcts
 

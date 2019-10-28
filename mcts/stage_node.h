@@ -69,8 +69,12 @@ struct container_hash {
         
         static unsigned int num_nodes_;
 
+        const MctsParameters & mcts_parameters_;
+
     public:
-        StageNode(const StageNodeSPtr& parent, std::shared_ptr<S> state,  const JointAction& joint_action, const unsigned int& depth);
+        StageNode(const StageNodeSPtr& parent, std::shared_ptr<S> state,
+                  const JointAction& joint_action, const unsigned int& depth,
+                  const MctsParameters & mcts_parameters);
         ~StageNode();
         bool select_or_expand(StageNodeSPtr& next_node);
         void update_statistics(const SE& ego_heuristic_estimate, const std::unordered_map<AgentIdx, SO>& other_heuristic_estimates);
@@ -102,19 +106,22 @@ struct container_hash {
 
     template<class S, class SE, class SO, class H>
     StageNode<S,SE, SO, H>::StageNode(const StageNodeSPtr& parent,
-                                        std::shared_ptr<S> state, const JointAction& joint_action, const unsigned int& depth ) :
+                                      std::shared_ptr<S> state,
+                                      const JointAction& joint_action,
+                                      const unsigned int& depth,
+                                      const MctsParameters& mcts_parameters) :
     state_(state),
     parent_(parent),
     children_(),
     joint_rewards_(),
     ego_costs_(),
-    ego_int_node_(*state_,S::ego_agent_idx,state_->get_num_actions(S::ego_agent_idx)),
-    other_int_nodes_([this]()-> InterNodeVector {
+    ego_int_node_(*state_,S::ego_agent_idx,state_->get_num_actions(S::ego_agent_idx), mcts_parameters),
+    other_int_nodes_([this, mcts_parameters]()-> InterNodeVector {
         // Initialize the intermediate nodes of other agents
         InterNodeVector vec;
         // vec.resize(state_.get_agent_idx().size()-1);
         for (AgentIdx ai = S::ego_agent_idx+1; ai < AgentIdx(state_->get_agent_idx().size()); ++ai ) {
-            vec.emplace_back(*state_,ai,state_->get_num_actions(ai));
+            vec.emplace_back(*state_,ai,state_->get_num_actions(ai), mcts_parameters);
         }
         return vec;
     }()),
@@ -126,7 +133,8 @@ struct container_hash {
         }
         return num_actions; }() ),
     id_(++num_nodes_),
-    depth_(depth)
+    depth_(depth),
+    mcts_parameters_(mcts_parameters)
     {
     }
 
@@ -182,7 +190,8 @@ struct container_hash {
                     (get_shared(),
                     state_->execute(joint_action, rewards, ego_cost),
                     joint_action,
-                    depth_+1);
+                    depth_+1,
+                    mcts_parameters_);
             children_[joint_action] = next_node;
             #ifdef PLAN_DEBUG_INFO
             //     std::cout << "expanded node state: " << state_->execute(joint_action, rewards)->sprintf();

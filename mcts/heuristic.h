@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include "state.h"
 #include "node_statistic.h"
+#include "mcts_parameters.h"
 
 namespace mcts {
 
@@ -24,6 +25,8 @@ namespace mcts {
     class Heuristic
     {
     public:
+        Heuristic(const MctsParameters &mcts_parameters) : mcts_parameters_(mcts_parameters) {}
+
         template<class S, class SE, class SO, class H>
         std::pair<SE, std::unordered_map<AgentIdx, SO>> calculate_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node);
 
@@ -32,6 +35,9 @@ namespace mcts {
     private:
         Implementation& impl() ;
         Implementation& impl() const;
+
+    protected:
+        const MctsParameters& mcts_parameters_;
     };
 
 

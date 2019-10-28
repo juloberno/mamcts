@@ -28,14 +28,16 @@ class CrossingStateEpisodeRunner {
                               const HypothesisBeliefTracker::PosteriorType& posterior_type,
                               const unsigned int& mcts_max_search_time,
                               const unsigned int& mcts_max_iterations,
+                              const MctsParameters& mcts_parameters,
                               Viewer* viewer) :
                   agents_true_policies_(agents_true_policies),
                   current_state_(),
                   last_state_(),
-                  belief_tracker_(belief_tracking_hist_len,belief_tracking_discount, posterior_type),
+                  belief_tracker_(belief_tracking_hist_len, belief_tracking_discount, posterior_type),
                   max_steps_(max_steps),
                   mcts_max_search_time_(mcts_max_search_time),
                   mcts_max_iterations_(mcts_max_iterations),
+                  mcts_parameters_(mcts_parameters),
                   viewer_(viewer)  {
                   RandomGenerator::random_generator_ = std::mt19937(1000);
                   current_state_ = std::make_shared<CrossingState<Domain>>(belief_tracker_.sample_current_hypothesis());
@@ -60,7 +62,7 @@ class CrossingStateEpisodeRunner {
       for (auto agent_idx : current_state_->get_agent_idx()) {
         if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
           // Plan for ego agent with hypothesis-based search
-          Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts;
+          Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts(mcts_parameters_);
           mcts.search(*current_state_, belief_tracker_, 5000, 10000);
           jointaction[agent_idx] = mcts.returnBestAction();
           std::cout << "best uct action: " << idx_to_ego_crossing_action<Domain>(jointaction[agent_idx]) << std::endl;
@@ -116,6 +118,7 @@ class CrossingStateEpisodeRunner {
     const unsigned int max_steps_;
     const unsigned int mcts_max_search_time_;
     const unsigned int mcts_max_iterations_;
+    const MctsParameters mcts_parameters_;
 };
 
 

@@ -11,6 +11,7 @@
 #include "state.h"
 #include "node_statistic.h"
 #include "random_generator.h"
+#include "mcts_parameters.h"
 #include <memory>
 #include <vector>
 #include <algorithm>
@@ -29,7 +30,8 @@ namespace mcts {
         const StateInterface<S>& state_;
 
     public:
-        IntermediateNode(const StateInterface<S>& state, AgentIdx agent_idx, ActionIdx num_actions);
+        IntermediateNode(const StateInterface<S>& state, AgentIdx agent_idx,
+                         ActionIdx num_actions, const MctsParameters& mcts_parameters);
 
         ~IntermediateNode();
 
@@ -47,8 +49,9 @@ namespace mcts {
     using IntermediateNodePtr = std::shared_ptr<IntermediateNode<S, Stats>>;
 
     template<class S, class Stats>
-    IntermediateNode<S, Stats>::IntermediateNode(const StateInterface<S>& state, AgentIdx agent_idx, ActionIdx num_actions) :
-    Stats(num_actions, agent_idx),
+    IntermediateNode<S, Stats>::IntermediateNode(const StateInterface<S>& state, AgentIdx agent_idx, 
+                                                ActionIdx num_actions, const MctsParameters& mcts_parameters) :
+    Stats(num_actions, agent_idx, mcts_parameters),
     agent_idx_(agent_idx),
     state_(state) {
     }
