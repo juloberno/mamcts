@@ -36,7 +36,6 @@ class CrossingStateEpisodeRunner {
                   max_steps_(max_steps),
                   mcts_max_search_time_(mcts_max_search_time),
                   mcts_max_iterations_(mcts_max_iterations),
-                  current_step_(0),
                   viewer_(viewer)  {
                   RandomGenerator::random_generator_ = std::mt19937(1000);
                   current_state_ = std::make_shared<CrossingState<Domain>>(belief_tracker_.sample_current_hypothesis());
@@ -49,11 +48,10 @@ class CrossingStateEpisodeRunner {
                   }
 
     // Reward, Cost, Terminal, Collision, GoalReached, MaxSteps
-    typedef std::tuple<float, float, bool, bool, bool, bool> StepResult;
+    typedef std::tuple<float, float, bool, bool, bool> StepResult;
     StepResult step() {
       if(current_state_->is_terminal()) {
-        std::cout << "Step " << current_step_ << "!!! terminal state reached  " << current_state_->sprintf() << std::endl;
-        return std::tuple<float, float, bool, bool, bool, bool>();
+        return std::tuple<float, float, bool, bool, bool>();
       }
       std::vector<Reward> rewards;
       Cost cost;
@@ -73,41 +71,40 @@ class CrossingStateEpisodeRunner {
           jointaction[agent_idx] = aconv(action);
         }
       }
-      std::cout << "Step " << current_step_ << ", Action = " << jointaction << ", " << current_state_->sprintf() << std::endl;
+
       last_state_ = current_state_;
       current_state_ = last_state_->execute(jointaction, rewards, cost);
       belief_tracker_.belief_update(*last_state_, *current_state_);
       
       bool collision = current_state_->is_terminal() && !current_state_->ego_goal_reached();
       bool goal_reached = current_state_->ego_goal_reached();
-      current_step_ += 1;
-      bool max_steps = current_step_ > max_steps_;
 
       if(viewer_) {
         current_state_->draw(viewer_);
       }
 
-      return std::make_tuple<float, float,bool, bool, bool, bool> (rewards[CrossingState<Domain>::ego_agent_idx], 
+      return std::make_tuple<float, float,bool, bool, bool> (rewards[CrossingState<Domain>::ego_agent_idx], 
                                                               cost,
                                                               std::move(current_state_->is_terminal()),
                                                               std::move(collision),
-                                                              std::move(goal_reached),
-                                                              std::move(max_steps));
+                                                              std::move(goal_reached));
     }
 
     static const std::vector<std::string> EVAL_RESULT_COLUMN_DESC;
-    typedef std::vector<StepResult> EpisodeResult;
+    typedef std::tuple<float, float, bool, bool, bool, bool, unsigned int> EpisodeResult;
     EpisodeResult run() {
-      EpisodeResult episode_result;
+      unsigned int current_step=0;
       bool done = false;
       while(!done) {
         const auto step_result = step();
-        episode_result.push_back(step_result);
-        if(std::get<2>(step_result) || std::get<5>(step_result) ) {
-          break;
+        const bool max_steps_reached = current_step > max_steps_;
+        const bool terminal_state = std::get<2>(step_result);
+        if(terminal_state || max_steps_reached) {
+          return std::tuple_cat(step_result, std::forward_as_tuple(max_steps_reached),
+                                 std::forward_as_tuple(current_step));
         }
+        current_step += 1;
       }
-    return std::move(episode_result);
     }
 
   private:
@@ -119,7 +116,6 @@ class CrossingStateEpisodeRunner {
     const unsigned int max_steps_;
     const unsigned int mcts_max_search_time_;
     const unsigned int mcts_max_iterations_;
-    unsigned int current_step_;
 };
 
 
