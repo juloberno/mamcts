@@ -218,8 +218,8 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
     RandomGenerator::random_generator_ = std::mt19937(1000);
     HypothesisBeliefTracker belief_tracker(4, 1, HypothesisBeliefTracker::PRODUCT);
     auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis(), params);
-    state->add_hypothesis(AgentPolicyCrossingState<Domain>({-2,-1}, params));
-    state->add_hypothesis(AgentPolicyCrossingState<Domain>({0,3}, params));
+    state->add_hypothesis(AgentPolicyCrossingState<Domain>({-2,1}, params));
+    state->add_hypothesis(AgentPolicyCrossingState<Domain>({2,3}, params));
     state->add_hypothesis(AgentPolicyCrossingState<Domain>({4,5}, params));
     auto next_state = state;
     belief_tracker.belief_update(*state, *next_state);
