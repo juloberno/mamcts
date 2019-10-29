@@ -119,105 +119,125 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
     const float gap_discretization = 0.001f;
     MCTS_EXPECT_TRUE((desired_gap_range_.second-desired_gap_range_.first) > gap_discretization);
     MCTS_EXPECT_TRUE((desired_gap_range_.second-desired_gap_range_.first) % gap_discretization == 0);
-    const float uniform_prob = 1/std::abs(desired_gap_range_.second-desired_gap_range_.first);
-    const float single_sample_prob = uniform_prob * gap_discretization;
+    const Probability uniform_prob = 1/std::abs(desired_gap_range_.second-desired_gap_range_.first);
+    const Probability single_sample_prob = uniform_prob * gap_discretization;
     auto prob_between = [&](float left, float right) {
         return std::max(right - left, gap_discretization) * uniform_prob;
     };
-    const float zero_prob = 0.0f;
-    const float one_prob = 1.0f;
-
-    if(agent_state.x_pos < parameters_.CROSSING_POINT() ) {        
-        const auto gap_error_min = ego_pos - agent_state.x_pos - desired_gap_range_.first;
-        const auto gap_error_max = ego_pos - agent_state.x_pos - desired_gap_range_.second;
-
-        // gap_error < 0 -> brake to increase distance
-        if ( desired_gap_range_.first >= 0 && desired_gap_range_.second > 0) {
-            // For both boundaries of gap range gap error is negative 
-            if(gap_error_min < 0 && gap_error_max <= 0 &&
-                action <= std::max(gap_error_min, parameters_.MIN_VELOCITY_OTHER) &&
-                 action >= std::max(gap_error_max, parameters_.MIN_VELOCITY_OTHER) ) {
-                     // Consider boundaries due to maximum and minimum operations
-                    if(gap_error_max < parameters_.MIN_VELOCITY_OTHER &&
-                    gap_error_min < parameters_.MIN_VELOCITY_OTHER &&
-                        action == parameters_.MIN_VELOCITY_OTHER) {
-                        return one_prob;
-                    } else if(gap_error_max < parameters_.MIN_VELOCITY_OTHER &&
-                        action == parameters_.MIN_VELOCITY_OTHER) {
-                            return prob_between(gap_error_max, parameters_.MIN_VELOCITY_OTHER);
-                     } else if(gap_error_min < parameters_.MIN_VELOCITY_OTHER &&
-                        action == parameters_.MIN_VELOCITY_OTHER) {
-                            return prob_between(gap_error_min, parameters_.MIN_VELOCITY_OTHER);
-                    } else {
-                            return single_sample_prob;
-                    }
-            // For only the higher desired gap the gap error is negative -> 
-            } else if(gap_error_min >= 0 && gap_error_max <= 0 &&
-                action <= std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER) &&
-                action >= std::max(gap_error_max, parameters_.MIN_VELOCITY_OTHER) ) 
-            {
-                // Consider boundaries due to maximum and minimum operations
-                if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
-                   action == parameters_.MAX_VELOCITY_OTHER) {
-                   return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min);
+    const Probability zero_prob = 0.0f;
+    const Probability one_prob = 1.0f;
+   
+    // Lambda function to calculate probability for positive gap errors    
+    auto probability_positive_gap_error = [&](const float gap_error_min, const float gap_error_max) {
+        // For both boundaries of gap range gap error is negative 
+        if(gap_error_min < 0 && gap_error_max <= 0 &&
+            action <= std::max(gap_error_min, parameters_.MIN_VELOCITY_OTHER) &&
+                action >= std::max(gap_error_max, parameters_.MIN_VELOCITY_OTHER) ) {
+                    // Consider boundaries due to maximum and minimum operations
+                if(gap_error_max < parameters_.MIN_VELOCITY_OTHER &&
+                gap_error_min < parameters_.MIN_VELOCITY_OTHER &&
+                    action == parameters_.MIN_VELOCITY_OTHER) {
+                    return one_prob;
                 } else if(gap_error_max < parameters_.MIN_VELOCITY_OTHER &&
-                          action == parameters_.MIN_VELOCITY_OTHER ) {
-                    return prob_between(gap_error_max, parameters_.MIN_VELOCITY_OTHER);
+                    action == parameters_.MIN_VELOCITY_OTHER) {
+                        return prob_between(gap_error_max, parameters_.MIN_VELOCITY_OTHER);
+                    } else if(gap_error_min < parameters_.MIN_VELOCITY_OTHER &&
+                    action == parameters_.MIN_VELOCITY_OTHER) {
+                        return prob_between(gap_error_min, parameters_.MIN_VELOCITY_OTHER);
                 } else {
-                    return single_sample_prob;
+                        return single_sample_prob;
                 }
-            // For both desired gap boundaries the gap error is positive (gap boundaries are ordered)
-            } else if (gap_error_min < 0 && gap_error_max < 0 &&
-                action <= std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER) &&
-                action >= std::min(gap_error_max, parameters_.MAX_VELOCITY_OTHER) ) {
-                // Consider boundaries due to maximum and minimum operations
-                if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
-                        gap_error_max > parameters_.MAX_VELOCITY_OTHER &&
-                        action == parameters_.MAX_VELOCITY_OTHER) {
-                    return one_prob;
-                } else if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
-                        action == parameters_.MAX_VELOCITY_OTHER) {
-                    return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min);
-                } else if(gap_error_max > parameters_.MAX_VELOCITY_OTHER &&
-                        action == parameters_.MAX_VELOCITY_OTHER) {
-                    return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_max);
-                } else {
-                    return single_sample_prob;
-                }
+        // For only the higher desired gap the gap error is negative -> 
+        } else if(gap_error_min >= 0 && gap_error_max <= 0 &&
+            action <= std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER) &&
+            action >= std::max(gap_error_max, parameters_.MIN_VELOCITY_OTHER) ) 
+        {
+            // Consider boundaries due to maximum and minimum operations
+            if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
+                action == parameters_.MAX_VELOCITY_OTHER) {
+                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min);
+            } else if(gap_error_max < parameters_.MIN_VELOCITY_OTHER &&
+                        action == parameters_.MIN_VELOCITY_OTHER ) {
+                return prob_between(gap_error_max, parameters_.MIN_VELOCITY_OTHER);
             } else {
-                return zero_prob;
+                return single_sample_prob;
             }
-        // hypothesis with both negative gap boundaries
-        } else if(desired_gap_range_.first < 0 && desired_gap_range_.second < 0) {
-            if(action >= std::max(std::min(gap_error_max, parameters_.MAX_VELOCITY_OTHER), agent_state.last_action) &&
-            action <= std::max(std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER), agent_state.last_action) ) {
-                // first check if action can only come up by using last action
-                if (agent_state.last_action == action &&
-                        std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER) <= agent_state.last_action &&
-                        std::min(gap_error_max, parameters_.MAX_VELOCITY_OTHER) <= agent_state.last_action) {
-                    return one_prob;
-                }
-                // then resolve inner max operations, first if we took the last action ...
-                else if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
+        // For both desired gap boundaries the gap error is positive (gap boundaries are ordered)
+        } else if (gap_error_min < 0 && gap_error_max < 0 &&
+            action <= std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER) &&
+            action >= std::min(gap_error_max, parameters_.MAX_VELOCITY_OTHER) ) {
+            // Consider boundaries due to maximum and minimum operations
+            if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
                     gap_error_max > parameters_.MAX_VELOCITY_OTHER &&
                     action == parameters_.MAX_VELOCITY_OTHER) {
-                    return one_prob;
-                } else if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
-                            gap_error_max < parameters_.MAX_VELOCITY_OTHER &&
-                        action == parameters_.MAX_VELOCITY_OTHER) {
-                    return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min);
-                } else if(gap_error_max > parameters_.MAX_VELOCITY_OTHER &&
-                            gap_error_min < parameters_.MAX_VELOCITY_OTHER &&
-                        action == parameters_.MAX_VELOCITY_OTHER) {
-                    return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_max);
-                } else {
-                    return single_sample_prob;  
-                }
+                return one_prob;
+            } else if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
+                    action == parameters_.MAX_VELOCITY_OTHER) {
+                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min);
+            } else if(gap_error_max > parameters_.MAX_VELOCITY_OTHER &&
+                    action == parameters_.MAX_VELOCITY_OTHER) {
+                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_max);
             } else {
-                    return zero_prob;
+                return single_sample_prob;
             }
         } else {
-            throw "probability calculation for mixed positive/negative gap range not implemented.";
+            return zero_prob;
+        }
+    };
+    
+    // Lambda function to calculate probabilities for negative gap errors
+    auto probability_negative_gap_error = [&](const float gap_error_min,
+                                                const float gap_error_max) {
+        if(action >= std::max(std::min(gap_error_max, parameters_.MAX_VELOCITY_OTHER), agent_state.last_action) &&
+        action <= std::max(std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER), agent_state.last_action) ) {
+            // first check if action can only come up by using last action
+            if (agent_state.last_action == action &&
+                    std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER) <= agent_state.last_action &&
+                    std::min(gap_error_max, parameters_.MAX_VELOCITY_OTHER) <= agent_state.last_action) {
+                return one_prob;
+            }
+            // then resolve inner max operations, first if we took the last action ...
+            else if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
+                gap_error_max > parameters_.MAX_VELOCITY_OTHER &&
+                action == parameters_.MAX_VELOCITY_OTHER) {
+                return one_prob;
+            } else if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
+                        gap_error_max < parameters_.MAX_VELOCITY_OTHER &&
+                    action == parameters_.MAX_VELOCITY_OTHER) {
+                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min);
+            } else if(gap_error_max > parameters_.MAX_VELOCITY_OTHER &&
+                        gap_error_min < parameters_.MAX_VELOCITY_OTHER &&
+                    action == parameters_.MAX_VELOCITY_OTHER) {
+                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_max);
+            } else {
+                return single_sample_prob;  
+            }
+        } else {
+                return zero_prob;
+        }
+    }; 
+        
+    // Distinguish between the different cases 
+    if(agent_state.x_pos < parameters_.CROSSING_POINT() ) { 
+        const auto gap_error_min = ego_pos - agent_state.x_pos - desired_gap_range_.first;
+        const auto gap_error_max = ego_pos - agent_state.x_pos - desired_gap_range_.second;
+        const auto gap_error_desired_gap_zero = ego_pos - agent_state.x_pos;
+        if ( desired_gap_range_.first >= 0 && desired_gap_range_.second > 0) {
+            return probability_positive_gap_error(gap_error_min, gap_error_max);
+        } else if(desired_gap_range_.first < 0 && desired_gap_range_.second <= 0) {
+            return probability_negative_gap_error(gap_error_min, gap_error_max);
+        } else if(desired_gap_range_.first < 0 && desired_gap_range_.second > 0) {
+            const Probability negative_range_prob = (-desired_gap_range_.first)*uniform_prob;
+            const Probability positive_range_prob = (desired_gap_range_.second)*uniform_prob;
+            const Probability p_negative_gap = probability_negative_gap_error(
+                gap_error_min, gap_error_desired_gap_zero
+            );
+            const Probability p_positive_gap = probability_positive_gap_error(
+                gap_error_desired_gap_zero, gap_error_max
+            );
+            return p_negative_gap*negative_range_prob + p_positive_gap*positive_range_prob;
+        } else {
+            throw "invalid configuration of desired gap range.";
         }
     } else {
         if(action == agent_state.last_action) {
