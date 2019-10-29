@@ -119,16 +119,16 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
     const float gap_discretization = 0.001f;
     MCTS_EXPECT_TRUE((desired_gap_range_.second-desired_gap_range_.first) > gap_discretization);
     MCTS_EXPECT_TRUE((desired_gap_range_.second-desired_gap_range_.first) % gap_discretization == 0);
-    const Probability uniform_prob = 1/std::abs(desired_gap_range_.second-desired_gap_range_.first);
-    const Probability single_sample_prob = uniform_prob * gap_discretization;
-    auto prob_between = [&](float left, float right) {
+    auto prob_between = [&](float left, float right, float uniform_prob) -> Probability {
         return std::max(right - left, gap_discretization) * uniform_prob;
     };
     const Probability zero_prob = 0.0f;
     const Probability one_prob = 1.0f;
    
     // Lambda function to calculate probability for positive gap errors    
-    auto probability_positive_gap_error = [&](const float gap_error_min, const float gap_error_max) {
+    auto probability_positive_gap_error = [&](const float gap_error_min, const float gap_error_max,
+                                              const float uniform_prob, const float single_sample_prob)
+                                              -> Probability {
         // For both boundaries of gap range gap error is negative 
         if(gap_error_min < 0 && gap_error_max <= 0 &&
             action <= std::max(gap_error_min, parameters_.MIN_VELOCITY_OTHER) &&
@@ -140,10 +140,10 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
                     return one_prob;
                 } else if(gap_error_max < parameters_.MIN_VELOCITY_OTHER &&
                     action == parameters_.MIN_VELOCITY_OTHER) {
-                        return prob_between(gap_error_max, parameters_.MIN_VELOCITY_OTHER);
+                        return prob_between(gap_error_max, parameters_.MIN_VELOCITY_OTHER, uniform_prob);
                     } else if(gap_error_min < parameters_.MIN_VELOCITY_OTHER &&
                     action == parameters_.MIN_VELOCITY_OTHER) {
-                        return prob_between(gap_error_min, parameters_.MIN_VELOCITY_OTHER);
+                        return prob_between(gap_error_min, parameters_.MIN_VELOCITY_OTHER, uniform_prob);
                 } else {
                         return single_sample_prob;
                 }
@@ -155,10 +155,10 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
             // Consider boundaries due to maximum and minimum operations
             if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
                 action == parameters_.MAX_VELOCITY_OTHER) {
-                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min);
+                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min, uniform_prob);
             } else if(gap_error_max < parameters_.MIN_VELOCITY_OTHER &&
                         action == parameters_.MIN_VELOCITY_OTHER ) {
-                return prob_between(gap_error_max, parameters_.MIN_VELOCITY_OTHER);
+                return prob_between(gap_error_max, parameters_.MIN_VELOCITY_OTHER, uniform_prob);
             } else {
                 return single_sample_prob;
             }
@@ -173,10 +173,10 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
                 return one_prob;
             } else if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
                     action == parameters_.MAX_VELOCITY_OTHER) {
-                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min);
+                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min, uniform_prob);
             } else if(gap_error_max > parameters_.MAX_VELOCITY_OTHER &&
                     action == parameters_.MAX_VELOCITY_OTHER) {
-                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_max);
+                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_max, uniform_prob);
             } else {
                 return single_sample_prob;
             }
@@ -186,8 +186,9 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
     };
     
     // Lambda function to calculate probabilities for negative gap errors
-    auto probability_negative_gap_error = [&](const float gap_error_min,
-                                                const float gap_error_max) {
+    auto probability_negative_gap_error = [&](const float gap_error_min, const float gap_error_max,
+                                              const float uniform_prob, const float single_sample_prob)
+                                              -> Probability {
         if(action >= std::max(std::min(gap_error_max, parameters_.MAX_VELOCITY_OTHER), agent_state.last_action) &&
         action <= std::max(std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER), agent_state.last_action) ) {
             // first check if action can only come up by using last action
@@ -204,11 +205,11 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
             } else if(gap_error_min > parameters_.MAX_VELOCITY_OTHER &&
                         gap_error_max < parameters_.MAX_VELOCITY_OTHER &&
                     action == parameters_.MAX_VELOCITY_OTHER) {
-                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min);
+                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_min, uniform_prob);
             } else if(gap_error_max > parameters_.MAX_VELOCITY_OTHER &&
                         gap_error_min < parameters_.MAX_VELOCITY_OTHER &&
                     action == parameters_.MAX_VELOCITY_OTHER) {
-                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_max);
+                return prob_between(parameters_.MAX_VELOCITY_OTHER, gap_error_max, uniform_prob);
             } else {
                 return single_sample_prob;  
             }
@@ -218,22 +219,32 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
     }; 
         
     // Distinguish between the different cases 
-    if(agent_state.x_pos < parameters_.CROSSING_POINT() ) { 
+    if(agent_state.x_pos < parameters_.CROSSING_POINT() ) {
         const auto gap_error_min = ego_pos - agent_state.x_pos - desired_gap_range_.first;
         const auto gap_error_max = ego_pos - agent_state.x_pos - desired_gap_range_.second;
         const auto gap_error_desired_gap_zero = ego_pos - agent_state.x_pos;
         if ( desired_gap_range_.first >= 0 && desired_gap_range_.second > 0) {
-            return probability_positive_gap_error(gap_error_min, gap_error_max);
+            const Probability uniform_prob = 1/std::abs(desired_gap_range_.second-desired_gap_range_.first);
+            const Probability single_sample_prob = uniform_prob * gap_discretization;
+            return probability_positive_gap_error(gap_error_min, gap_error_max, uniform_prob, single_sample_prob);
         } else if(desired_gap_range_.first < 0 && desired_gap_range_.second <= 0) {
-            return probability_negative_gap_error(gap_error_min, gap_error_max);
+            const Probability uniform_prob = 1/std::abs(desired_gap_range_.second-desired_gap_range_.first);
+            const Probability single_sample_prob = uniform_prob * gap_discretization;
+            return probability_negative_gap_error(gap_error_min, gap_error_max, uniform_prob, single_sample_prob);
         } else if(desired_gap_range_.first < 0 && desired_gap_range_.second > 0) {
-            const Probability negative_range_prob = (-desired_gap_range_.first)*uniform_prob;
-            const Probability positive_range_prob = (desired_gap_range_.second)*uniform_prob;
+            // Split up gap range into negative and positive part and combine with probability OR
+            const Probability uniform_prob_pos_range = 1/desired_gap_range_.second;
+            const Probability uniform_prob_neg_range = 1/-desired_gap_range_.first;
+            const Probability single_sample_prob_pos_range = uniform_prob_pos_range * gap_discretization;
+            const Probability single_sample_prob_neg_range = uniform_prob_neg_range * gap_discretization;
+            const Probability negative_range_prob = (-desired_gap_range_.first)/std::abs(desired_gap_range_.second-desired_gap_range_.first);
+            const Probability positive_range_prob = (desired_gap_range_.second)/std::abs(desired_gap_range_.second-desired_gap_range_.first);
+            
             const Probability p_negative_gap = probability_negative_gap_error(
-                gap_error_min, gap_error_desired_gap_zero
+                gap_error_min, gap_error_desired_gap_zero, uniform_prob_neg_range, single_sample_prob_neg_range
             );
             const Probability p_positive_gap = probability_positive_gap_error(
-                gap_error_desired_gap_zero, gap_error_max
+                gap_error_desired_gap_zero, gap_error_max, uniform_prob_pos_range, single_sample_prob_pos_range
             );
             return p_negative_gap*negative_range_prob + p_positive_gap*positive_range_prob;
         } else {
