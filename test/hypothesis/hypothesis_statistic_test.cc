@@ -18,28 +18,6 @@
 using namespace std;
 using namespace mcts;
 
-MctsParameters default_hypo_params() {
-  MctsParameters parameters;
-  parameters.DISCOUNT_FACTOR = 0.9;
-  
-  parameters.random_heuristic.MAX_SEARCH_TIME = 10;
-  parameters.random_heuristic.MAX_NUMBER_OF_ITERATIONS = 1000;
-
-  parameters.uct_statistic.LOWER_BOUND = -1000;
-  parameters.uct_statistic.UPPER_BOUND = 100;
-  parameters.uct_statistic.EXPLORATION_CONSTANT = 0.7;
-
-  parameters.hypothesis_statistic.COST_BASED_ACTION_SELECTION = false;
-  parameters.hypothesis_statistic.LOWER_COST_BOUND = 0;
-  parameters.hypothesis_statistic.UPPER_COST_BOUND = 1;
-  parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_ALPHA = 0.5;
-  parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_K = 1;
-  parameters.hypothesis_statistic.EXPLORATION_CONSTANT = 0.7;
-
-  return parameters;
-}
-
-std::mt19937  mcts::RandomGenerator::random_generator_;
 
 
 TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
@@ -49,15 +27,15 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
 
   // First iteration with hypothesis 0 for agent 1
   HypothesisStatisticTestState state(current_agents_hypothesis);
-  HypothesisStatistic stat_parent(5, 1, default_hypo_params()); // agents 1 statistic 
+  HypothesisStatistic stat_parent(5, 1, mcts_default_parameters()); // agents 1 statistic 
   auto action_idx = stat_parent.choose_next_action(state);
   EXPECT_EQ(action_idx, 5);
   stat_parent.collect( 1, 2.3f, action_idx);
 
-  HypothesisStatistic heuristic(5,1, default_hypo_params());
+  HypothesisStatistic heuristic(5,1, mcts_default_parameters());
   heuristic.set_heuristic_estimate(10.0f , 20.0f);
 
-  HypothesisStatistic stat_child(5,1, default_hypo_params());
+  HypothesisStatistic stat_child(5,1, mcts_default_parameters());
   stat_child.update_from_heuristic(heuristic);
   stat_parent.update_statistic(stat_child);
 
@@ -65,15 +43,15 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   const auto node_counts = stat_parent.get_total_node_visits();
 
   EXPECT_NEAR(ucb_stats.at(0).at(action_idx).action_ego_cost_, 2.3f
-                    +default_hypo_params().DISCOUNT_FACTOR*20.0f, 0.001);
+                    +mcts_default_parameters().DISCOUNT_FACTOR*20.0f, 0.001);
   EXPECT_EQ(ucb_stats.at(0).at(action_idx).action_count_, 1);
   EXPECT_EQ(node_counts.at(0), 1);
 
   // Second update with hypothesis 0 for agent 1, action is the same as only one action available
-  HypothesisStatistic heuristic2(5,1, default_hypo_params());
+  HypothesisStatistic heuristic2(5,1, mcts_default_parameters());
   heuristic2.set_heuristic_estimate(15.0f , 24.5f);
 
-  HypothesisStatistic stat_child2(5,1, default_hypo_params());
+  HypothesisStatistic stat_child2(5,1, mcts_default_parameters());
   stat_child2.update_from_heuristic(heuristic2);
   auto action_idx2 = stat_parent.choose_next_action(state);
   EXPECT_EQ(action_idx2, 5);
@@ -84,17 +62,17 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   const auto node_counts2 = stat_parent.get_total_node_visits();
 
   EXPECT_NEAR(ucb_stats2.at(0).at(action_idx2).action_ego_cost_, (2.3f+4.3
-                    +default_hypo_params().DISCOUNT_FACTOR*20.0f+
-                    default_hypo_params().DISCOUNT_FACTOR*24.5f)/2, 0.001);
+                    +mcts_default_parameters().DISCOUNT_FACTOR*20.0f+
+                    mcts_default_parameters().DISCOUNT_FACTOR*24.5f)/2, 0.001);
   EXPECT_EQ(ucb_stats2.at(0).at(action_idx2).action_count_, 2);
   EXPECT_EQ(node_counts2.at(0), 2);
 
   // Third update with changed actions hypothesis 0 for agent 1
   state.change_actions();
-  HypothesisStatistic heuristic3(5,1, default_hypo_params());
+  HypothesisStatistic heuristic3(5,1, mcts_default_parameters());
   heuristic3.set_heuristic_estimate(15.0f , 450.5f);
 
-  HypothesisStatistic stat_child3(5,1, default_hypo_params());
+  HypothesisStatistic stat_child3(5,1, mcts_default_parameters());
   stat_child3.update_from_heuristic(heuristic3);
   auto action_idx3 = stat_parent.choose_next_action(state);
   EXPECT_EQ(action_idx3, 3);
@@ -105,7 +83,7 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   const auto node_counts3 = stat_parent.get_total_node_visits();
 
   EXPECT_NEAR(ucb_stats3.at(0).at(action_idx3).action_ego_cost_, 1000.3f +
-                           default_hypo_params().DISCOUNT_FACTOR*450.5f, 0.001);
+                           mcts_default_parameters().DISCOUNT_FACTOR*450.5f, 0.001);
   EXPECT_EQ(ucb_stats3.at(0).at(action_idx3).action_count_, 1);
   EXPECT_EQ(node_counts3.at(0), 3);
 
@@ -114,10 +92,10 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
       {1,1}, {2,1}
   }; //< state holds a refence to current selected hypothesis
 
-  HypothesisStatistic heuristic4(5,1, default_hypo_params());
+  HypothesisStatistic heuristic4(5,1, mcts_default_parameters());
   heuristic4.set_heuristic_estimate(15.0f , 45.5f);
 
-  HypothesisStatistic stat_child4(5,1, default_hypo_params());
+  HypothesisStatistic stat_child4(5,1, mcts_default_parameters());
   stat_child4.update_from_heuristic(heuristic4);
   auto action_idx4 = stat_parent.choose_next_action(state);
   EXPECT_EQ(action_idx4, 4);
@@ -128,7 +106,7 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   const auto node_counts4 = stat_parent.get_total_node_visits();
 
   EXPECT_NEAR(ucb_stats4.at(1).at(action_idx4).action_ego_cost_, 10.3f +
-                           default_hypo_params().DISCOUNT_FACTOR*45.5f, 0.001);
+                           mcts_default_parameters().DISCOUNT_FACTOR*45.5f, 0.001);
   EXPECT_EQ(ucb_stats4.at(1).at(action_idx4).action_count_, 1);
   EXPECT_EQ(node_counts4.at(1), 1);
 
@@ -141,14 +119,14 @@ TEST(hypothesis_statistic, backprop_heuristic_hyp1) {
       {1,0}, {2,1}
   };
   HypothesisStatisticTestState state(current_agents_hypothesis);
-  HypothesisStatistic stat_parent(5,2, default_hypo_params()); // agents 2 statistic 
+  HypothesisStatistic stat_parent(5,2, mcts_default_parameters()); // agents 2 statistic 
   auto action_idx = stat_parent.choose_next_action(state);
   stat_parent.collect( 1, 5.3f, action_idx);
 
-  HypothesisStatistic heuristic(5,2, default_hypo_params());
+  HypothesisStatistic heuristic(5,2, mcts_default_parameters());
   heuristic.set_heuristic_estimate(10.0f , 22.0f);
 
-  HypothesisStatistic stat_child(5,2, default_hypo_params());
+  HypothesisStatistic stat_child(5,2, mcts_default_parameters());
   stat_child.update_from_heuristic(heuristic);
   stat_parent.update_statistic(stat_child);
 
@@ -156,7 +134,7 @@ TEST(hypothesis_statistic, backprop_heuristic_hyp1) {
   const auto node_counts = stat_parent.get_total_node_visits();
 
   EXPECT_NEAR(ucb_stats.at(1).at(action_idx).action_ego_cost_, 5.3f
-                    +default_hypo_params().DISCOUNT_FACTOR*22.0f, 0.001);
+                    +mcts_default_parameters().DISCOUNT_FACTOR*22.0f, 0.001);
   EXPECT_EQ(ucb_stats.at(1).at(action_idx).action_count_, 1);
   EXPECT_EQ(node_counts.at(1), 1);
 }
@@ -167,7 +145,7 @@ TEST(hypothesis_statistic, worst_case_action_selection) {
       {1,0}, {2,1}
   };
 
-  auto mcts_params = default_hypo_params();
+  auto mcts_params = mcts_default_parameters();
   mcts_params.hypothesis_statistic.COST_BASED_ACTION_SELECTION = true;
   mcts_params.hypothesis_statistic.PROGRESSIVE_WIDENING_ALPHA = 0.9;
   mcts_params.hypothesis_statistic.PROGRESSIVE_WIDENING_K = 1;

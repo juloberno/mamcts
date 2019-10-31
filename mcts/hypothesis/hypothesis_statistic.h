@@ -30,6 +30,7 @@ public:
 
     HypothesisStatistic(ActionIdx num_actions, AgentIdx agent_idx, const MctsParameters& mcts_parameters) :
                     NodeStatistic<HypothesisStatistic>(num_actions, agent_idx, mcts_parameters),
+                    RandomGenerator(mcts_parameters.RANDOM_SEED),
                     ego_cost_value_(EGO_COST_VALUE_NOT_SET),
                     latest_ego_cost_(LATEST_EGO_COST_NOT_SET),
                     ucb_statistics_(),

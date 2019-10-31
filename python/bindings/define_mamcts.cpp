@@ -16,9 +16,6 @@
 namespace py = pybind11;
 using namespace mcts;
 
-std::mt19937 mcts::RandomGenerator::random_generator_;
-
-
 void define_mamcts(py::module m)
 {   
     py::class_<MctsParameters>(m, "MctsParameters")
@@ -26,49 +23,61 @@ void define_mamcts(py::module m)
       .def("__repr__", [](const MctsParameters &m) {
         return "mamcts.MctsParameters";
       })
+      .def_readwrite("RANDOM_SEED", &MctsParameters::RANDOM_SEED)
       .def_readwrite("DISCOUNT_FACTOR", &MctsParameters::DISCOUNT_FACTOR)
       .def_readwrite("hypothesis_statistic", &MctsParameters::hypothesis_statistic)
       .def_readwrite("uct_statistic", &MctsParameters::uct_statistic)
-      .def_readwrite("random_heuristic", &MctsParameters::random_heuristic);
+      .def_readwrite("random_heuristic", &MctsParameters::random_heuristic)
+      .def_readwrite("hypothesis_belief_tracker", &MctsParameters::hypothesis_belief_tracker);
 
-    py::class_<MctsParameters::RandomHeuristic>(m, "MctsParametersRandomHeuristic")
+    py::class_<MctsParameters::RandomHeuristicParameters>(m, "MctsParametersRandomHeuristicParameters")
       .def(py::init<>())
-      .def("__repr__", [](const MctsParameters::RandomHeuristic &m) {
-        return "mamcts.MctsParametersRandomHeuristic";
+      .def("__repr__", [](const MctsParameters::RandomHeuristicParameters &m) {
+        return "mamcts.MctsParametersRandomHeuristicParameters";
       })
-      .def_readwrite("MAX_SEARCH_TIME", &MctsParameters::RandomHeuristic::MAX_SEARCH_TIME)
+      .def_readwrite("MAX_SEARCH_TIME", &MctsParameters::RandomHeuristicParameters::MAX_SEARCH_TIME)
       .def_readwrite("MAX_NUMBER_OF_ITERATIONS",
-               &MctsParameters::RandomHeuristic::MAX_NUMBER_OF_ITERATIONS);
+               &MctsParameters::RandomHeuristicParameters::MAX_NUMBER_OF_ITERATIONS);
 
 
-    py::class_<MctsParameters::UctStatistic>(m ,"MctsParametersUctStatistic")
+    py::class_<MctsParameters::UctStatisticParameters>(m ,"MctsParametersUctStatisticParametersParameters")
       .def(py::init<>())
-      .def("__repr__", [](const MctsParameters::UctStatistic &m) {
-        return "mamcts.MctsParametersUctStatistic";
+      .def("__repr__", [](const MctsParameters::UctStatisticParameters &m) {
+        return "mamcts.MctsParametersUctStatisticParameters";
       })
-      .def_readwrite("LOWER_BOUND", &MctsParameters::UctStatistic::LOWER_BOUND)
-      .def_readwrite("UPPER_BOUND", &MctsParameters::UctStatistic::UPPER_BOUND)
-      .def_readwrite("EXPLORATION_CONSTANT", &MctsParameters::UctStatistic::EXPLORATION_CONSTANT);
+      .def_readwrite("LOWER_BOUND", &MctsParameters::UctStatisticParameters::LOWER_BOUND)
+      .def_readwrite("UPPER_BOUND", &MctsParameters::UctStatisticParameters::UPPER_BOUND)
+      .def_readwrite("EXPLORATION_CONSTANT", &MctsParameters::UctStatisticParameters::EXPLORATION_CONSTANT);
 
-    py::class_<MctsParameters::HypothesisStatistic>(m, "MctsParametersHypothesisStatistic")
+    py::class_<MctsParameters::HypothesisStatisticParameters>(m, "MctsParametersHypothesisStatisticParametersParameters")
       .def(py::init<>())
-      .def("__repr__", [](const MctsParameters::HypothesisStatistic &m) {
-        return "mamcts.MctsParametersHypothesisStatistic";
+      .def("__repr__", [](const MctsParameters::HypothesisStatisticParameters &m) {
+        return "mamcts.MctsParametersHypothesisStatisticParameters";
       })
       .def_readwrite("COST_BASED_ACTION_SELECTION",
-                 &MctsParameters::HypothesisStatistic::COST_BASED_ACTION_SELECTION)
+                 &MctsParameters::HypothesisStatisticParameters::COST_BASED_ACTION_SELECTION)
       .def_readwrite("UPPER_COST_BOUND",
-                 &MctsParameters::HypothesisStatistic::UPPER_COST_BOUND)
+                 &MctsParameters::HypothesisStatisticParameters::UPPER_COST_BOUND)
       .def_readwrite("LOWER_COST_BOUND",
-                &MctsParameters::HypothesisStatistic::LOWER_COST_BOUND)
+                &MctsParameters::HypothesisStatisticParameters::LOWER_COST_BOUND)
       .def_readwrite("PROGRESSIVE_WIDENING_K",
-                &MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_K)
+                &MctsParameters::HypothesisStatisticParameters::PROGRESSIVE_WIDENING_K)
       .def_readwrite("PROGRESSIVE_WIDENING_ALPHA",
-                &MctsParameters::HypothesisStatistic::PROGRESSIVE_WIDENING_ALPHA)
+                &MctsParameters::HypothesisStatisticParameters::PROGRESSIVE_WIDENING_ALPHA)
       .def_readwrite("EXPLORATION_CONSTANT",
-                &MctsParameters::HypothesisStatistic::EXPLORATION_CONSTANT);
+                &MctsParameters::HypothesisStatisticParameters::EXPLORATION_CONSTANT);
 
-    using mcts1 = Mcts<CrossingState<int>, UctStatistic, HypothesisStatistic, RandomHeuristic>;
+    py::class_<MctsParameters::HypothesisBeliefTrackerParameters>(m ,"MctsParametersHypothesisBeliefTrackerParameters")
+      .def(py::init<>())
+      .def("__repr__", [](const MctsParameters::HypothesisBeliefTrackerParameters &m) {
+        return "mamcts.MctsParametersHypothesisBeliefTrackerParameters";
+      })
+      .def_readwrite("RANDOM_SEED_HYPOTHESIS_SAMPLING", &MctsParameters::HypothesisBeliefTrackerParameters::RANDOM_SEED_HYPOTHESIS_SAMPLING)
+      .def_readwrite("HISTORY_LENGTH", &MctsParameters::HypothesisBeliefTrackerParameters::HISTORY_LENGTH)
+      .def_readwrite("PROBABILITY_DISCOUNT", &MctsParameters::HypothesisBeliefTrackerParameters::PROBABILITY_DISCOUNT)
+      .def_readwrite("POSTERIOR_TYPE", &MctsParameters::HypothesisBeliefTrackerParameters::POSTERIOR_TYPE);
+
+    using mcts1 = Mcts<CrossingState<int>, UctStatisticParameters, HypothesisStatisticParameters, RandomHeuristicParameters>;
     py::class_<mcts1,
              std::shared_ptr<mcts1>>(m, "MctsCrossingStateIntUctUct")
       .def(py::init<const MctsParameters&>())

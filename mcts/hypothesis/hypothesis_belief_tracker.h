@@ -10,6 +10,7 @@
 #include <random>
 #include <deque>
 
+#include "mcts/mcts_parameters.h"
 #include "mcts/hypothesis/common.h"
 #include "mcts/random_generator.h"
 #include "mcts/hypothesis/hypothesis_state.h"
@@ -26,12 +27,11 @@ class HypothesisBeliefTracker : public mcts::RandomGenerator {
     } PosteriorType;
 
 
-    HypothesisBeliefTracker(const unsigned int& history_length,
-                            const float& probability_discount,
-                            const PosteriorType& posterior_type) : 
-                            history_length_(history_length),
-                            probability_discount_(probability_discount),
-                            posterior_type_(posterior_type),
+    HypothesisBeliefTracker(const MctsParameters& mcts_parameters) : 
+                            RandomGenerator(mcts_parameters.hypothesis_belief_tracker.RANDOM_SEED_HYPOTHESIS_SAMPLING),
+                            history_length_(mcts_parameters.hypothesis_belief_tracker.HISTORY_LENGTH),
+                            probability_discount_(mcts_parameters.hypothesis_belief_tracker.PROBABILITY_DISCOUNT),
+                            posterior_type_(static_cast<PosteriorType>(mcts_parameters.hypothesis_belief_tracker.POSTERIOR_TYPE)),
                             tracked_probabilities_(),
                             tracked_beliefs_(),
                             current_sampled_hypothesis_() {};

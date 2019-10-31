@@ -34,8 +34,12 @@ public:
     using StageNodeSPtr = std::shared_ptr<StageNode<S,SE,SO, H>>;
     using StageNodeWPtr = std::weak_ptr<StageNode<S,SE,SO, H>>;
 
-    Mcts(const MctsParameters& mcts_parameters) : root_(), num_iterations(0), heuristic_(mcts_parameters),
-                                                 mcts_parameters_(mcts_parameters) {};
+    Mcts(const MctsParameters& mcts_parameters) : root_(),
+                                                  num_iterations(0),
+                                                  mcts_parameters_(mcts_parameters), 
+                                                  random_generator_(mcts_parameters_.RANDOM_SEED),
+                                                  heuristic_(mcts_parameters),
+                                                  {};
 
     ~Mcts() {}
     
@@ -61,6 +65,8 @@ private:
     unsigned int num_iterations;
 
     const MctsParameters mcts_parameters_;
+
+    RandomGenerator random_generator_;
 
     H heuristic_;
 

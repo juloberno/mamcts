@@ -5,8 +5,8 @@
 // ========================================================
 
 
-#ifndef MCTS_EPISODE_RUNNER_H_
-#define MCTS_EPISODE_RUNNER_H_
+#ifndef MCTS_CROSSING_STATE_EPISODE_RUNNER_H_
+#define MCTS_CROSSING_STATE_EPISODE_RUNNER_H_
 
 #include "environments/crossing_state.h"
 #include "mcts/heuristics/random_heuristic.h"
@@ -25,23 +25,19 @@ class CrossingStateEpisodeRunner {
                               const MctsParameters& mcts_parameters,
                               const CrossingStateParameters<Domain>& crossing_state_parameters,
                               const unsigned int& max_steps,
-                              const unsigned int& belief_tracking_hist_len,
-                              const float& belief_tracking_discount,
-                              const HypothesisBeliefTracker::PosteriorType& posterior_type,
                               const unsigned int& mcts_max_search_time,
                               const unsigned int& mcts_max_iterations,
                               Viewer* viewer) :
                   agents_true_policies_(agents_true_policies),
                   current_state_(),
                   last_state_(),
-                  belief_tracker_(belief_tracking_hist_len, belief_tracking_discount, posterior_type),
+                  belief_tracker_(mcts_parameters),
                   max_steps_(max_steps),
                   mcts_max_search_time_(mcts_max_search_time),
                   mcts_max_iterations_(mcts_max_iterations),
                   mcts_parameters_(mcts_parameters),
                   crossing_state_parameters_(crossing_state_parameters),
                   viewer_(viewer)  {
-                  RandomGenerator::random_generator_ = std::mt19937(1000);
                   current_state_ = std::make_shared<CrossingState<Domain>>(belief_tracker_.sample_current_hypothesis(),
                                                                            crossing_state_parameters_);
                   for(const auto& hp : hypothesis) {
@@ -116,7 +112,7 @@ class CrossingStateEpisodeRunner {
     std::shared_ptr<CrossingState<Domain>> current_state_;
     std::shared_ptr<CrossingState<Domain>> last_state_;
     HypothesisBeliefTracker belief_tracker_; // todo: pass params
-    const std::unordered_map<AgentIdx, AgentPolicyCrossingState<Domain>> agents_true_policies_;
+    std::unordered_map<AgentIdx, AgentPolicyCrossingState<Domain>> agents_true_policies_;
     const unsigned int max_steps_;
     const unsigned int mcts_max_search_time_;
     const unsigned int mcts_max_iterations_;
@@ -127,4 +123,4 @@ class CrossingStateEpisodeRunner {
 
 } // namespace mcts
 
-#endif // MCTS_EPISODE_RUNNER_H_
+#endif // MCTS_CROSSING_STATE_EPISODE_RUNNER_H_

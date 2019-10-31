@@ -9,6 +9,7 @@
 #define UNIT_TESTING
 #define DEBUG
 #define PLAN_DEBUG_INFO
+#include "mcts/mcts_parameters.h"
 #include "mcts/hypothesis/hypothesis_statistic.h"
 #include "mcts/statistics/uct_statistic.h"
 #include "test/hypothesis/belief_tracker_test_state.h"
@@ -19,13 +20,9 @@ using namespace std;
 using namespace mcts;
 
 
-std::mt19937  mcts::RandomGenerator::random_generator_;
-
-
 TEST(belief_tracker, simple_tracking_state)
 {
-    RandomGenerator::random_generator_ = std::mt19937(1000);
-    HypothesisBeliefTracker tracker(10, 1, HypothesisBeliefTracker::PRODUCT);
+    HypothesisBeliefTracker tracker(mcts_default_parameters());
 
     // Inits reference to current sampled hypothesis
     BeliefTrackerTestState state(tracker.sample_current_hypothesis()); 

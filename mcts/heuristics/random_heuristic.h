@@ -17,7 +17,8 @@ class RandomHeuristic :  public mcts::Heuristic<RandomHeuristic>, mcts::RandomGe
 {
 public:
     RandomHeuristic(const MctsParameters& mcts_parameters) :
-            mcts::Heuristic<RandomHeuristic>(mcts_parameters) {}
+            mcts::Heuristic<RandomHeuristic>(mcts_parameters),
+            RandomGenerator(mcts_parameters.RANDOM_SEED) {}
 
     template<class S, class SE, class SO, class H>
     std::pair<SE, std::unordered_map<AgentIdx, SO>> calculate_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node) {

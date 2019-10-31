@@ -21,6 +21,7 @@ public:
 
     UctStatistic(ActionIdx num_actions, AgentIdx agent_idx, const MctsParameters & mcts_parameters) :
              NodeStatistic<UctStatistic>(num_actions, agent_idx, mcts_parameters),
+             RandomGenerator(mcts_parameters.RANDOM_SEED),
              value_(0.0f),
              latest_return_(0.0),
              ucb_statistics_([&]() -> std::map<ActionIdx, UcbPair>{
