@@ -263,15 +263,12 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
 template <typename Domain>
 class CrossingState : public mcts::HypothesisStateInterface<CrossingState<Domain>>
 {
-private:
-  static const unsigned int num_other_agents = 2;
-
 public:
     CrossingState(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis,
                   const CrossingStateParameters<Domain>& parameters) :
                             HypothesisStateInterface<CrossingState<Domain>>(current_agents_hypothesis),
                             hypothesis_(),
-                            other_agent_states_(),
+                            other_agent_states_(parameters.NUM_OTHER_AGENTS),
                             ego_state_(),
                             terminal_(false),
                             parameters_(parameters) {
@@ -282,7 +279,7 @@ public:
 
     CrossingState(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis,
                   const CrossingStateParameters<Domain>& parameters,
-                  const std::array<AgentState<Domain>, num_other_agents>& other_agent_states,
+                  const std::vector<AgentState<Domain>>& other_agent_states,
                   const AgentState<Domain>& ego_state,
                   const bool& terminal,
                   const std::vector<AgentPolicyCrossingState<Domain>>& hypothesis
@@ -335,7 +332,7 @@ public:
         }
         const AgentState<Domain> next_ego_state(new_x_ego, aconv<Domain>(joint_action[this->ego_agent_idx]));
 
-        std::array<AgentState<Domain>, num_other_agents> next_other_agent_states;
+        std::vector<AgentState<Domain>> next_other_agent_states(other_agent_states_.size());
         bool collision = false;
         for(size_t i = 0; i < other_agent_states_.size(); ++i) {
             const auto& old_state = other_agent_states_[i];
@@ -354,7 +351,7 @@ public:
         const bool goal_reached = next_ego_state.x_pos >= parameters_.EGO_GOAL_POS;
 
         const bool terminal = goal_reached || collision || ego_out_of_map;
-        rewards.resize(num_other_agents+1);
+        rewards.resize(other_agent_states_.size()+1);
         rewards[0] = goal_reached * 100.0f - 1000.0f * collision - 1000.0f * ego_out_of_map;
         ego_cost = collision * 1.0f;
 
@@ -379,7 +376,7 @@ public:
     }
 
     const std::vector<AgentIdx> get_agent_idx() const {
-        std::vector<AgentIdx> agent_idx(num_other_agents+1);
+        std::vector<AgentIdx> agent_idx(other_agent_states_.size()+1);
         std::iota(agent_idx.begin(), agent_idx.end(),0);
         return agent_idx; // adapt to number of agents
     }
@@ -428,7 +425,7 @@ public:
         return ego_state_;
     }
 
-    inline const std::array<AgentState<Domain>, num_other_agents>& get_agent_states() const {
+    inline const std::vector<AgentState<Domain>>& get_agent_states() const {
         return other_agent_states_;
     }
 
@@ -446,9 +443,9 @@ public:
 
         // draw lines equally spaced angles with small points
         // indicating states and larger points indicating the current state
-        const float angle_delta = M_PI/(num_other_agents+2); // one for ego 
+        const float angle_delta = M_PI/(other_agent_states_.size()+2); // one for ego 
         const float line_radius = state_draw_dst*(parameters_.CHAIN_LENGTH-1)/2.0f;
-        for(int i = 0; i < num_other_agents+1; ++i) {
+        for(int i = 0; i < other_agent_states_.size()+1; ++i) {
             float start_angle = 1.5*M_PI - (i+1)*angle_delta;
             float end_angle = start_angle + M_PI;
             std::pair<float, float> line_x{cos(start_angle)*line_radius, cos(end_angle)*line_radius };
@@ -457,12 +454,12 @@ public:
 
             // Differentiate between ego and other agents
             AgentState<Domain> state;
-            if(i == std::floor(num_other_agents/2)) {
+            if(i == std::floor(other_agent_states_.size()/2)) {
                 state = ego_state_;
                 color = {0.8,0,0,0}; 
             } else {
                 AgentIdx agt_idx = i;
-                if (i > std::floor(num_other_agents/2)) {
+                if (i > std::floor(other_agent_states_.size()/2)) {
                     agt_idx  = i-1;
                 }
                 state = other_agent_states_[agt_idx];
@@ -508,7 +505,7 @@ public:
 private:
     std::vector<AgentPolicyCrossingState<Domain>> hypothesis_;
 
-    std::array<AgentState<Domain>, num_other_agents> other_agent_states_;
+    std::vector<AgentState<Domain>> other_agent_states_;
     AgentState<Domain> ego_state_;
     bool terminal_;
 

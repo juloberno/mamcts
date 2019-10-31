@@ -391,6 +391,32 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
 
 }
 
+TEST(episode_runner, four_agents_reached_goal) {
+  auto params = default_crossing_state_parameters<Domain>();
+  params.NUM_OTHER_AGENTS = 4;
+  params.CHAIN_LENGTH = 41;
+  params.EGO_GOAL_POS = 26;
+  auto runner = CrossingStateEpisodeRunner<Domain>(
+      { {1 , AgentPolicyCrossingState<Domain>({5,6}, params)},
+        {2 , AgentPolicyCrossingState<Domain>({3,4}, params)},
+        {3 , AgentPolicyCrossingState<Domain>({5.5,6}, params)},
+        {4 , AgentPolicyCrossingState<Domain>({-3,-2}, params)}},
+      {AgentPolicyCrossingState<Domain>({3,4}, params), 
+        AgentPolicyCrossingState<Domain>({-3,3}, params),
+        AgentPolicyCrossingState<Domain>({5,6}, params)},
+        default_hypo_params(),
+        params,
+        30,
+        4,
+        1,
+        HypothesisBeliefTracker::PRODUCT,
+        10000,
+        10000,
+        nullptr);
+  auto result = runner.run();
+  EXPECT_TRUE(std::get<4>(result));
+}
+
 TEST(episode_runner, run_some_steps) {
   const auto params = default_crossing_state_parameters<Domain>();
   auto runner = CrossingStateEpisodeRunner<Domain>(
