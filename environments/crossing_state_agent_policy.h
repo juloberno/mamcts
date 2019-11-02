@@ -55,7 +55,7 @@ class AgentPolicyCrossingState : public RandomGenerator {
 
     std::string info() const {
       std::stringstream ss;
-      ss << "[" << desired_gap_range_.first << ", " << desired_gap_range_.second << "]" << std::endl;
+      ss << "[" << desired_gap_range_.first << ", " << desired_gap_range_.second << "]";
       return ss.str();
     }
 
