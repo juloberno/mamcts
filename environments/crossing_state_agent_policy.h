@@ -53,6 +53,12 @@ class AgentPolicyCrossingState : public RandomGenerator {
 
     }
 
+    std:.string info() const {
+      std::stringstream ss;
+      ss << "[" << desired_gap_range.first << ", " << desired_gap_range.second << "]" << std::endl;
+      return ss.str();
+    }
+
   private: 
         const std::pair<Domain, Domain> desired_gap_range_;
         const CrossingStateParameters<Domain>& parameters_;

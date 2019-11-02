@@ -48,6 +48,7 @@ void define_crossing_state(py::module m, std::string suffix) {
     py::class_<AgentPolicyCrossingState<Domain>,
              std::shared_ptr<AgentPolicyCrossingState<Domain>>>(m, name3.c_str())
       .def(py::init<const std::pair<int, int>&, const CrossingStateParameters<Domain>&>())
+      .def("info", &AgentPolicyCrossingState<Domain>::info)
       .def("__repr__", [&](const AgentPolicyCrossingState<Domain> &m) {
         return "";// add_suffix("mamcts.AgentPolicyCrossingState");
       });
