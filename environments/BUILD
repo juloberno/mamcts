@@ -8,9 +8,6 @@ cc_library(
         "viewer.h",
         "crossing_state_episode_runner.h"
     ],
-    srcs = [
-        "crossing_state_episode_runner.cpp",
-    ],
     deps = [
         "//mcts:mamcts",
     ],

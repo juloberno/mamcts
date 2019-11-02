@@ -261,7 +261,7 @@ TEST(episode_runner, four_agents_reached_goal) {
         10000,
         nullptr);
   auto result = runner.run();
-  EXPECT_TRUE(std::get<4>(result));
+  EXPECT_TRUE(std::get<4>(result).second);
 }
 
 TEST(episode_runner, run_some_steps) {

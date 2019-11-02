@@ -78,7 +78,6 @@ void define_crossing_state(py::module m, std::string suffix) {
       .def("__repr__", [&](const CrossingStateEpisodeRunner<Domain> &m) {
         return "";// add_suffix("mamcts.CrossingStateEpisodeRunner");
       })
-      .def_readonly_static("EVAL_RESULT_COLUMN_DESC", &CrossingStateEpisodeRunner<Domain>::EVAL_RESULT_COLUMN_DESC)
       .def("step", &CrossingStateEpisodeRunner<Domain>::step)
       .def("run", &CrossingStateEpisodeRunner<Domain>::run);
 

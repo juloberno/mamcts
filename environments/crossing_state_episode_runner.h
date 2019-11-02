@@ -48,12 +48,9 @@ class CrossingStateEpisodeRunner {
                   belief_tracker_.belief_update(*last_state_, *current_state_);
                   }
 
-    // Reward, Cost, Terminal, Collision, GoalReached, MaxSteps
-    typedef std::tuple<float, float, bool, bool, bool> StepResult;
-    StepResult step() {
-      if(current_state_->is_terminal()) {
-        return std::tuple<float, float, bool, bool, bool>();
-      }
+    std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,
+                            std::pair<std::string, bool>, std::pair<std::string, bool>,
+                            std::pair<std::string, bool>> step() {
       std::vector<Reward> rewards;
       Cost cost;
 
@@ -83,25 +80,30 @@ class CrossingStateEpisodeRunner {
         current_state_->draw(viewer_);
       }
 
-      return std::make_tuple<float, float,bool, bool, bool> (rewards[CrossingState<Domain>::ego_agent_idx], 
-                                                              cost,
-                                                              std::move(current_state_->is_terminal()),
-                                                              std::move(collision),
-                                                              std::move(goal_reached));
+      return std::make_tuple<std::pair<std::string, float>,std::pair<std::string, float>,
+                            std::pair<std::string, bool>, std::pair<std::string, bool>,
+                            std::pair<std::string, bool>> (std::pair<std::string, float>("Reward", std::move(rewards[CrossingState<Domain>::ego_agent_idx])), 
+                                                             std::pair<std::string, float>("Cost", std::move(cost)),
+                                                             std::pair<std::string, bool>("Terminal", std::move(current_state_->is_terminal())),
+                                                             std::pair<std::string, bool>("Collision", std::move(collision)),
+                                                             std::pair<std::string, bool>("GoalReached", std::move(goal_reached)));
     }
 
-    static const std::vector<std::string> EVAL_RESULT_COLUMN_DESC;
-    typedef std::tuple<float, float, bool, bool, bool, bool, unsigned int> EpisodeResult;
-    EpisodeResult run() {
+    std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,
+                            std::pair<std::string, bool>, std::pair<std::string, bool>,
+                            std::pair<std::string, bool>,
+                            std::pair<std::string, unsigned int>,
+                            std::pair<std::string, unsigned int>> run() {
       unsigned int current_step=0;
       bool done = false;
       while(!done) {
         const auto step_result = step();
         const bool max_steps_reached = current_step > max_steps_;
-        const bool terminal_state = std::get<2>(step_result);
-        if(terminal_state || max_steps_reached) {
-          return std::tuple_cat(step_result, std::forward_as_tuple(max_steps_reached),
-                                 std::forward_as_tuple(current_step));
+        const auto terminal_state = std::get<2>(step_result);
+        if(terminal_state.second || max_steps_reached) {
+          return std::tuple_cat(step_result,
+                              std::forward_as_tuple(std::pair<std::string, unsigned int>("MaxSteps", max_steps_reached)),
+                              std::forward_as_tuple(std::pair<std::string, unsigned int>("NumSteps", current_step)));
         }
         current_step += 1;
       }
