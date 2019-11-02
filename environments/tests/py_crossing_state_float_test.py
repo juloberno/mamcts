@@ -74,7 +74,6 @@ class PickleTests(unittest.TestCase):
              None)
 
         episode_result = runner.run()
-        print(runner.EVAL_RESULT_COLUMN_DESC)
         print(episode_result)
 
 if __name__ == '__main__':

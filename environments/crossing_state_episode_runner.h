@@ -51,6 +51,11 @@ class CrossingStateEpisodeRunner {
     std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,
                             std::pair<std::string, bool>, std::pair<std::string, bool>,
                             std::pair<std::string, bool>> step() {
+      if(current_state_->is_terminal()) {
+        return std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,
+                            std::pair<std::string, bool>, std::pair<std::string, bool>,
+                            std::pair<std::string, bool>> ();
+      }
       std::vector<Reward> rewards;
       Cost cost;
 
@@ -80,13 +85,13 @@ class CrossingStateEpisodeRunner {
         current_state_->draw(viewer_);
       }
 
-      return std::make_tuple<std::pair<std::string, float>,std::pair<std::string, float>,
+      return std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,
                             std::pair<std::string, bool>, std::pair<std::string, bool>,
-                            std::pair<std::string, bool>> (std::pair<std::string, float>("Reward", std::move(rewards[CrossingState<Domain>::ego_agent_idx])), 
-                                                             std::pair<std::string, float>("Cost", std::move(cost)),
-                                                             std::pair<std::string, bool>("Terminal", std::move(current_state_->is_terminal())),
-                                                             std::pair<std::string, bool>("Collision", std::move(collision)),
-                                                             std::pair<std::string, bool>("GoalReached", std::move(goal_reached)));
+                            std::pair<std::string, bool>> (std::pair<std::string, float>(std::string("Reward"), rewards[CrossingState<Domain>::ego_agent_idx]), 
+                                                             std::pair<std::string, float>(std::string("Cost"), cost),
+                                                             std::pair<std::string, bool>(std::string("Terminal"), std::move(current_state_->is_terminal())),
+                                                             std::pair<std::string, bool>(std::string("Collision"), std::move(collision)),
+                                                             std::pair<std::string, bool>(std::string("GoalReached"), std::move(goal_reached)));
     }
 
     std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,
@@ -102,8 +107,8 @@ class CrossingStateEpisodeRunner {
         const auto terminal_state = std::get<2>(step_result);
         if(terminal_state.second || max_steps_reached) {
           return std::tuple_cat(step_result,
-                              std::forward_as_tuple(std::pair<std::string, unsigned int>("MaxSteps", max_steps_reached)),
-                              std::forward_as_tuple(std::pair<std::string, unsigned int>("NumSteps", current_step)));
+                              std::forward_as_tuple(std::pair<std::string, unsigned int>(std::string("MaxSteps"), max_steps_reached)),
+                              std::forward_as_tuple(std::pair<std::string, unsigned int>(std::string("NumSteps"), current_step)));
         }
         current_step += 1;
       }
