@@ -64,7 +64,7 @@ class CrossingStateEpisodeRunner {
         if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
           // Plan for ego agent with hypothesis-based search
           Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts(mcts_parameters_);
-          mcts.search(*current_state_, belief_tracker_, 5000, 10000);
+          mcts.search(*current_state_, belief_tracker_, mcts_max_search_time_, mcts_max_iterations_);
           jointaction[agent_idx] = mcts.returnBestAction();
         } else {
           // Other agents act according to unknown true agents policy
