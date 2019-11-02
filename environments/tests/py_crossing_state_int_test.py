@@ -23,9 +23,9 @@ def default_mcts_parameters():
     parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_K = 1
     parameters.hypothesis_statistic.EXPLORATION_CONSTANT = 0.7
 
-        parameters.hypothesis_belief_tracker.RANDOM_SEED_HYPOTHESIS_SAMPLING = 1000
+    parameters.hypothesis_belief_tracker.RANDOM_SEED_HYPOTHESIS_SAMPLING = 1000
     parameters.hypothesis_belief_tracker.HISTORY_LENGTH = 4
-    parameters.hypothesis_belief_tracker.PROBABILITY_DISCOUNT = 1.0f
+    parameters.hypothesis_belief_tracker.PROBABILITY_DISCOUNT = 1.0
     parameters.hypothesis_belief_tracker.POSTERIOR_TYPE = HypothesisBeliefTracker.PosteriorType.PRODUCT
 
     return parameters

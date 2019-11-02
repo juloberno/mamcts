@@ -13,7 +13,7 @@ namespace mcts {
 
     class RandomGenerator {
     public:
-        const std::mt19937 random_generator_;
+        mutable std::mt19937 random_generator_;
     public:
         RandomGenerator(const unsigned int& random_seed) :
                random_generator_(random_seed) {}

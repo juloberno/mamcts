@@ -11,6 +11,7 @@
 #include <iostream>
 #include <random>
 #include <unordered_map>
+#include "mcts/random_generator.h"
 #include "environments/crossing_state_common.h"
 
 
@@ -27,7 +28,7 @@ class AgentPolicyCrossingState : public RandomGenerator {
                                 MCTS_EXPECT_TRUE(desired_gap_range.first <= desired_gap_range.second)
                             }
 
-    Domain act(const AgentState<Domain>& agent_state, const Domain& ego_pos);
+    Domain act(const AgentState<Domain>& agent_state, const Domain& ego_pos) const;
 
     Probability get_probability(const AgentState<Domain>& agent_state, const Domain& ego_pos, const Domain& action) const;
 
@@ -58,19 +59,19 @@ class AgentPolicyCrossingState : public RandomGenerator {
 };
 
 template <>
-inline int AgentPolicyCrossingState<int>::act(const AgentState<int>& agent_state, const int& ego_pos) {
+inline int AgentPolicyCrossingState<int>::act(const AgentState<int>& agent_state, const int& ego_pos) const {
     // sample desired gap parameter
     std::uniform_int_distribution<int> dis(desired_gap_range_.first, desired_gap_range_.second);
-    int desired_gap_dst = dis(RandomGenerator::random_generator_);
+    int desired_gap_dst = dis(this->random_generator_);
 
     return calculate_action(agent_state, ego_pos, desired_gap_dst);
 }
 
 template <>
-inline float AgentPolicyCrossingState<float>::act(const AgentState<float>& agent_state, const float& ego_pos) {
+inline float AgentPolicyCrossingState<float>::act(const AgentState<float>& agent_state, const float& ego_pos) const {
     // sample desired gap parameter
     std::uniform_real_distribution<float> dis(desired_gap_range_.first, desired_gap_range_.second);
-    int desired_gap_dst = dis(RandomGenerator::random_generator_);
+    int desired_gap_dst = dis(this->random_generator_);
 
     return calculate_action(agent_state, ego_pos, desired_gap_dst);
 }

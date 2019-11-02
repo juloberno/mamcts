@@ -50,7 +50,6 @@ protected:
     ActionIdx num_actions_;
     AgentIdx agent_idx_;
     const MctsParameters& mcts_parameters_;
-    std::mt19937& random_generator_;
 };
 
 template <class Implementation>

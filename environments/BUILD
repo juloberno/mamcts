@@ -9,7 +9,6 @@ cc_library(
         "crossing_state_episode_runner.h"
     ],
     srcs = [
-        "crossing_state.cpp",
         "crossing_state_episode_runner.cpp",
     ],
     deps = [

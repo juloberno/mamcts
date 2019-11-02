@@ -38,7 +38,6 @@ namespace mcts {
 
     protected:
         const MctsParameters& mcts_parameters_;
-        std::mt19937& random_generator_;
     };
 
 

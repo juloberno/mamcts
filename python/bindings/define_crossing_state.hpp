@@ -12,6 +12,7 @@
 #include "environments/crossing_state_episode_runner.h"
 
 namespace py = pybind11;
+using namespace mcts;
 
 template <typename Domain>
 void define_crossing_state(py::module m, std::string suffix) {

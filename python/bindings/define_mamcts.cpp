@@ -77,7 +77,7 @@ void define_mamcts(py::module m)
       .def_readwrite("PROBABILITY_DISCOUNT", &MctsParameters::HypothesisBeliefTrackerParameters::PROBABILITY_DISCOUNT)
       .def_readwrite("POSTERIOR_TYPE", &MctsParameters::HypothesisBeliefTrackerParameters::POSTERIOR_TYPE);
 
-    using mcts1 = Mcts<CrossingState<int>, UctStatisticParameters, HypothesisStatisticParameters, RandomHeuristicParameters>;
+    using mcts1 = Mcts<CrossingState<int>, UctStatistic, HypothesisStatistic, RandomHeuristic>;
     py::class_<mcts1,
              std::shared_ptr<mcts1>>(m, "MctsCrossingStateIntUctUct")
       .def(py::init<const MctsParameters&>())

@@ -232,7 +232,7 @@ TEST(hypothesis_crossing_state_float, hypothesis_belief_correct)
     params.EGO_GOAL_POS = 900;
 
     auto params_mcts = mcts_default_parameters();
-    params_mcts.hypothesis_belief_tracker.HISTORY_LENGTH = 200;
+    params_mcts.hypothesis_belief_tracker.HISTORY_LENGTH = 100;
     params_mcts.hypothesis_belief_tracker.POSTERIOR_TYPE =  HypothesisBeliefTracker::SUM;
 
     // This test checks if hypothesis probability is split up correctly between two overlapping hypothesis

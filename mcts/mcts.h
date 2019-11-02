@@ -37,9 +37,8 @@ public:
     Mcts(const MctsParameters& mcts_parameters) : root_(),
                                                   num_iterations(0),
                                                   mcts_parameters_(mcts_parameters), 
-                                                  random_generator_(mcts_parameters_.RANDOM_SEED),
-                                                  heuristic_(mcts_parameters),
-                                                  {};
+                                                  heuristic_(mcts_parameters)
+                                                  {}
 
     ~Mcts() {}
     
@@ -65,8 +64,6 @@ private:
     unsigned int num_iterations;
 
     const MctsParameters mcts_parameters_;
-
-    RandomGenerator random_generator_;
 
     H heuristic_;
 
