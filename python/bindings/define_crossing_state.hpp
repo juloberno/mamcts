@@ -22,6 +22,7 @@ void define_crossing_state(py::module m, std::string suffix) {
              std::shared_ptr<CrossingStateParameters<Domain>>>(m, name1.c_str())
       .def_readwrite("NUM_OTHER_AGENTS", &CrossingStateParameters<Domain>::NUM_OTHER_AGENTS)
       .def_readwrite("OTHER_AGENTS_POLICY_RANDOM_SEED", &CrossingStateParameters<Domain>::OTHER_AGENTS_POLICY_RANDOM_SEED)
+      .def_readwrite("COST_ONLY_COLLISION", &CrossingStateParameters<Domain>::COST_ONLY_COLLISION)
       .def_readwrite("MAX_VELOCITY_EGO", &CrossingStateParameters<Domain>::MAX_VELOCITY_EGO)
       .def_readwrite("MIN_VELOCITY_EGO",&CrossingStateParameters<Domain>::MIN_VELOCITY_EGO)
       .def_readwrite("MIN_VELOCITY_OTHER",&CrossingStateParameters<Domain>::MIN_VELOCITY_OTHER)

@@ -113,7 +113,11 @@ public:
         const bool terminal = goal_reached || collision || ego_out_of_map;
         rewards.resize(other_agent_states_.size()+1);
         rewards[0] = goal_reached * 100.0f - 1000.0f * collision - 1000.0f * ego_out_of_map;
-        ego_cost = collision * 1.0f;
+        if(parameters_.COST_ONLY_COLLISION) {
+          ego_cost = collision * 1.0f;
+        } else {
+          ego_cost = -1.0f*rewards[0];
+        }
 
         return std::make_shared<CrossingState<Domain>>(this->current_agents_hypothesis_,
                                                        parameters_,
