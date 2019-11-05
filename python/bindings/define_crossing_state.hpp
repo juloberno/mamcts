@@ -31,7 +31,7 @@ void define_crossing_state(py::module m, std::string suffix) {
       .def_readwrite("CHAIN_LENGTH",&CrossingStateParameters<Domain>::CHAIN_LENGTH)
       .def_property_readonly("CROSSING_POINT",&CrossingStateParameters<Domain>::CROSSING_POINT)
       .def_property_readonly("NUM_EGO_ACTIONS",&CrossingStateParameters<Domain>::NUM_EGO_ACTIONS)
-      .def_property_readonly("NUM_OTHER_ACTIONS",&CrossingStateParameters<Domain>::NUM_OTHER_ACTIONS)
+      .def_readwrite("NUM_OTHER_ACTIONS",&CrossingStateParameters<Domain>::NUM_OTHER_ACTIONS)
       .def("__repr__", [&](const CrossingStateParameters<Domain> &m) {
         return "";//add_suffix("mamcts.CrossingStateParameters");
       });

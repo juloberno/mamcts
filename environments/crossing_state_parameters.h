@@ -19,7 +19,7 @@ struct CrossingStateParameters {
     bool COST_ONLY_COLLISION;
     Domain MAX_VELOCITY_OTHER;
     Domain MIN_VELOCITY_OTHER;
-    Domain NUM_OTHER_ACTIONS() const { return MAX_VELOCITY_OTHER-MIN_VELOCITY_OTHER + 1; }
+    Domain NUM_OTHER_ACTIONS;
     Domain MAX_VELOCITY_EGO;
     Domain MIN_VELOCITY_EGO;
     Domain NUM_EGO_ACTIONS() const { return MAX_VELOCITY_EGO - MIN_VELOCITY_EGO + 1; }
@@ -27,6 +27,7 @@ struct CrossingStateParameters {
     Domain EGO_GOAL_POS;
     Domain CROSSING_POINT() const { return (CHAIN_LENGTH-1)/2+1; }
 };
+
 
 template <typename Domain>
 CrossingStateParameters<Domain> default_crossing_state_parameters() {
@@ -40,6 +41,11 @@ CrossingStateParameters<Domain> default_crossing_state_parameters() {
   parameters.MIN_VELOCITY_EGO = -1;
   parameters.CHAIN_LENGTH = 21; 
   parameters.EGO_GOAL_POS = 12;
+  if(std::is_same<Domain, int>::value) {
+    parameters.NUM_OTHER_ACTIONS = parameters.MAX_VELOCITY_OTHER - parameters.MIN_VELOCITY_OTHER +1;
+  } else if (std::is_same<Domain, float>::value) {
+    parameters.NUM_OTHER_ACTIONS = 30;
+  }
 
   return parameters;
 }

@@ -131,7 +131,7 @@ public:
         if(agent_idx == this->ego_agent_idx) {
             return parameters_.NUM_EGO_ACTIONS();
         } else {
-            return parameters_.NUM_OTHER_ACTIONS();
+            return parameters_.NUM_OTHER_ACTIONS;
         }
     }
 

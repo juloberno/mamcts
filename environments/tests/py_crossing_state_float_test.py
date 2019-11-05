@@ -9,6 +9,7 @@ from mamcts import MctsParameters, CrossingStateDefaultParametersFloat
 def default_mcts_parameters():
     parameters = MctsParameters()
     parameters.DISCOUNT_FACTOR = 0.9
+    parameters.RANDOM_SEED = 1000
     parameters.random_heuristic.MAX_SEARCH_TIME = 10
     parameters.random_heuristic.MAX_NUMBER_OF_ITERATIONS = 1000
 
