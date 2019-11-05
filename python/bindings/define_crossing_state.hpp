@@ -20,6 +20,7 @@ void define_crossing_state(py::module m, std::string suffix) {
     std::string name1 = "CrossingStateParameters" + suffix;
     py::class_<CrossingStateParameters<Domain>,
              std::shared_ptr<CrossingStateParameters<Domain>>>(m, name1.c_str())
+      .def(py::init<>())
       .def_readwrite("NUM_OTHER_AGENTS", &CrossingStateParameters<Domain>::NUM_OTHER_AGENTS)
       .def_readwrite("OTHER_AGENTS_POLICY_RANDOM_SEED", &CrossingStateParameters<Domain>::OTHER_AGENTS_POLICY_RANDOM_SEED)
       .def_readwrite("COST_ONLY_COLLISION", &CrossingStateParameters<Domain>::COST_ONLY_COLLISION)
