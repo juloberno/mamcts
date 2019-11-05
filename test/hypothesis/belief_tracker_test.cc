@@ -62,6 +62,18 @@ TEST(belief_tracker, simple_tracking_state)
     
 }
 
+TEST(belief_tracker, fixed_hypothesis_set)
+{
+  auto mcts_parameters = mcts_default_parameters();
+  mcts_parameters.hypothesis_belief_tracker.FIXED_HYPOTHESIS_SET = {{10 ,1}, {5, 4}};
+  HypothesisBeliefTracker tracker(mcts_parameters);
+
+  // Inits reference to current sampled hypothesis
+  BeliefTrackerTestState state(tracker.sample_current_hypothesis()); 
+  tracker.belief_update(state, state); //< last action equal in both states
+  const auto& sampled_hypothesis = tracker.sample_current_hypothesis();
+  EXPECT_EQ(mcts_parameters.hypothesis_belief_tracker.FIXED_HYPOTHESIS_SET, sampled_hypothesis);
+}
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
 

@@ -75,7 +75,8 @@ void define_mamcts(py::module m)
       .def_readwrite("RANDOM_SEED_HYPOTHESIS_SAMPLING", &MctsParameters::HypothesisBeliefTrackerParameters::RANDOM_SEED_HYPOTHESIS_SAMPLING)
       .def_readwrite("HISTORY_LENGTH", &MctsParameters::HypothesisBeliefTrackerParameters::HISTORY_LENGTH)
       .def_readwrite("PROBABILITY_DISCOUNT", &MctsParameters::HypothesisBeliefTrackerParameters::PROBABILITY_DISCOUNT)
-      .def_readwrite("POSTERIOR_TYPE", &MctsParameters::HypothesisBeliefTrackerParameters::POSTERIOR_TYPE);
+      .def_readwrite("POSTERIOR_TYPE", &MctsParameters::HypothesisBeliefTrackerParameters::POSTERIOR_TYPE)
+      .def_readwrite("FIXED_HYPOTHESIS_SET", &MctsParameters::HypothesisBeliefTrackerParameters::FIXED_HYPOTHESIS_SET);
 
     using mcts1 = Mcts<CrossingState<int>, UctStatistic, HypothesisStatistic, RandomHeuristic>;
     py::class_<mcts1,

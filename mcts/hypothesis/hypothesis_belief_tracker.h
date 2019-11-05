@@ -32,6 +32,8 @@ class HypothesisBeliefTracker : public mcts::RandomGenerator {
                             history_length_(mcts_parameters.hypothesis_belief_tracker.HISTORY_LENGTH),
                             probability_discount_(mcts_parameters.hypothesis_belief_tracker.PROBABILITY_DISCOUNT),
                             posterior_type_(static_cast<PosteriorType>(mcts_parameters.hypothesis_belief_tracker.POSTERIOR_TYPE)),
+                            fixed_hypothesis_set_(static_cast<std::unordered_map<AgentIdx, HypothesisId>>(
+                              mcts_parameters.hypothesis_belief_tracker.FIXED_HYPOTHESIS_SET)),
                             tracked_probabilities_(),
                             tracked_beliefs_(),
                             current_sampled_hypothesis_() {};
@@ -51,13 +53,19 @@ private:
     PosteriorType posterior_type_;
     std::unordered_map<AgentIdx, std::vector<std::deque<Probability>>> tracked_probabilities_;
     std::unordered_map<AgentIdx, std::vector<Belief>> tracked_beliefs_;//< contains the beliefs for each hypothesis for each agent 
-    std::unordered_map<AgentIdx, HypothesisId> current_sampled_hypothesis_;
+    std::unordered_map<AgentIdx, HypothesisId> current_sampled_hypothesis_; //< the currently sampled hypothesis shared across all hypothesis states
+    std::unordered_map<AgentIdx, HypothesisId> fixed_hypothesis_set_; // < if not empty a fixed hypothesis set is used in each iteration (e.g. for the omniscient approach)
 };
 
 
 template <typename S>
 void HypothesisBeliefTracker::belief_update(const HypothesisStateInterface<S>& state, 
                                             const HypothesisStateInterface<S>& next_state) {
+  if(!fixed_hypothesis_set_.empty()) {
+    // no belief update required, if fixed hypothesis set is given
+    return;
+  }
+
   for(auto agent_idx : state.get_agent_idx() ) {
     auto belief_track_it = tracked_beliefs_.find(agent_idx);
     if(belief_track_it == tracked_beliefs_.end()) {
@@ -111,6 +119,11 @@ void HypothesisBeliefTracker::belief_update(const HypothesisStateInterface<S>& s
 }
 
 inline const std::unordered_map<AgentIdx, HypothesisId>& HypothesisBeliefTracker::sample_current_hypothesis() {
+  if(!fixed_hypothesis_set_.empty()) {
+    current_sampled_hypothesis_ = fixed_hypothesis_set_;
+    return current_sampled_hypothesis_;
+  }
+
   for (const auto& it : tracked_beliefs_) {
     // Sample one hypothesis for each agent
     std::discrete_distribution<HypothesisId> hypothesis_distribution(it.second.begin(), it.second.end());

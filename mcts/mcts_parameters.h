@@ -8,7 +8,7 @@
 #define MCTS_PARAMETERS_H
 
 
-
+#include <unordered_map>
 
 
 namespace mcts{
@@ -44,6 +44,7 @@ struct MctsParameters{
       unsigned int HISTORY_LENGTH;
       float PROBABILITY_DISCOUNT;
       int POSTERIOR_TYPE;
+      std::unordered_map<unsigned char, unsigned int> FIXED_HYPOTHESIS_SET;
   };
 
   HypothesisStatisticParameters hypothesis_statistic;
@@ -76,6 +77,7 @@ inline MctsParameters mcts_default_parameters() {
   parameters.hypothesis_belief_tracker.HISTORY_LENGTH = 4;
   parameters.hypothesis_belief_tracker.PROBABILITY_DISCOUNT = 1.0f;
   parameters.hypothesis_belief_tracker.POSTERIOR_TYPE = 0; // = HypothesisBeliefTracker::PRODUCT;
+  parameters.hypothesis_belief_tracker.FIXED_HYPOTHESIS_SET = {};
 
   return parameters;
 }
