@@ -27,7 +27,7 @@ void define_crossing_state(py::module m, std::string suffix) {
       .def_readwrite("MAX_VELOCITY_EGO", &CrossingStateParameters<Domain>::MAX_VELOCITY_EGO)
       .def_readwrite("MIN_VELOCITY_EGO",&CrossingStateParameters<Domain>::MIN_VELOCITY_EGO)
       .def_readwrite("MIN_VELOCITY_OTHER",&CrossingStateParameters<Domain>::MIN_VELOCITY_OTHER)
-      .def_readwrite("MIN_VELOCITY_OTHER",&CrossingStateParameters<Domain>::MIN_VELOCITY_OTHER)
+      .def_readwrite("MAX_VELOCITY_OTHER",&CrossingStateParameters<Domain>::MAX_VELOCITY_OTHER)
       .def_readwrite("EGO_GOAL_POS",&CrossingStateParameters<Domain>::EGO_GOAL_POS)
       .def_readwrite("CHAIN_LENGTH",&CrossingStateParameters<Domain>::CHAIN_LENGTH)
       .def_property_readonly("CROSSING_POINT",&CrossingStateParameters<Domain>::CROSSING_POINT)
