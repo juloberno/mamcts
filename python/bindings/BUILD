@@ -20,6 +20,7 @@ cc_binary(
     "@com_github_eigen_eigen//:eigen", 
   ],
   linkshared = 1,
-  linkstatic = 1
+  linkstatic = 1,
+  copts=["-O3"],
 )
 
