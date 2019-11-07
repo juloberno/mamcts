@@ -34,14 +34,14 @@ void define_crossing_state(py::module m, std::string suffix) {
       .def_property_readonly("NUM_EGO_ACTIONS",&CrossingStateParameters<Domain>::NUM_EGO_ACTIONS)
       .def_readwrite("NUM_OTHER_ACTIONS",&CrossingStateParameters<Domain>::NUM_OTHER_ACTIONS)
       .def("__repr__", [&](const CrossingStateParameters<Domain> &m) {
-        return "";//add_suffix("mamcts.CrossingStateParameters");
+        return "mamcts." + name1;
       });
 
     std::string name2 = "AgentCrossingState" + suffix;
     py::class_<AgentState<Domain>,
              std::shared_ptr<AgentState<Domain>>>(m, name2.c_str())
       .def("__repr__", [&](const AgentState<Domain> &m) {
-        return "";// add_suffix("mamcts.AgentCrossingState");
+        return "mamcts." + name2;
       })
       .def_readonly("position", &AgentState<Domain>::x_pos)
       .def_readonly("last_action", &AgentState<Domain>::last_action);
@@ -52,7 +52,7 @@ void define_crossing_state(py::module m, std::string suffix) {
       .def(py::init<const std::pair<Domain, Domain>&, const CrossingStateParameters<Domain>&>())
       .def("info", &AgentPolicyCrossingState<Domain>::info)
       .def("__repr__", [&](const AgentPolicyCrossingState<Domain> &m) {
-        return "";// add_suffix("mamcts.AgentPolicyCrossingState");
+        return "mamcts." + name3;
       });
 
     std::string name4 = "CrossingState" + suffix;
@@ -60,7 +60,7 @@ void define_crossing_state(py::module m, std::string suffix) {
              std::shared_ptr<CrossingState<Domain>>>(m, name4.c_str())
       .def(py::init<const std::unordered_map<AgentIdx, HypothesisId>&, const CrossingStateParameters<Domain>&>())
       .def("__repr__", [&](const CrossingState<Domain> &m) {
-        return "";// add_suffix("mamcts.CrossingState");
+        return "mamcts." + name4;
       })
       .def("draw", &CrossingState<Domain>::draw)
       .def_property_readonly("other_agents_states", &CrossingState<Domain>::get_agent_states)
@@ -79,7 +79,7 @@ void define_crossing_state(py::module m, std::string suffix) {
                             const unsigned int&,
                             mcts::Viewer*>())
       .def("__repr__", [&](const CrossingStateEpisodeRunner<Domain> &m) {
-        return "";// add_suffix("mamcts.CrossingStateEpisodeRunner");
+        return "mamcts." + name5;
       })
       .def("step", &CrossingStateEpisodeRunner<Domain>::step)
       .def("run", &CrossingStateEpisodeRunner<Domain>::run);
