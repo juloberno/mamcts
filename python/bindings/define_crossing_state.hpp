@@ -33,15 +33,15 @@ void define_crossing_state(py::module m, std::string suffix) {
       .def_property_readonly("CROSSING_POINT",&CrossingStateParameters<Domain>::CROSSING_POINT)
       .def_property_readonly("NUM_EGO_ACTIONS",&CrossingStateParameters<Domain>::NUM_EGO_ACTIONS)
       .def_readwrite("NUM_OTHER_ACTIONS",&CrossingStateParameters<Domain>::NUM_OTHER_ACTIONS)
-      .def("__repr__", [&](const CrossingStateParameters<Domain> &m) {
-        return "mamcts." + name1;
+      .def("__repr__", [](const CrossingStateParameters<Domain> &m) {
+        return typeid(m).name();
       });
 
     std::string name2 = "AgentCrossingState" + suffix;
     py::class_<AgentState<Domain>,
              std::shared_ptr<AgentState<Domain>>>(m, name2.c_str())
-      .def("__repr__", [&](const AgentState<Domain> &m) {
-        return "mamcts." + name2;
+      .def("__repr__", [](const AgentState<Domain> &m) {
+        return typeid(m).name();
       })
       .def_readonly("position", &AgentState<Domain>::x_pos)
       .def_readonly("last_action", &AgentState<Domain>::last_action);
@@ -51,16 +51,16 @@ void define_crossing_state(py::module m, std::string suffix) {
              std::shared_ptr<AgentPolicyCrossingState<Domain>>>(m, name3.c_str())
       .def(py::init<const std::pair<Domain, Domain>&, const CrossingStateParameters<Domain>&>())
       .def("info", &AgentPolicyCrossingState<Domain>::info)
-      .def("__repr__", [&](const AgentPolicyCrossingState<Domain> &m) {
-        return "mamcts." + name3;
+      .def("__repr__", [](const AgentPolicyCrossingState<Domain> &m) {
+        return typeid(m).name();
       });
 
     std::string name4 = "CrossingState" + suffix;
     py::class_<CrossingState<Domain>,
              std::shared_ptr<CrossingState<Domain>>>(m, name4.c_str())
       .def(py::init<const std::unordered_map<AgentIdx, HypothesisId>&, const CrossingStateParameters<Domain>&>())
-      .def("__repr__", [&](const CrossingState<Domain> &m) {
-        return "mamcts." + name4;
+      .def("__repr__", [](const CrossingState<Domain> &m) {
+        return typeid(m).name();
       })
       .def("draw", &CrossingState<Domain>::draw)
       .def_property_readonly("other_agents_states", &CrossingState<Domain>::get_agent_states)
@@ -78,8 +78,8 @@ void define_crossing_state(py::module m, std::string suffix) {
                             const unsigned int&,
                             const unsigned int&,
                             mcts::Viewer*>())
-      .def("__repr__", [&](const CrossingStateEpisodeRunner<Domain> &m) {
-        return "mamcts." + name5;
+      .def("__repr__", [](const CrossingStateEpisodeRunner<Domain> &m) {
+        return typeid(m).name();
       })
       .def("step", &CrossingStateEpisodeRunner<Domain>::step)
       .def("run", &CrossingStateEpisodeRunner<Domain>::run);

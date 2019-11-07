@@ -50,7 +50,7 @@ class PickleTests(unittest.TestCase):
              default_mcts_parameters(),
              crossing_state_params,
              30,
-             10000,
+             200,
              10000,
              viewer)
         for _ in range(0, 20):
@@ -69,7 +69,7 @@ class PickleTests(unittest.TestCase):
              default_mcts_parameters(),
              crossing_state_params,
              30,
-             10000,
+             200,
              10000,
              None)
 

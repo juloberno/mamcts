@@ -36,8 +36,10 @@ class PickleTests(unittest.TestCase):
         crossing_state_params = CrossingStateDefaultParametersFloat()
         viewer = PyViewer()
         state = CrossingStateFloat({}, crossing_state_params)
+        print(state)
         state.draw(viewer)
         viewer.show(block=True)
+        print(CrossingStateDefaultParametersFloat)
 
     def test_episode_runner_step(self):
         crossing_state_params = CrossingStateDefaultParametersFloat()
@@ -51,7 +53,7 @@ class PickleTests(unittest.TestCase):
              default_mcts_parameters(),
              crossing_state_params,
              30,
-             10000,
+             200,
              10000,
              viewer)
         for _ in range(0, 20):
@@ -70,7 +72,7 @@ class PickleTests(unittest.TestCase):
              default_mcts_parameters(),
              crossing_state_params,
              30,
-             10000,
+             200,
              10000,
              None)
 
