@@ -35,7 +35,43 @@ void define_crossing_state(py::module m, std::string suffix) {
       .def_readwrite("NUM_OTHER_ACTIONS",&CrossingStateParameters<Domain>::NUM_OTHER_ACTIONS)
       .def("__repr__", [](const CrossingStateParameters<Domain> &m) {
         return typeid(m).name();
-      });
+      })
+      .def(py::pickle(
+        [](const CrossingStateParameters<Domain> &p) { // __getstate__
+            /* Return a tuple that fully encodes the state of the object */
+            py::dict d;
+            d["NUM_OTHER_AGENTS"] = p.NUM_OTHER_AGENTS;
+            d["OTHER_AGENTS_POLICY_RANDOM_SEED"] = p.OTHER_AGENTS_POLICY_RANDOM_SEED;
+            d["COST_ONLY_COLLISION"] = p.COST_ONLY_COLLISION;
+            d["MAX_VELOCITY_EGO"] = p.MAX_VELOCITY_EGO;
+            d["MIN_VELOCITY_EGO"] = p.MIN_VELOCITY_EGO;
+            d["MIN_VELOCITY_OTHER"] = p.MIN_VELOCITY_OTHER;
+            d["MAX_VELOCITY_OTHER"] = p.MAX_VELOCITY_OTHER;
+            d["EGO_GOAL_POS"] = p.EGO_GOAL_POS;
+            d["CHAIN_LENGTH"] = p.CHAIN_LENGTH;
+            d["NUM_OTHER_ACTIONS"] = p.NUM_OTHER_ACTIONS;
+            return d;
+        },
+        [](py::dict d) { // __setstate__
+            if (d.size() != 10)
+                throw std::runtime_error("Invalid CrossingStateParameters state!");
+
+            /* Create a new C++ instance */
+            CrossingStateParameters<Domain> p;
+            p.NUM_OTHER_AGENTS = d["NUM_OTHER_AGENTS"].cast<unsigned int>();
+            p.OTHER_AGENTS_POLICY_RANDOM_SEED = d["OTHER_AGENTS_POLICY_RANDOM_SEED"].cast<unsigned int>();
+            p.COST_ONLY_COLLISION = d["COST_ONLY_COLLISION"].cast<bool>();
+            p.MAX_VELOCITY_EGO = d["MAX_VELOCITY_EGO"].cast<Domain>();
+            p.MIN_VELOCITY_EGO = d["MIN_VELOCITY_EGO"].cast<Domain>();
+            p.MIN_VELOCITY_OTHER = d["MIN_VELOCITY_OTHER"].cast<Domain>();
+            p.MAX_VELOCITY_OTHER = d["MAX_VELOCITY_OTHER"].cast<Domain>();
+            p.EGO_GOAL_POS = d["EGO_GOAL_POS"].cast<Domain>();
+            p.CHAIN_LENGTH = d["CHAIN_LENGTH"].cast<Domain>();
+            p.NUM_OTHER_ACTIONS = d["NUM_OTHER_ACTIONS"].cast<unsigned int>();
+
+            return p;
+        }
+    ));
 
     std::string name2 = "AgentCrossingState" + suffix;
     py::class_<AgentState<Domain>,

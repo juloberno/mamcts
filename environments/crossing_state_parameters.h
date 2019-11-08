@@ -19,7 +19,7 @@ struct CrossingStateParameters {
     bool COST_ONLY_COLLISION;
     Domain MAX_VELOCITY_OTHER;
     Domain MIN_VELOCITY_OTHER;
-    Domain NUM_OTHER_ACTIONS;
+    unsigned int NUM_OTHER_ACTIONS;
     Domain MAX_VELOCITY_EGO;
     Domain MIN_VELOCITY_EGO;
     Domain NUM_EGO_ACTIONS() const { return MAX_VELOCITY_EGO - MIN_VELOCITY_EGO + 1; }
