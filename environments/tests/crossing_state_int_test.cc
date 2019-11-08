@@ -257,7 +257,7 @@ TEST(episode_runner, four_agents_reached_goal) {
         mcts_default_parameters(),
         params,
         30,
-        10000,
+        200,
         10000,
         nullptr);
   auto result = runner.run();
@@ -276,7 +276,7 @@ TEST(episode_runner, run_some_steps) {
         mcts_default_parameters(),
         params,
         30,
-        10000,
+        200,
         10000,
         nullptr);
   for (int i =0; i< 50; ++i) {
