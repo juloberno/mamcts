@@ -15,12 +15,45 @@ def pu(object):
         object_unpickle = pickle.load(file)
     return object_unpickle
 
+def is_equal_mcts_params(mctsp1, mctsp2):
+    return mctsp1.DISCOUNT_FACTOR == mctsp2.DISCOUNT_FACTOR and \
+        mctsp1.RANDOM_SEED == mctsp2.RANDOM_SEED and \
+        mctsp1.random_heuristic.MAX_SEARCH_TIME == mctsp2.random_heuristic.MAX_SEARCH_TIME and \
+        mctsp1.random_heuristic.MAX_NUMBER_OF_ITERATIONS == mctsp2.random_heuristic.MAX_NUMBER_OF_ITERATIONS and \
+        mctsp1.uct_statistic.LOWER_BOUND == mctsp2.uct_statistic.LOWER_BOUND and \
+        mctsp1.uct_statistic.UPPER_BOUND == mctsp2.uct_statistic.UPPER_BOUND and \
+        mctsp1.uct_statistic.EXPLORATION_CONSTANT == mctsp2.uct_statistic.EXPLORATION_CONSTANT and \
+        mctsp1.hypothesis_statistic.COST_BASED_ACTION_SELECTION == mctsp2.hypothesis_statistic.COST_BASED_ACTION_SELECTION and \
+        mctsp1.hypothesis_statistic.LOWER_COST_BOUND == mctsp2.hypothesis_statistic.LOWER_COST_BOUND and \
+        mctsp1.hypothesis_statistic.UPPER_COST_BOUND == mctsp2.hypothesis_statistic.UPPER_COST_BOUND and \
+        mctsp1.hypothesis_statistic.PROGRESSIVE_WIDENING_ALPHA == mctsp2.hypothesis_statistic.PROGRESSIVE_WIDENING_ALPHA and \
+        mctsp1.hypothesis_statistic.PROGRESSIVE_WIDENING_K == mctsp2.hypothesis_statistic.PROGRESSIVE_WIDENING_K and \
+        mctsp1.hypothesis_statistic.EXPLORATION_CONSTANT == mctsp2.hypothesis_statistic.EXPLORATION_CONSTANT and \
+        mctsp1.hypothesis_belief_tracker.RANDOM_SEED_HYPOTHESIS_SAMPLING == \
+                 mctsp2.hypothesis_belief_tracker.RANDOM_SEED_HYPOTHESIS_SAMPLING and \
+        mctsp1.hypothesis_belief_tracker.HISTORY_LENGTH == mctsp2.hypothesis_belief_tracker.HISTORY_LENGTH and \
+        mctsp1.hypothesis_belief_tracker.PROBABILITY_DISCOUNT == mctsp2.hypothesis_belief_tracker.PROBABILITY_DISCOUNT and \
+        mctsp1.hypothesis_belief_tracker.POSTERIOR_TYPE == mctsp2.hypothesis_belief_tracker.POSTERIOR_TYPE and \
+        mctsp1.hypothesis_belief_tracker.FIXED_HYPOTHESIS_SET == mctsp2.hypothesis_belief_tracker.FIXED_HYPOTHESIS_SET
+
+def is_equal_crossing_state_params(cp1, cp2):
+    return cp1.NUM_OTHER_AGENTS == cp2.NUM_OTHER_AGENTS and \
+        cp1.OTHER_AGENTS_POLICY_RANDOM_SEED == cp2.OTHER_AGENTS_POLICY_RANDOM_SEED and \
+        cp1.COST_ONLY_COLLISION == cp2.COST_ONLY_COLLISION  and \
+        cp1.MAX_VELOCITY_EGO == cp2.MAX_VELOCITY_EGO  and \
+        cp1.MIN_VELOCITY_EGO == cp2.MIN_VELOCITY_EGO  and \
+        cp1.MIN_VELOCITY_OTHER == cp2.MIN_VELOCITY_OTHER  and \
+        cp1.MAX_VELOCITY_OTHER == cp2.MAX_VELOCITY_OTHER  and \
+        cp1.EGO_GOAL_POS == cp2.EGO_GOAL_POS and \
+        cp1.CHAIN_LENGTH == cp2.CHAIN_LENGTH   and \
+        cp1.NUM_OTHER_ACTIONS ==  cp2.NUM_OTHER_ACTIONS
+
 class WrapperTests(unittest.TestCase):
-    def import_test(self):
+    def test_import(self):
         from mamcts import MctsCrossingStateIntUctUct
 
-    def pickle_unpickle_test(self):
-        from mamcts import MctsParameters, CrossingStateParameters
+    def test_pickle_unpickle(self):
+        from mamcts import MctsParameters, HypothesisBeliefTracker
         from mamcts import CrossingStateDefaultParametersFloat, CrossingStateDefaultParametersInt
 
         params_mcts = MctsParameters()
@@ -44,16 +77,17 @@ class WrapperTests(unittest.TestCase):
         params_mcts.hypothesis_belief_tracker.HISTORY_LENGTH = 4
         params_mcts.hypothesis_belief_tracker.PROBABILITY_DISCOUNT = 1.0
         params_mcts.hypothesis_belief_tracker.POSTERIOR_TYPE = HypothesisBeliefTracker.PosteriorType.PRODUCT
+        params_mcts.hypothesis_belief_tracker.FIXED_HYPOTHESIS_SET = {1: 5, 10: 4, 3 : 100}
         params_mcts_unpickle = pu(params_mcts)
-        self.assertEqual(params_mcts, params_mcts_unpickle)
+        self.assertTrue(is_equal_mcts_params(params_mcts, params_mcts_unpickle))
 
         params_crossing_state = CrossingStateDefaultParametersFloat()
         params_crossing_state_unpickle = pu(params_crossing_state)
-        self.assertEqual(params_crossing_state, params_crossing_state_unpickle)
-
-        print("test done")
+        self.assertTrue(is_equal_crossing_state_params(params_crossing_state, params_crossing_state_unpickle))
 
         params_crossing_state = CrossingStateDefaultParametersInt()
         params_crossing_state_unpickle = pu(params_crossing_state)
-        self.assertEqual(params_crossing_state, params_crossing_state_unpickle)
-        print(params_crossing_state_unpickle)
+        self.assertTrue(is_equal_crossing_state_params(params_crossing_state, params_crossing_state_unpickle))
+
+if __name__ == '__main__':
+    unittest.main()
