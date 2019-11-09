@@ -190,7 +190,7 @@ TEST(hypothesis_crossing_state_float, hypothesis_friendly)
 {
     const auto params = default_crossing_state_parameters<Domain>();
     auto params_mcts = mcts_default_parameters();
-    params_mcts.hypothesis_belief_tracker.HISTORY_LENGTH = 100;
+    params_mcts.hypothesis_belief_tracker.HISTORY_LENGTH = 10;
     HypothesisBeliefTracker belief_tracker(params_mcts);
     auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis(), params);
     state->add_hypothesis(AgentPolicyCrossingState<Domain>({5,5.5}, params));
@@ -213,7 +213,7 @@ TEST(hypothesis_crossing_state_float, hypothesis_friendly)
         }
       }
       state = state->execute(jointaction, rewards, cost);
-      if (cost > 0) {
+      if (state->is_terminal() && !state->ego_goal_reached()) {
         collision=true;
         break;
       }
@@ -362,8 +362,9 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
       next_state = state->execute(jointaction, rewards, cost);
       belief_tracker.belief_update(*state, *next_state);
       state = next_state;
-      if(cost > 0) {
+      if (state->is_terminal() && !state->ego_goal_reached()) {
         collision=true;
+        break;
       }
       if (next_state->is_terminal()) {
         break;

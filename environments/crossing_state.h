@@ -167,7 +167,7 @@ public:
     }
 
     bool ego_goal_reached() const {
-        return ego_state_.x_pos >= parameters_.CROSSING_POINT();
+        return ego_state_.x_pos >= parameters_.EGO_GOAL_POS;
     }
 
     int min_distance_to_ego() const {

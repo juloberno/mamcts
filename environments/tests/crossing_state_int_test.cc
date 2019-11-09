@@ -44,7 +44,7 @@ TEST(hypothesis_crossing_state, collision )
     auto jointaction = JointAction(state->get_agent_idx().size());
     for (auto agent_idx : state->get_agent_idx()) {
       if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
-        jointaction[agent_idx] = 2;
+        jointaction[agent_idx] =2;
       } else {
         const auto action = aconv<Domain>(1);
         jointaction[agent_idx] = action;
@@ -52,8 +52,8 @@ TEST(hypothesis_crossing_state, collision )
     }
     for(int i = 0; i< 100; ++i) {
       state = state->execute(jointaction, rewards, cost);
-      if (cost > 0 && state->is_terminal()) {
-        collision = true;
+      if (state->is_terminal() && !state->ego_goal_reached()) {
+        collision=true;
         break;
       }
     }
@@ -87,7 +87,7 @@ TEST(hypothesis_crossing_state, hypothesis_friendly)
         }
       }
       state = state->execute(jointaction, rewards, cost);
-      if (cost > 0) {
+      if (state->is_terminal() && !state->ego_goal_reached()) {
         collision=true;
         break;
       }
@@ -229,8 +229,9 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
       next_state = state->execute(jointaction, rewards, cost);
       belief_tracker.belief_update(*state, *next_state);
       state = next_state;
-      if(cost > 0) {
+      if (state->is_terminal() && !state->ego_goal_reached()) {
         collision=true;
+        break;
       }
       if (next_state->is_terminal()) {
         break;
