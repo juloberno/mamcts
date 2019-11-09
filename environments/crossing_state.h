@@ -108,11 +108,11 @@ public:
             }
         }
 
-        const bool goal_reached = next_ego_state.x_pos >= parameters_.EGO_GOAL_POS;
+        const bool goal_reached = (next_ego_state.x_pos >= parameters_.EGO_GOAL_POS) && !collision;
 
         const bool terminal = goal_reached || collision || ego_out_of_map;
         rewards.resize(other_agent_states_.size()+1);
-        rewards[0] = goal_reached * 100.0f - 1000.0f * collision - 1000.0f * ego_out_of_map;
+        rewards[0] = goal_reached * 100.0f - 100.0f * collision - 100.0f * ego_out_of_map - 5.0f;
         if(parameters_.COST_ONLY_COLLISION) {
           ego_cost = collision * 1.0f;
         } else {
