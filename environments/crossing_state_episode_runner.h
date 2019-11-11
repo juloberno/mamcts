@@ -85,8 +85,6 @@ class CrossingStateEpisodeRunner {
         current_state_->draw(viewer_);
       }
 
-      std::cout << "Action = " << jointaction << ", " << current_state_->sprintf() << std::endl;
-
       return std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,
                             std::pair<std::string, bool>, std::pair<std::string, bool>,
                             std::pair<std::string, bool>> (std::pair<std::string, float>(std::string("Reward"), rewards[CrossingState<Domain>::ego_agent_idx]), 
