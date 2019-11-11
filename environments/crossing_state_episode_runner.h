@@ -69,7 +69,7 @@ class CrossingStateEpisodeRunner {
         } else {
           // Other agents act according to unknown true agents policy
           const auto action = agents_true_policies_.at(agent_idx).act(current_state_->get_agent_state(agent_idx),
-                                                      current_state_->get_ego_state().x_pos);
+                                                      current_state_->get_ego_state());
           jointaction[agent_idx] = aconv(action);
         }
       }
@@ -84,6 +84,8 @@ class CrossingStateEpisodeRunner {
       if(viewer_) {
         current_state_->draw(viewer_);
       }
+
+      std::cout << "Action = " << jointaction << ", " << current_state_->sprintf() << std::endl;
 
       return std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,
                             std::pair<std::string, bool>, std::pair<std::string, bool>,

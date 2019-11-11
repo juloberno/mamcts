@@ -125,7 +125,7 @@ TEST(hypothesis_crossing_state, hypothesis_belief_correct)
           jointaction[agent_idx] =  2;
         } else {
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
-                                                     state->get_ego_state().x_pos);
+                                                     state->get_ego_state());
           jointaction[agent_idx] = aconv<Domain>(action);
         }
       }
@@ -175,7 +175,7 @@ TEST(crossing_state, mcts_goal_reached_true_hypothesis)
         } else {
           // Other agents act according to unknown true agents policy
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
-                                                     state->get_ego_state().x_pos);
+                                                     state->get_ego_state());
           jointaction[agent_idx] = aconv<Domain>(action);
         }
       }
@@ -221,7 +221,7 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
         } else {
           // Other agents act according to unknown true agents policy
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
-                                                     state->get_ego_state().x_pos);
+                                                     state->get_ego_state());
           jointaction[agent_idx] = aconv<Domain>(action);
         }
       }

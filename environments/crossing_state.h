@@ -60,12 +60,12 @@ public:
     ActionIdx plan_action_current_hypothesis(const AgentIdx& agent_idx) const {
         const HypothesisId agt_hyp_id = this->current_agents_hypothesis_.at(agent_idx);
         return aconv(hypothesis_.at(agt_hyp_id).act(other_agent_states_[agent_idx-1],
-                                                    ego_state_.x_pos));
+                                                    ego_state_));
     };
 
     template<typename ActionType = Domain>
     Probability get_probability(const HypothesisId& hypothesis, const AgentIdx& agent_idx, const Domain& action) const { 
-        return hypothesis_.at(hypothesis).get_probability(other_agent_states_[agent_idx-1], ego_state_.x_pos, action);
+        return hypothesis_.at(hypothesis).get_probability(other_agent_states_[agent_idx-1], ego_state_, action);
     ;}
 
     template<typename ActionType = Domain>

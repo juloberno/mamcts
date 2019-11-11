@@ -27,12 +27,12 @@ using namespace mcts;
 using Domain = float;
 
 Probability policy_test_helper(const float& agent_pos, const float& agent_last_action,
-                               const float& ego_pos, std::pair<float,float> gap_range,
+                               const float& ego_pos, const float& ego_last_action, std::pair<float,float> gap_range,
                                const float& action) {
   const auto params = default_crossing_state_parameters<Domain>();
   AgentPolicyCrossingState<Domain> policy(gap_range, params);
   AgentState<Domain> astate(agent_pos, agent_last_action);
-  const auto p = policy.get_probability(astate, ego_pos, action);
+  const auto p = policy.get_probability(astate, AgentState<float>(ego_pos, ego_last_action), action);
   return p;
 }
 
@@ -40,115 +40,115 @@ Probability policy_test_helper(const float& agent_pos, const float& agent_last_a
 TEST(hypothesis_crossing_state_float, policy_probability )
 {
   // Both gap bounds yield negative gap error
-  auto p = policy_test_helper(1, 2, 1, {2, 3.5}, -2.5);
+  auto p = policy_test_helper(1, 2, 1, 1.0f, {2, 3.5}, -2.5);
   EXPECT_NEAR(p, 1/(3.5f-2.0f)*0.001, 0.001f);
 
-  p = policy_test_helper(1, 2, 1.8, {2, 3.5}, -2.5);
+  p = policy_test_helper(1, 2, 1.8, 1.0f,  {2, 3.5}, -2.5);
   EXPECT_NEAR(p, 1/(3.5f-2.0f)*0.001, 0.001f);
 
-  p = policy_test_helper(1, 2, 2, {4.5, 5}, -3);
+  p = policy_test_helper(1, 2, 2,1.0f,  {4.5, 5}, -3);
   EXPECT_NEAR(p, 1.0f, 0.001f);
 
-  p = policy_test_helper(1, 2, 1.7f, {3, 5}, -3);
+  p = policy_test_helper(1, 2, 1.7f, 1.0f, {3, 5}, -3);
   EXPECT_NEAR(p, 1.3/(5-3) , 0.001f);
 
-  p = policy_test_helper(1, 2, 3.0f, {3, 5}, -3);
+  p = policy_test_helper(1, 2, 3.0f, 1.0f, {3, 5}, -3);
   EXPECT_NEAR(p, 1.0/(5-3)*0.001 , 0.001f);
 
-  p = policy_test_helper(1, 2, 0.0f, {3, 5}, -4.5);
+  p = policy_test_helper(1, 2, 0.0f, 1.0f, {3, 5}, -4.5);
   EXPECT_NEAR(p, 1.0/(5-3)*0.001 , 0.001f);
 
-  p = policy_test_helper(1, 2, 0.0f, {0, 5}, -3.0f);
+  p = policy_test_helper(1, 2, 0.0f, 1.0f, {0, 5}, -3.0f);
   EXPECT_NEAR(p, 3.0/(5-0) , 0.001f);
 
   // One gap bound yields positive, one gap bound negative error
-  p = policy_test_helper(1, 2, 2.5f, {1, 5}, 0.3f);
+  p = policy_test_helper(1, 2, 2.5f, 1.0f, {1, 5}, 0.3f);
   EXPECT_NEAR(p, 1.0/(5.0-1.0)*0.001 , 0.001f);
 
-  p = policy_test_helper(1, 2, 2.5f, {1, 5}, 0.5f);
+  p = policy_test_helper(1, 2, 2.5f, 1.0f, {1, 5}, 0.5f);
   EXPECT_NEAR(p, 1.0/(5.0-1.0)*0.001 , 0.001f);
 
-  p = policy_test_helper(1, 2, 2.5f, {1, 5}, 1.5f);
+  p = policy_test_helper(1, 2, 2.5f, 1.0f, {1, 5}, 1.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 2, 2.5f, {1, 5}, -3.0f);
+  p = policy_test_helper(1, 2, 2.5f, 1.0f, {1, 5}, -3.0f);
   EXPECT_NEAR(p, 0.5/(5.0-1.0), 0.001f);
 
-  p = policy_test_helper(1, 2, 2.5f, {1, 4.5}, -3.0f);
+  p = policy_test_helper(1, 2, 2.5f, 1.0f, {1, 4.5}, -3.0f);
   EXPECT_NEAR(p, 1.0f/(4.5-1.0)*0.001 , 0.001f);
 
   // Both gap bounds yield positive error
 
   // -- last action not used -------
-  p = policy_test_helper(1, 1, 0.5f, {-3.0f, -2.5f}, 1.5f);
+  p = policy_test_helper(1, 1, 0.5f, 1.0f, {-3.0f, -2.5f}, 1.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 1, 0.5f, {-3.0f, -2.5f}, 2.5f);
+  p = policy_test_helper(1, 1, 0.5f, 1.0f, {-3.0f, -2.5f}, 2.5f);
   EXPECT_NEAR(p, 1.0f/(-2.5+3)*0.001 , 0.001f);
 
-  p = policy_test_helper(1, 1, 0.5f, {-4.0f, -3.5f}, 3.0f);
+  p = policy_test_helper(1, 1, 0.5f, 1.0f, {-4.0f, -3.5f}, 3.0f);
   EXPECT_NEAR(p, 1.0f/(4-3.5)*0.001 , 0.001f);
 
-  p = policy_test_helper(1, 1, 0.5f, {-4.0f, -3.5f}, 2.5f);
+  p = policy_test_helper(1, 1, 0.5f, 1.0f, {-4.0f, -3.5f}, 2.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 1, 0.5f, {-4.0f, -3.5f}, 5.5f);
+  p = policy_test_helper(1, 1, 0.5f, 1.0f, {-4.0f, -3.5f}, 5.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 1, 0.5f, {-3.0f, -2.5f}, 5.5f);
+  p = policy_test_helper(1, 1, 0.5f, 1.0f, {-3.0f, -2.5f}, 5.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 2.5, 0.5f, {-5.0f, -2.5f}, 3.0f);
+  p = policy_test_helper(1, 2.5, 0.5f, 1.0f, {-5.0f, -2.5f}, 3.0f);
   EXPECT_NEAR(p, 1.5/(5-2.5) , 0.001f);
 
   // -- last action used---
-  p = policy_test_helper(1, 1, 0.5f, {-3.0f, -2.5f}, 1.0f);
+  p = policy_test_helper(1, 1, 0.5f, 1.0f, {-3.0f, -2.5f}, 1.0f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 3.5, 0.5f, {-3.0f, -2.5f}, 2.5f);
+  p = policy_test_helper(1, 3.5, 0.5f, 1.0f, {-3.0f, -2.5f}, 2.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 3.5, 0.5f, {-3.0f, -2.5f}, 2.5f);
+  p = policy_test_helper(1, 3.5, 0.5f, 1.0f, {-3.0f, -2.5f}, 2.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 2.5, 0.5f, {-5.0f, -2.5f}, 2.8f);
+  p = policy_test_helper(1, 2.5, 0.5f, 1.0f, {-5.0f, -2.5f}, 2.8f);
   EXPECT_NEAR(p, 1.0/(5-2.5)*0.001 , 0.001f);
 
-  p = policy_test_helper(1, 2.5, 0.5f, {-5.0f, -4.5f}, 3.0f);
+  p = policy_test_helper(1, 2.5, 0.5f, 1.0f, {-5.0f, -4.5f}, 3.0f);
   EXPECT_NEAR(p, 1.0, 0.001f);
 
-  p = policy_test_helper(1, 1.5, 0.5f, {-5.0f, -1.5f}, 1.5f);
+  p = policy_test_helper(1, 1.5, 0.5f, 1.0f, {-5.0f, -1.5f}, 1.5f);
   EXPECT_NEAR(p, 1.0/(5-1.5)*0.001, 0.001f);
 
-  p = policy_test_helper(1, 3.5, 0.5f, {-1.5f, -0.5f}, 3.5f);
+  p = policy_test_helper(1, 3.5, 0.5f, 1.0f, {-1.5f, -0.5f}, 3.5f);
   EXPECT_NEAR(p, 1.0, 0.001f);
 
   // Some gap bounds yield positive some negative error
-  p = policy_test_helper(1, 0.0f, 1.0f, {-1.0f, 1.0f}, 0.5f);
+  p = policy_test_helper(1, 0.0f, 1.0f, 1.0f, {-1.0f, 1.0f}, 0.5f);
   EXPECT_NEAR(p, 1.0/(1.0+1.0f)*0.001, 0.001f);
 
-  p = policy_test_helper(1, 0.0f, 0.5f, {-1.0f, 1.0f}, 0.2f);
+  p = policy_test_helper(1, 0.0f, 0.5f, 1.0f, {-1.0f, 1.0f}, 0.2f);
   EXPECT_NEAR(p, 1.0/(1.0+1.0f)*0.001, 0.001f);
 
-  p = policy_test_helper(1, 0.0f, 0.5f, {-5.0f, 5.0f}, 3.0f);
+  p = policy_test_helper(1, 0.0f, 0.5f, 1.0f, {-5.0f, 5.0f}, 3.0f);
   EXPECT_NEAR(p, 1.5/(5.0+5.0f), 0.001f);
 
-  p = policy_test_helper(1, 1.5, 0.5f, {-5.0f, 1.5f}, 1.5f);
+  p = policy_test_helper(1, 1.5, 0.5f, 1.0f, {-5.0f, 1.5f}, 1.5f);
   EXPECT_NEAR(p, 1.0/(5+1.5)*0.001, 0.001f);
 
-  p = policy_test_helper(1, 3.5, 0.5f, {-3.0f, 2.5f}, 2.5f);
+  p = policy_test_helper(1, 3.5, 0.5f, 1.0f, {-3.0f, 2.5f}, 2.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 2, 2.5f, {-1, 5}, -3.0f);
+  p = policy_test_helper(1, 2, 2.5f, 1.0f, {-1, 5}, -3.0f);
   EXPECT_NEAR(p, 0.5/(5.0+1.0), 0.001f);
 
-  p = policy_test_helper(1, 1, 0.5f, {-3.0f, 2.5f}, -2.5f);
+  p = policy_test_helper(1, 1, 0.5f, 1.0f, {-3.0f, 2.5f}, -2.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(3, 1, 0.5f, {-3.0f, 4.5f}, 1.9f);
+  p = policy_test_helper(3, 1, 0.5f, 1.0f, {-3.0f, 4.5f}, 1.9f);
   EXPECT_NEAR(p, 1.0/(3.0+4.5)*0.001 , 0.001f);
 
-  p = policy_test_helper(1, 2.0, 2.5f, {-1, 5}, 0.0f);
+  p = policy_test_helper(1, 2.0, 2.5f, 1.0f, {-1, 5}, 0.0f);
   EXPECT_NEAR(p, 1.0/(5.0+1.0)*0.001, 0.001f);
 }
 
@@ -178,10 +178,44 @@ TEST(hypothesis_crossing_state_float, collision )
     }
     for(int i = 0; i< 100; ++i) {
       state = state->execute(jointaction, rewards, cost);
-      if (cost > 0 && state->is_terminal()) {
+      if (state->is_terminal() && !state->ego_goal_reached()) {
         collision = true;
         break;
       }
+    }
+    EXPECT_TRUE(collision);
+}
+
+TEST(hypothesis_crossing_state_float, collision_2 )
+{ 
+    const auto params = default_crossing_state_parameters<Domain>();
+    auto params_mcts = mcts_default_parameters();
+    params_mcts.hypothesis_belief_tracker.HISTORY_LENGTH = 100;
+    HypothesisBeliefTracker belief_tracker(params_mcts);
+    std::vector<AgentState<Domain>> other_agent_states(params.NUM_OTHER_AGENTS, AgentState<Domain>(6.0,2.0));
+    auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis(), params,
+                                                        other_agent_states,
+                                                        AgentState<Domain>(8.0f,5.0f),
+                                                        false,
+                                                        std::vector<AgentPolicyCrossingState<Domain>>());
+
+    std::vector<Reward> rewards;
+    Cost cost;
+    bool collision = false;
+
+    // All agents move forward 
+    auto jointaction = JointAction(state->get_agent_idx().size());
+    for (auto agent_idx : state->get_agent_idx()) {
+      if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
+        jointaction[agent_idx] = 4;
+      } else {
+        const auto action = aconv<Domain>(6.0f);
+        jointaction[agent_idx] = action;
+      }
+    }
+    state = state->execute(jointaction, rewards, cost);
+    if (state->is_terminal() && !state->ego_goal_reached()) {
+      collision = true;
     }
     EXPECT_TRUE(collision);
 }
@@ -256,7 +290,7 @@ TEST(hypothesis_crossing_state_float, hypothesis_belief_correct)
           jointaction[agent_idx] =  2;
         } else {
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
-                                                     state->get_ego_state().x_pos);
+                                                     state->get_ego_state());
           jointaction[agent_idx] = aconv<Domain>(action);
         }
       }
@@ -308,7 +342,7 @@ TEST(crossing_state, mcts_goal_reached_true_hypothesis)
         } else {
           // Other agents act according to unknown true agents policy
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
-                                                     state->get_ego_state().x_pos);
+                                                     state->get_ego_state());
           jointaction[agent_idx] = aconv<Domain>(action);
         }
       }
@@ -354,7 +388,7 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
         } else {
           // Other agents act according to unknown true agents policy
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
-                                                     state->get_ego_state().x_pos);
+                                                     state->get_ego_state());
           jointaction[agent_idx] = aconv<Domain>(action);
         }
       }
@@ -398,11 +432,29 @@ TEST(episode_runner, four_agents_reached_goal) {
   EXPECT_TRUE(std::get<4>(result).second);
 }
 
+TEST(episode_runner, collision_return_true) {
+  auto params = default_crossing_state_parameters<Domain>();
+  auto runner = CrossingStateEpisodeRunner<Domain>(
+      { {1 , AgentPolicyCrossingState<Domain>({-0.01,0.01}, params)},
+        {2 , AgentPolicyCrossingState<Domain>({-0.01,0.01}, params)}},
+      {AgentPolicyCrossingState<Domain>({3,4}, params), 
+        AgentPolicyCrossingState<Domain>({-3,-2}, params),
+        AgentPolicyCrossingState<Domain>({5,6}, params)},
+        mcts_default_parameters(),
+        params,
+        30,
+        200,
+        10000,
+        nullptr);
+  auto result = runner.run();
+  EXPECT_TRUE(std::get<3>(result).second);
+}
+
 TEST(episode_runner, run_some_steps) {
   const auto params = default_crossing_state_parameters<Domain>();
   auto runner = CrossingStateEpisodeRunner<Domain>(
-      { {1 , AgentPolicyCrossingState<Domain>({5,5}, params)},
-        {2 , AgentPolicyCrossingState<Domain>({5,5}, params)}},
+      { {1 , AgentPolicyCrossingState<Domain>({-0.01,0.01}, params)},
+        {2 , AgentPolicyCrossingState<Domain>({-0.01,0.01}, params)}},
       {AgentPolicyCrossingState<Domain>({4,5}, params), 
         AgentPolicyCrossingState<Domain>({5,6}, params)},
         mcts_default_parameters(),

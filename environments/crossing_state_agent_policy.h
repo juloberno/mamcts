@@ -28,14 +28,14 @@ class AgentPolicyCrossingState : public RandomGenerator {
                                 MCTS_EXPECT_TRUE(desired_gap_range.first <= desired_gap_range.second)
                             }
 
-    Domain act(const AgentState<Domain>& agent_state, const Domain& ego_pos) const;
+    Domain act(const AgentState<Domain>& agent_state, const AgentState<Domain>& ego_state) const;
 
-    Probability get_probability(const AgentState<Domain>& agent_state, const Domain& ego_pos, const Domain& action) const;
+    Probability get_probability(const AgentState<Domain>& agent_state, const AgentState<Domain>& ego_state, const Domain& action) const;
 
-    Domain calculate_action(const AgentState<Domain>& agent_state, const Domain& ego_pos, const Domain& desired_gap_dst) const {
+    Domain calculate_action(const AgentState<Domain>& agent_state, const AgentState<Domain> ego_state, const Domain& desired_gap_dst) const {
         // If past crossing point, use last execute action
         if(agent_state.x_pos < parameters_.CROSSING_POINT() ) {        
-            const auto gap_error = ego_pos - agent_state.x_pos - desired_gap_dst;
+            const auto gap_error = ego_state.x_pos - agent_state.x_pos - desired_gap_dst;
             // gap_error < 0 -> brake to increase distance
             if (desired_gap_dst > 0) {
                 if(gap_error < 0) {
@@ -65,31 +65,31 @@ class AgentPolicyCrossingState : public RandomGenerator {
 };
 
 template <>
-inline int AgentPolicyCrossingState<int>::act(const AgentState<int>& agent_state, const int& ego_pos) const {
+inline int AgentPolicyCrossingState<int>::act(const AgentState<int>& agent_state, const AgentState<int>& ego_state) const {
     // sample desired gap parameter
     std::uniform_int_distribution<int> dis(desired_gap_range_.first, desired_gap_range_.second);
     int desired_gap_dst = dis(this->random_generator_);
 
-    return calculate_action(agent_state, ego_pos, desired_gap_dst);
+    return calculate_action(agent_state, ego_state, desired_gap_dst);
 }
 
 template <>
-inline float AgentPolicyCrossingState<float>::act(const AgentState<float>& agent_state, const float& ego_pos) const {
+inline float AgentPolicyCrossingState<float>::act(const AgentState<float>& agent_state, const AgentState<float>& ego_state) const {
     // sample desired gap parameter
     std::uniform_real_distribution<float> dis(desired_gap_range_.first, desired_gap_range_.second);
-    int desired_gap_dst = dis(this->random_generator_);
+    float desired_gap_dst = dis(this->random_generator_);
 
-    return calculate_action(agent_state, ego_pos, desired_gap_dst);
+    return calculate_action(agent_state, ego_state, desired_gap_dst);
 }
 
 
 template <>
-inline Probability AgentPolicyCrossingState<int>::get_probability(const AgentState<int>& agent_state, const int& ego_pos, const int& action) const {
+inline Probability AgentPolicyCrossingState<int>::get_probability(const AgentState<int>& agent_state, const AgentState<int>& ego_state, const int& action) const {
     std::vector<int> gap_distances(desired_gap_range_.second - desired_gap_range_.first+1);
     std::iota(gap_distances.begin(), gap_distances.end(),desired_gap_range_.first);
     unsigned int action_selected = 0;
     for(const auto& desired_gap_dst : gap_distances) {
-        const auto calculated = calculate_action(agent_state, ego_pos, desired_gap_dst);
+        const auto calculated = calculate_action(agent_state, ego_state, desired_gap_dst);
         if(calculated == action ) {
             action_selected++;
         }
@@ -99,7 +99,7 @@ inline Probability AgentPolicyCrossingState<int>::get_probability(const AgentSta
 }
 
 template <>
-inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentState<float>& agent_state, const float& ego_pos, const float& action) const {
+inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentState<float>& agent_state, const AgentState<float>& ego_state, const float& action) const {
     const float gap_discretization = 0.001f;
     MCTS_EXPECT_TRUE((desired_gap_range_.second-desired_gap_range_.first) > gap_discretization);
     MCTS_EXPECT_TRUE((desired_gap_range_.second-desired_gap_range_.first) % gap_discretization == 0);
@@ -204,9 +204,9 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
         
     // Distinguish between the different cases 
     if(agent_state.x_pos < parameters_.CROSSING_POINT() ) {
-        const auto gap_error_min = ego_pos - agent_state.x_pos - desired_gap_range_.first;
-        const auto gap_error_max = ego_pos - agent_state.x_pos - desired_gap_range_.second;
-        const auto gap_error_desired_gap_zero = ego_pos - agent_state.x_pos;
+        const auto gap_error_min = ego_state.x_pos - agent_state.x_pos - desired_gap_range_.first;
+        const auto gap_error_max = ego_state.x_pos - agent_state.x_pos - desired_gap_range_.second;
+        const auto gap_error_desired_gap_zero = ego_state.x_pos - agent_state.x_pos;
         if ( desired_gap_range_.first >= 0 && desired_gap_range_.second > 0) {
             const Probability uniform_prob = 1/std::abs(desired_gap_range_.second-desired_gap_range_.first);
             const Probability single_sample_prob = uniform_prob * gap_discretization;
