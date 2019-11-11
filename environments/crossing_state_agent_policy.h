@@ -34,8 +34,9 @@ class AgentPolicyCrossingState : public RandomGenerator {
 
     Domain calculate_action(const AgentState<Domain>& agent_state, const AgentState<Domain> ego_state, const Domain& desired_gap_dst) const {
         // If past crossing point, use last execute action
-        if(agent_state.x_pos < parameters_.CROSSING_POINT() ) {        
-            const auto gap_error = ego_state.x_pos - agent_state.x_pos - desired_gap_dst;
+        if(agent_state.x_pos < parameters_.CROSSING_POINT() ) {
+            // use a forward predicted ego state based on the last action
+            const auto gap_error = ego_state.x_pos + ego_state.last_action - agent_state.x_pos - desired_gap_dst;
             // gap_error < 0 -> brake to increase distance
             if (desired_gap_dst > 0) {
                 if(gap_error < 0) {
@@ -204,9 +205,9 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
         
     // Distinguish between the different cases 
     if(agent_state.x_pos < parameters_.CROSSING_POINT() ) {
-        const auto gap_error_min = ego_state.x_pos - agent_state.x_pos - desired_gap_range_.first;
-        const auto gap_error_max = ego_state.x_pos - agent_state.x_pos - desired_gap_range_.second;
-        const auto gap_error_desired_gap_zero = ego_state.x_pos - agent_state.x_pos;
+        const auto gap_error_min = ego_state.x_pos + ego_state.last_action - agent_state.x_pos - desired_gap_range_.first;
+        const auto gap_error_max = ego_state.x_pos + ego_state.last_action - agent_state.x_pos - desired_gap_range_.second;
+        const auto gap_error_desired_gap_zero = ego_state.x_pos + ego_state.last_action - agent_state.x_pos;
         if ( desired_gap_range_.first >= 0 && desired_gap_range_.second > 0) {
             const Probability uniform_prob = 1/std::abs(desired_gap_range_.second-desired_gap_range_.first);
             const Probability single_sample_prob = uniform_prob * gap_discretization;

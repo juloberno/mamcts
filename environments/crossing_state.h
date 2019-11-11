@@ -31,6 +31,8 @@ public:
                             other_agent_states_(parameters.NUM_OTHER_AGENTS),
                             ego_state_(),
                             terminal_(false),
+                            goal_reached_(false),
+                            collided_(false),
                             parameters_(parameters) {
                                 for (auto& state : other_agent_states_) {
                                     state = AgentState<Domain>();
@@ -42,6 +44,8 @@ public:
                   const std::vector<AgentState<Domain>>& other_agent_states,
                   const AgentState<Domain>& ego_state,
                   const bool& terminal,
+                  const bool& goal_reached,
+                  const bool& collided,
                   const std::vector<AgentPolicyCrossingState<Domain>>& hypothesis
                   ) : 
                             HypothesisStateInterface<CrossingState>(current_agents_hypothesis),
@@ -49,6 +53,8 @@ public:
                             other_agent_states_(other_agent_states),
                             ego_state_(ego_state),
                             terminal_(terminal),
+                            goal_reached_(goal_reached),
+                            collided_(collided),
                             parameters_(parameters) {};
     ~CrossingState() {};
 
@@ -90,7 +96,7 @@ public:
         if(new_x_ego < 0) {
             ego_out_of_map = true;
         }
-        const AgentState<Domain> next_ego_state(new_x_ego, aconv<Domain>(joint_action[this->ego_agent_idx]));
+        const AgentState<Domain> next_ego_state(new_x_ego, idx_to_ego_crossing_action(joint_action[this->ego_agent_idx]));
 
         std::vector<AgentState<Domain>> next_other_agent_states(other_agent_states_.size());
         bool collision = false;
@@ -124,6 +130,8 @@ public:
                                                        next_other_agent_states,
                                                        next_ego_state,
                                                        terminal,
+                                                       goal_reached,
+                                                       collision,
                                                        hypothesis_);
     }
 
@@ -167,7 +175,11 @@ public:
     }
 
     bool ego_goal_reached() const {
-        return ego_state_.x_pos >= parameters_.EGO_GOAL_POS;
+        return goal_reached_;
+    }
+
+    bool ego_collided() const {
+        return collided_;
     }
 
     int min_distance_to_ego() const {
@@ -271,7 +283,9 @@ private:
 
     std::vector<AgentState<Domain>> other_agent_states_;
     AgentState<Domain> ego_state_;
-    bool terminal_;
+    const bool terminal_;
+    const bool goal_reached_;
+    const bool collided_;
 
     const CrossingStateParameters<Domain>& parameters_;
 };

@@ -46,19 +46,19 @@ TEST(hypothesis_crossing_state_float, policy_probability )
   p = policy_test_helper(1, 2, 1.8, 1.0f,  {2, 3.5}, -2.5);
   EXPECT_NEAR(p, 1/(3.5f-2.0f)*0.001, 0.001f);
 
-  p = policy_test_helper(1, 2, 2,1.0f,  {4.5, 5}, -3);
+  p = policy_test_helper(2, 2, 2, 1.0f,  {4.5, 5}, -3);
   EXPECT_NEAR(p, 1.0f, 0.001f);
 
-  p = policy_test_helper(1, 2, 1.7f, 1.0f, {3, 5}, -3);
+  p = policy_test_helper(2, 2, 1.7f, 1.0f, {3, 5}, -3);
   EXPECT_NEAR(p, 1.3/(5-3) , 0.001f);
 
-  p = policy_test_helper(1, 2, 3.0f, 1.0f, {3, 5}, -3);
+  p = policy_test_helper(2, 2, 3.0f, 1.0f, {3, 5}, -3);
   EXPECT_NEAR(p, 1.0/(5-3)*0.001 , 0.001f);
 
   p = policy_test_helper(1, 2, 0.0f, 1.0f, {3, 5}, -4.5);
   EXPECT_NEAR(p, 1.0/(5-3)*0.001 , 0.001f);
 
-  p = policy_test_helper(1, 2, 0.0f, 1.0f, {0, 5}, -3.0f);
+  p = policy_test_helper(2, 2, 0.0f, 1.0f, {0, 5}, -3.0f);
   EXPECT_NEAR(p, 3.0/(5-0) , 0.001f);
 
   // One gap bound yields positive, one gap bound negative error
@@ -71,7 +71,7 @@ TEST(hypothesis_crossing_state_float, policy_probability )
   p = policy_test_helper(1, 2, 2.5f, 1.0f, {1, 5}, 1.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 2, 2.5f, 1.0f, {1, 5}, -3.0f);
+  p = policy_test_helper(2, 2, 2.5f, 1.0f, {1, 5}, -3.0f);
   EXPECT_NEAR(p, 0.5/(5.0-1.0), 0.001f);
 
   p = policy_test_helper(1, 2, 2.5f, 1.0f, {1, 4.5}, -3.0f);
@@ -83,10 +83,10 @@ TEST(hypothesis_crossing_state_float, policy_probability )
   p = policy_test_helper(1, 1, 0.5f, 1.0f, {-3.0f, -2.5f}, 1.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 1, 0.5f, 1.0f, {-3.0f, -2.5f}, 2.5f);
+  p = policy_test_helper(2, 1, 0.5f, 1.0f, {-3.0f, -2.5f}, 2.5f);
   EXPECT_NEAR(p, 1.0f/(-2.5+3)*0.001 , 0.001f);
 
-  p = policy_test_helper(1, 1, 0.5f, 1.0f, {-4.0f, -3.5f}, 3.0f);
+  p = policy_test_helper(2, 1, 0.5f, 1.0f, {-4.0f, -3.5f}, 3.0f);
   EXPECT_NEAR(p, 1.0f/(4-3.5)*0.001 , 0.001f);
 
   p = policy_test_helper(1, 1, 0.5f, 1.0f, {-4.0f, -3.5f}, 2.5f);
@@ -98,7 +98,7 @@ TEST(hypothesis_crossing_state_float, policy_probability )
   p = policy_test_helper(1, 1, 0.5f, 1.0f, {-3.0f, -2.5f}, 5.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 2.5, 0.5f, 1.0f, {-5.0f, -2.5f}, 3.0f);
+  p = policy_test_helper(2, 2.5, 0.5f, 1.0f, {-5.0f, -2.5f}, 3.0f);
   EXPECT_NEAR(p, 1.5/(5-2.5) , 0.001f);
 
   // -- last action used---
@@ -130,7 +130,7 @@ TEST(hypothesis_crossing_state_float, policy_probability )
   p = policy_test_helper(1, 0.0f, 0.5f, 1.0f, {-1.0f, 1.0f}, 0.2f);
   EXPECT_NEAR(p, 1.0/(1.0+1.0f)*0.001, 0.001f);
 
-  p = policy_test_helper(1, 0.0f, 0.5f, 1.0f, {-5.0f, 5.0f}, 3.0f);
+  p = policy_test_helper(2, 0.0f, 0.5f, 1.0f, {-5.0f, 5.0f}, 3.0f);
   EXPECT_NEAR(p, 1.5/(5.0+5.0f), 0.001f);
 
   p = policy_test_helper(1, 1.5, 0.5f, 1.0f, {-5.0f, 1.5f}, 1.5f);
@@ -139,7 +139,7 @@ TEST(hypothesis_crossing_state_float, policy_probability )
   p = policy_test_helper(1, 3.5, 0.5f, 1.0f, {-3.0f, 2.5f}, 2.5f);
   EXPECT_NEAR(p, 0.0f , 0.001f);
 
-  p = policy_test_helper(1, 2, 2.5f, 1.0f, {-1, 5}, -3.0f);
+  p = policy_test_helper(2, 2, 2.5f, 1.0f, {-1, 5}, -3.0f);
   EXPECT_NEAR(p, 0.5/(5.0+1.0), 0.001f);
 
   p = policy_test_helper(1, 1, 0.5f, 1.0f, {-3.0f, 2.5f}, -2.5f);
@@ -196,6 +196,8 @@ TEST(hypothesis_crossing_state_float, collision_2 )
     auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis(), params,
                                                         other_agent_states,
                                                         AgentState<Domain>(8.0f,5.0f),
+                                                        false,
+                                                        false,
                                                         false,
                                                         std::vector<AgentPolicyCrossingState<Domain>>());
 
@@ -255,7 +257,7 @@ TEST(hypothesis_crossing_state_float, hypothesis_friendly)
         break;
       }
     }
-    EXPECT_TRUE(state->min_distance_to_ego() >= 6); // the deterministic hypothesis keeps a desired gap of 5
+    EXPECT_TRUE(state->min_distance_to_ego() >= 5); // the deterministic hypothesis keeps a desired gap of 5
     EXPECT_FALSE(collision);
 }
 

@@ -78,7 +78,7 @@ class CrossingStateEpisodeRunner {
       current_state_ = last_state_->execute(jointaction, rewards, cost);
       belief_tracker_.belief_update(*last_state_, *current_state_);
       
-      bool collision = current_state_->is_terminal() && !current_state_->ego_goal_reached();
+      bool collision = current_state_->ego_collided();
       bool goal_reached = current_state_->ego_goal_reached();
 
       if(viewer_) {
