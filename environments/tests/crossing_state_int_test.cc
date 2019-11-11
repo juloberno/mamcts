@@ -95,7 +95,7 @@ TEST(hypothesis_crossing_state, hypothesis_friendly)
         break;
       }
     }
-    EXPECT_EQ(state->min_distance_to_ego(), 6); // the deterministic hypothesis keeps a desired gap of 5
+    EXPECT_EQ(state->min_distance_to_ego(), 5); // the deterministic hypothesis keeps a desired gap of 5
     EXPECT_FALSE(collision);
 }
 
