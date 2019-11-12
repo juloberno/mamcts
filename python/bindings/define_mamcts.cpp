@@ -123,6 +123,8 @@ void define_mamcts(py::module m)
       })
       .def_readwrite("COST_BASED_ACTION_SELECTION",
                  &MctsParameters::HypothesisStatisticParameters::COST_BASED_ACTION_SELECTION)
+       .def_readwrite("PROGRESSIVE_WIDENING_HYPOTHESIS_BASED",
+                 &MctsParameters::HypothesisStatisticParameters::PROGRESSIVE_WIDENING_HYPOTHESIS_BASED)
       .def_readwrite("UPPER_COST_BOUND",
                  &MctsParameters::HypothesisStatisticParameters::UPPER_COST_BOUND)
       .def_readwrite("LOWER_COST_BOUND",
@@ -138,6 +140,7 @@ void define_mamcts(py::module m)
             /* Return a tuple that fully encodes the state of the object */
             py::dict d;
             d["COST_BASED_ACTION_SELECTION"] = p.COST_BASED_ACTION_SELECTION;
+            d["PROGRESSIVE_WIDENING_HYPOTHESIS_BASED"] = p.PROGRESSIVE_WIDENING_HYPOTHESIS_BASED;
             d["UPPER_COST_BOUND"] = p.UPPER_COST_BOUND;
             d["LOWER_COST_BOUND"] = p.LOWER_COST_BOUND;
             d["PROGRESSIVE_WIDENING_K"] = p.PROGRESSIVE_WIDENING_K;
@@ -146,12 +149,13 @@ void define_mamcts(py::module m)
             return d;
         },
         [](py::dict d) { // __setstate__
-            if (d.size() != 6)
+            if (d.size() != 7)
                 throw std::runtime_error("Invalid HypothesisStatisticParameters state!");
 
             /* Create a new C++ instance */
             MctsParameters::HypothesisStatisticParameters p;
             p.COST_BASED_ACTION_SELECTION = d["COST_BASED_ACTION_SELECTION"].cast<bool>();
+            p.PROGRESSIVE_WIDENING_HYPOTHESIS_BASED = d["PROGRESSIVE_WIDENING_HYPOTHESIS_BASED"].cast<bool>();
             p.UPPER_COST_BOUND = d["UPPER_COST_BOUND"].cast<double>();
             p.LOWER_COST_BOUND = d["LOWER_COST_BOUND"].cast<double>();
             p.PROGRESSIVE_WIDENING_K = d["PROGRESSIVE_WIDENING_K"].cast<double>();
