@@ -38,6 +38,13 @@ class PyViewer : public mcts::Viewer {
         linewidth,
         color);
   }
+
+   void clear() override {
+    PYBIND11_OVERLOAD_PURE(
+        void,
+        mcts::Viewer,
+        clear);
+  }
 };
 
 
