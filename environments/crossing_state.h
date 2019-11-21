@@ -211,7 +211,6 @@ public:
 
     
     void draw(mcts::Viewer* viewer) const {
-        viewer->clear();
         // draw map ( crossing point is always at zero)
         const float state_draw_dst = 1.0f;
         const float linewidth = 2;
