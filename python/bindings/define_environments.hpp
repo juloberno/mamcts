@@ -45,6 +45,14 @@ class PyViewer : public mcts::Viewer {
         mcts::Viewer,
         clear);
   }
+
+  void show(bool block) override {
+    PYBIND11_OVERLOAD_PURE(
+        void,
+        mcts::Viewer,
+        show,
+        block);
+  }
 };
 
 
