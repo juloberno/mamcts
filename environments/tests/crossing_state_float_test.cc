@@ -269,16 +269,16 @@ TEST(hypothesis_crossing_state_float, hypothesis_belief_correct)
 
     auto params_mcts = mcts_default_parameters();
     params_mcts.hypothesis_belief_tracker.HISTORY_LENGTH = 100;
-    params_mcts.hypothesis_belief_tracker.POSTERIOR_TYPE =  HypothesisBeliefTracker::SUM;
+    params_mcts.hypothesis_belief_tracker.POSTERIOR_TYPE = HypothesisBeliefTracker::SUM;
 
     // This test checks if hypothesis probability is split up correctly between two overlapping hypothesis
     HypothesisBeliefTracker belief_tracker(params_mcts);
     auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis(), params);
-    state->add_hypothesis(AgentPolicyCrossingState<Domain>({4,5}, params));
-    state->add_hypothesis(AgentPolicyCrossingState<Domain>({5,6}, params));
+    state->add_hypothesis(AgentPolicyCrossingState<Domain>({0.1, 0.5}, params));
+    state->add_hypothesis(AgentPolicyCrossingState<Domain>({0.5, 0.9}, params));
     auto next_state = state;
 
-    AgentPolicyCrossingState<Domain> true_agents_policy({4.5,5.5}, params);
+    AgentPolicyCrossingState<Domain> true_agents_policy({0.3, 0.7}, params);
 
     std::vector<Reward> rewards;
     Cost cost;

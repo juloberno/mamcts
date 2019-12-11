@@ -47,7 +47,10 @@ def is_equal_crossing_state_params(cp1, cp2):
         cp1.MAX_VELOCITY_OTHER == cp2.MAX_VELOCITY_OTHER  and \
         cp1.EGO_GOAL_POS == cp2.EGO_GOAL_POS and \
         cp1.CHAIN_LENGTH == cp2.CHAIN_LENGTH   and \
-        cp1.NUM_OTHER_ACTIONS ==  cp2.NUM_OTHER_ACTIONS
+        cp1.NUM_OTHER_ACTIONS ==  cp2.NUM_OTHER_ACTIONS and \
+        cp1.REWARD_COLLISION ==  cp2.REWARD_COLLISION and \
+        cp1.REWARD_GOAL_REACHED ==  cp2.REWARD_GOAL_REACHED and \
+        cp1.REWARD_STEP ==  cp2.REWARD_STEP
 
 class WrapperTests(unittest.TestCase):
     def test_import(self):

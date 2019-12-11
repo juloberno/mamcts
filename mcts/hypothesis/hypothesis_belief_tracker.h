@@ -95,7 +95,12 @@ void HypothesisBeliefTracker::belief_update(const HypothesisStateInterface<S>& s
         }
 
         // calculate belief
-        Probability belief = state.get_prior(hid, agent_idx);
+        Probability belief;
+        if(posterior_type_ == PosteriorType::PRODUCT) {
+            belief = state.get_prior(hid, agent_idx);
+          } else if(posterior_type_ == PosteriorType::SUM) {
+            belief = 0.0001f; // some small value to initialize sum
+          }
         float current_pdiscount = probability_discount_;
         const auto& probabilities = probability_track_agent[hid];
         //std::cout << "Update ------------------" << std::endl;

@@ -33,6 +33,9 @@ void define_crossing_state(py::module m, std::string suffix) {
       .def_property_readonly("CROSSING_POINT",&CrossingStateParameters<Domain>::CROSSING_POINT)
       .def_property_readonly("NUM_EGO_ACTIONS",&CrossingStateParameters<Domain>::NUM_EGO_ACTIONS)
       .def_readwrite("NUM_OTHER_ACTIONS",&CrossingStateParameters<Domain>::NUM_OTHER_ACTIONS)
+      .def_readwrite("REWARD_COLLISION",&CrossingStateParameters<Domain>::REWARD_COLLISION)
+      .def_readwrite("REWARD_GOAL_REACHED",&CrossingStateParameters<Domain>::REWARD_GOAL_REACHED)
+      .def_readwrite("REWARD_STEP",&CrossingStateParameters<Domain>::REWARD_STEP)
       .def("__repr__", [](const CrossingStateParameters<Domain> &m) {
         return typeid(m).name();
       })
@@ -50,10 +53,13 @@ void define_crossing_state(py::module m, std::string suffix) {
             d["EGO_GOAL_POS"] = p.EGO_GOAL_POS;
             d["CHAIN_LENGTH"] = p.CHAIN_LENGTH;
             d["NUM_OTHER_ACTIONS"] = p.NUM_OTHER_ACTIONS;
+            d["REWARD_COLLISION"] = p.REWARD_COLLISION;
+            d["REWARD_GOAL_REACHED"] = p.REWARD_GOAL_REACHED;
+            d["REWARD_STEP"] = p.REWARD_STEP;
             return d;
         },
         [](py::dict d) { // __setstate__
-            if (d.size() != 10)
+            if (d.size() != 13)
                 throw std::runtime_error("Invalid CrossingStateParameters state!");
 
             /* Create a new C++ instance */
@@ -68,6 +74,9 @@ void define_crossing_state(py::module m, std::string suffix) {
             p.EGO_GOAL_POS = d["EGO_GOAL_POS"].cast<Domain>();
             p.CHAIN_LENGTH = d["CHAIN_LENGTH"].cast<Domain>();
             p.NUM_OTHER_ACTIONS = d["NUM_OTHER_ACTIONS"].cast<unsigned int>();
+            p.REWARD_COLLISION = d["REWARD_COLLISION"].cast<Reward>();
+            p.REWARD_GOAL_REACHED = d["REWARD_GOAL_REACHED"].cast<Reward>();
+            p.REWARD_STEP = d["REWARD_STEP"].cast<Reward>();
 
             return p;
         }

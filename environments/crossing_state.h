@@ -83,7 +83,7 @@ public:
         }
     }
 
-    Probability get_prior(const HypothesisId& hypothesis, const AgentIdx& agent_idx) const { return 0.001f;}
+    Probability get_prior(const HypothesisId& hypothesis, const AgentIdx& agent_idx) const { return 0.5f;}
 
     HypothesisId get_num_hypothesis(const AgentIdx& agent_idx) const {return hypothesis_.size();}
 
@@ -118,7 +118,9 @@ public:
 
         const bool terminal = goal_reached || collision || ego_out_of_map;
         rewards.resize(other_agent_states_.size()+1);
-        rewards[0] = goal_reached * 100.0f - 1000.0f * collision - 1000.0f * ego_out_of_map;
+        rewards[0] = goal_reached * parameters_.REWARD_GOAL_REACHED
+                   + collision * parameters_.REWARD_COLLISION + parameters_.REWARD_COLLISION * ego_out_of_map
+                   + parameters_.REWARD_STEP;
         if(parameters_.COST_ONLY_COLLISION) {
           ego_cost = collision * 1.0f;
         } else {

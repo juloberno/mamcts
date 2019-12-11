@@ -26,6 +26,10 @@ struct CrossingStateParameters {
     Domain CHAIN_LENGTH; 
     Domain EGO_GOAL_POS;
     Domain CROSSING_POINT() const { return (CHAIN_LENGTH-1)/2+1; }
+
+    Reward REWARD_COLLISION;
+    Reward REWARD_GOAL_REACHED;
+    Reward REWARD_STEP;
 };
 
 
@@ -46,6 +50,10 @@ CrossingStateParameters<Domain> default_crossing_state_parameters() {
   } else if (std::is_same<Domain, float>::value) {
     parameters.NUM_OTHER_ACTIONS = 30;
   }
+
+  parameters.REWARD_COLLISION = -1000.0f;
+  parameters.REWARD_GOAL_REACHED = 100.0f;
+  parameters.REWARD_STEP = 0.0f;
 
   return parameters;
 }
