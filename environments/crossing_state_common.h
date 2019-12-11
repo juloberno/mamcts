@@ -28,7 +28,7 @@ inline ActionIdx aconv(const Domain& action) {
 
 template <typename Domain>
 struct AgentState {
-    AgentState() : x_pos(0), last_action(2.0f) {}
+    AgentState() : x_pos(5), last_action(2.0f) {}
     AgentState(const Domain& x, const Domain& last_action) : 
             x_pos(x), last_action(last_action) {}
     Domain x_pos;
