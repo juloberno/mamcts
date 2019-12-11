@@ -83,7 +83,7 @@ public:
         }
     }
 
-    Probability get_prior(const HypothesisId& hypothesis, const AgentIdx& agent_idx) const { return 0.5f;}
+    Probability get_prior(const HypothesisId& hypothesis, const AgentIdx& agent_idx) const { return 0.001f;}
 
     HypothesisId get_num_hypothesis(const AgentIdx& agent_idx) const {return hypothesis_.size();}
 
