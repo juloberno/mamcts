@@ -82,7 +82,9 @@ class CrossingStateEpisodeRunner {
       bool goal_reached = current_state_->ego_goal_reached();
 
       if(viewer_) {
+        viewer_->clear();
         current_state_->draw(viewer_);
+        viewer_->show(false);
       }
 
       return std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,

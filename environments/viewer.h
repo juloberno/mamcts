@@ -19,6 +19,8 @@ class Viewer {
     virtual ~Viewer() {}
     virtual void drawPoint(float x, float y, float size,  Color color) = 0;
     virtual void drawLine(std::pair<float,float> x, std::pair<float,float> y, float linewidth,  Color color) = 0;
+    virtual void clear() = 0;
+    virtual void show(bool block) = 0;
 };
 
 }
