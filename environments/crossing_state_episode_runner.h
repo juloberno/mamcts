@@ -85,6 +85,9 @@ class CrossingStateEpisodeRunner {
         viewer_->clear();
         current_state_->draw(viewer_);
         viewer_->show(false);
+
+        // If viewer present, also print some debugging information
+        std::cout << belief_tracker_.sprintf() << std::endl;
       }
 
       return std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,

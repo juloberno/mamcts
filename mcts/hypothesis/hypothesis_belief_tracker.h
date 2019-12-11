@@ -47,6 +47,9 @@ class HypothesisBeliefTracker : public mcts::RandomGenerator {
     const std::unordered_map<AgentIdx, std::vector<Belief>> get_beliefs() const {
       return tracked_beliefs_;
     }
+
+    std::string sprintf() const;
+
 private:
     unsigned int history_length_;
     float probability_discount_;
@@ -131,6 +134,20 @@ inline const std::unordered_map<AgentIdx, HypothesisId>& HypothesisBeliefTracker
     hypothesis_id = hypothesis_distribution(random_generator_);
   }
   return current_sampled_hypothesis_;
+}
+
+inline std::string HypothesisBeliefTracker::sprintf() const {
+  std::stringstream ss;
+  // Beliefs
+  ss << "Beliefs: " << std::endl;
+  for (const auto& belief : get_beliefs()) {
+    ss << "Ag. "  << belief.first << ": ";
+    for (const auto& probability: belief.second) {
+        ss << probability << ",";
+    }
+    ss << std::endl;
+  }
+  return ss.str();
 }
 
 } // namespace mcts
