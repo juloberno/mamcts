@@ -103,17 +103,23 @@ class CrossingStateEpisodeRunner {
                             std::pair<std::string, bool>, std::pair<std::string, bool>,
                             std::pair<std::string, bool>,
                             std::pair<std::string, unsigned int>,
-                            std::pair<std::string, unsigned int>> run() {
+                            std::pair<std::string, unsigned int>,
+                            std::pair<std::string,
+                            std::vector<std::unordered_map<AgentIdx, std::vector<Belief>>>>> run() {
       unsigned int current_step=0;
       bool done = false;
+      std::vector<std::unordered_map<AgentIdx, std::vector<Belief>>> belief_results;
       while(!done) {
         const auto step_result = step();
         const bool max_steps_reached = current_step > max_steps_;
         const auto terminal_state = std::get<2>(step_result);
+        belief_results.push_back(belief_tracker_.get_beliefs());
         if(terminal_state.second || max_steps_reached) {
           return std::tuple_cat(step_result,
                               std::forward_as_tuple(std::pair<std::string, unsigned int>(std::string("MaxSteps"), max_steps_reached)),
-                              std::forward_as_tuple(std::pair<std::string, unsigned int>(std::string("NumSteps"), current_step)));
+                              std::forward_as_tuple(std::pair<std::string, unsigned int>(std::string("NumSteps"), current_step)),
+                              std::forward_as_tuple(std::pair<std::string,
+                                 std::vector<std::unordered_map<AgentIdx, std::vector<Belief>>>>(std::string("BeliefResults"), belief_results)));
         }
         current_step += 1;
       }
