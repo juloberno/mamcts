@@ -83,7 +83,7 @@ class PickleTests(unittest.TestCase):
              10000,
              None)
 
-        episode_result = runner.run()
+        episode_result = runner.run(True)
         print(episode_result)
 
 if __name__ == '__main__':

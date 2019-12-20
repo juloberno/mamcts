@@ -105,7 +105,8 @@ class CrossingStateEpisodeRunner {
                             std::pair<std::string, unsigned int>,
                             std::pair<std::string, unsigned int>,
                             std::pair<std::string,
-                            std::vector<std::unordered_map<AgentIdx, std::vector<Belief>>>>> run() {
+                            std::vector<std::unordered_map<AgentIdx, std::vector<Belief>>>>> run(
+                              bool save_belief_results=false) {
       unsigned int current_step=0;
       bool done = false;
       std::vector<std::unordered_map<AgentIdx, std::vector<Belief>>> belief_results;
@@ -113,7 +114,9 @@ class CrossingStateEpisodeRunner {
         const auto step_result = step();
         const bool max_steps_reached = current_step > max_steps_;
         const auto terminal_state = std::get<2>(step_result);
-        belief_results.push_back(belief_tracker_.get_beliefs());
+        if(save_belief_results) {
+          belief_results.push_back(belief_tracker_.get_beliefs());
+        }
         if(terminal_state.second || max_steps_reached) {
           return std::tuple_cat(step_result,
                               std::forward_as_tuple(std::pair<std::string, unsigned int>(std::string("MaxSteps"), max_steps_reached)),
