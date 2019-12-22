@@ -71,8 +71,12 @@ public:
 
     template<typename ActionType = Domain>
     Probability get_probability(const HypothesisId& hypothesis, const AgentIdx& agent_idx, const Domain& action) const { 
-        return hypothesis_.at(hypothesis).get_probability(other_agent_states_[agent_idx-1], ego_state_, action);
-    ;}
+        if (agent_idx == this->ego_agent_idx) {
+            return hypothesis_.at(hypothesis).get_probability(ego_state_, ego_state_, action);
+        } else {
+            return hypothesis_.at(hypothesis).get_probability(other_agent_states_[agent_idx-1], ego_state_, action);
+        }
+    }
 
     template<typename ActionType = Domain>
     ActionType get_last_action(const AgentIdx& agent_idx) const {

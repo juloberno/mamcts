@@ -174,6 +174,7 @@ inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentS
     auto probability_negative_gap_error = [&](const float gap_error_min, const float gap_error_max,
                                               const float uniform_prob, const float single_sample_prob)
                                               -> Probability {
+                                                
         if(action >= std::max(std::min(gap_error_max, parameters_.MAX_VELOCITY_OTHER), agent_state.last_action) &&
         action <= std::max(std::min(gap_error_min, parameters_.MAX_VELOCITY_OTHER), agent_state.last_action) ) {
             // first check if action can only come up by using last action
