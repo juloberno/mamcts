@@ -41,6 +41,7 @@ Edges correspond to an action of one agent with action-value V and visit count N
 
 If you use this code please cite it as:
 
+```
 @misc{bernhard_mamcts_2020,
   title = {{MA-MCTS}: A configurable library for Multi-Agent Monte Carlo Tree Search in C++},
   author = "{Julian Bernhard}",
@@ -49,4 +50,5 @@ If you use this code please cite it as:
   year = 2019,
   note = "[Online; accessed 25-June-2019]"
 }
+```
 
