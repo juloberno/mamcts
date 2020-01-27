@@ -9,37 +9,46 @@
 #define UNIT_TESTING
 #define DEBUG
 #define PLAN_DEBUG_INFO
-#include "test/mcts_test_class.h"
+#include "test/uct/uct_test_class.h"
 #include "mcts/heuristics/random_heuristic.h"
 #include "mcts/statistics/uct_statistic.h"
-#include "test/simple_state.h"
+#include "test/uct/simple_state.h"
 #include <cstdio>
 
 using namespace std;
 using namespace mcts;
 
 
-std::mt19937  mcts::RandomGenerator::random_generator_;
+MctsParameters default_uct_params() {
+  MctsParameters parameters;
+  parameters.DISCOUNT_FACTOR = 0.9;
+  parameters.RANDOM_SEED = 1000;
+  
+  parameters.random_heuristic.MAX_SEARCH_TIME = 10;
+  parameters.random_heuristic.MAX_NUMBER_OF_ITERATIONS = 1000;
+
+  parameters.uct_statistic.LOWER_BOUND = -1000;
+  parameters.uct_statistic.UPPER_BOUND = 100;
+  parameters.uct_statistic.EXPLORATION_CONSTANT = 0.7;
+
+  return parameters;
+}
 
 TEST(test_mcts, verify_uct )
 {
-
-    RandomGenerator::random_generator_ = std::mt19937(1000);
-    Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts;
+    Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts(default_uct_params());
     SimpleState state(4);
     
-    mcts.search(state, 50000, 2000);
+    mcts.search(state, 50000, 20000);
 
-    MctsTest test;
+    UctTest test;
     test.verify_uct(mcts,1);
 
 }
 
 TEST(test_mcts, generate_dot_file )
 {
-
-    RandomGenerator::random_generator_ = std::mt19937(1000);
-    Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts;
+    Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts(default_uct_params());
     SimpleState state(4);
     
     mcts.search(state, 50000, 20);

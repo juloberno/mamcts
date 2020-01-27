@@ -1,0 +1,281 @@
+digraph G {
+label = "MCTS with Exploration constant = 0.7";
+labelloc = "t";
+subgraph cluster_node_1{
+node1_0[label="V=3.2194, N=30 
+ Ag.0"];
+node1_1[label="V=4.256, N=30 
+ Ag.1"];
+label= "ID 1";
+graph[style=dotted]; }
+subgraph cluster_node_31{
+node31_0[label="V=0.825541, N=1 
+ Ag.0"];
+node31_1[label="V=1.18449, N=1 
+ Ag.1"];
+label= "ID 31";
+graph[style=dotted]; }
+node1_0 -> node31_0[label="a=0, N=15, V=3.07791"];
+node1_1 -> node31_1[label="a=1, N=15, V=4.01149"];
+subgraph cluster_node_30{
+node30_0[label="V=5.36193, N=1 
+ Ag.0"];
+node30_1[label="V=7.75341, N=1 
+ Ag.1"];
+label= "ID 30";
+graph[style=dotted]; }
+node1_0 -> node30_0[label="a=1, N=15, V=3.36089"];
+node1_1 -> node30_1[label="a=0, N=15, V=4.50051"];
+subgraph cluster_node_2{
+node2_0[label="V=3.5387, N=14 
+ Ag.0"];
+node2_1[label="V=4.61161, N=14 
+ Ag.1"];
+label= "ID 2";
+graph[style=dotted]; }
+subgraph cluster_node_7{
+node7_0[label="V=3.95298, N=7 
+ Ag.0"];
+node7_1[label="V=5.1854, N=7 
+ Ag.1"];
+label= "ID 7";
+graph[style=dotted]; }
+subgraph cluster_node_23{
+node23_0[label="V=3.80619, N=2 
+ Ag.0"];
+node23_1[label="V=5.48082, N=2 
+ Ag.1"];
+label= "ID 23";
+graph[style=dotted]; }
+subgraph cluster_node_25{
+node25_0[label="V=3.37394, N=1 
+ Ag.0"];
+node25_1[label="V=4.94299, N=1 
+ Ag.1"];
+label= "ID 25";
+graph[style=dotted]; }
+node23_0 -> node25_0[label="a=1, N=1, V=3.03654"];
+node23_1 -> node25_1[label="a=1, N=1, V=4.44869"];
+node7_0 -> node23_0[label="a=0, N=3, V=4.2058"];
+node7_1 -> node23_1[label="a=1, N=3, V=5.58039"];
+subgraph cluster_node_19{
+node19_0[label="V=3.28697, N=2 
+ Ag.0"];
+node19_1[label="V=4.6734, N=2 
+ Ag.1"];
+label= "ID 19";
+graph[style=dotted]; }
+subgraph cluster_node_29{
+node29_0[label="V=4.51416, N=1 
+ Ag.0"];
+node29_1[label="V=6.45126, N=1 
+ Ag.1"];
+label= "ID 29";
+graph[style=dotted]; }
+node19_0 -> node29_0[label="a=1, N=1, V=4.06274"];
+node19_1 -> node29_1[label="a=1, N=1, V=5.80614"];
+node7_0 -> node19_0[label="a=1, N=3, V=3.92094"];
+node7_1 -> node19_1[label="a=0, N=3, V=5.19684"];
+subgraph cluster_node_11{
+node11_0[label="V=4.27362, N=1 
+ Ag.0"];
+node11_1[label="V=5.41746, N=1 
+ Ag.1"];
+label= "ID 11";
+graph[style=dotted]; }
+node7_0 -> node11_0[label="a=1, N=3, V=3.92094"];
+node7_1 -> node11_1[label="a=1, N=3, V=5.58039"];
+subgraph cluster_node_15{
+node15_0[label="V=4.18473, N=1 
+ Ag.0"];
+node15_1[label="V=5.75378, N=1 
+ Ag.1"];
+label= "ID 15";
+graph[style=dotted]; }
+node7_0 -> node15_0[label="a=0, N=3, V=4.2058"];
+node7_1 -> node15_1[label="a=0, N=3, V=5.19684"];
+node2_0 -> node7_0[label="a=0, N=7, V=3.55768"];
+node2_1 -> node7_1[label="a=0, N=7, V=4.66686"];
+subgraph cluster_node_5{
+node5_0[label="V=3.80949, N=6 
+ Ag.0"];
+node5_1[label="V=4.98171, N=6 
+ Ag.1"];
+label= "ID 5";
+graph[style=dotted]; }
+subgraph cluster_node_13{
+node13_0[label="V=3.78983, N=2 
+ Ag.0"];
+node13_1[label="V=4.83362, N=2 
+ Ag.1"];
+label= "ID 13";
+graph[style=dotted]; }
+subgraph cluster_node_17{
+node17_0[label="V=3.43368, N=1 
+ Ag.0"];
+node17_1[label="V=4.18415, N=1 
+ Ag.1"];
+label= "ID 17";
+graph[style=dotted]; }
+node13_0 -> node17_0[label="a=1, N=1, V=3.09031"];
+node13_1 -> node17_1[label="a=1, N=1, V=3.76574"];
+node5_0 -> node13_0[label="a=0, N=2, V=3.41085"];
+node5_1 -> node13_1[label="a=0, N=2, V=4.35026"];
+subgraph cluster_node_9{
+node9_0[label="V=4.16595, N=3 
+ Ag.0"];
+node9_1[label="V=5.49389, N=3 
+ Ag.1"];
+label= "ID 9";
+graph[style=dotted]; }
+subgraph cluster_node_27{
+node27_0[label="V=5.13045, N=1 
+ Ag.0"];
+node27_1[label="V=6.87384, N=1 
+ Ag.1"];
+label= "ID 27";
+graph[style=dotted]; }
+node9_0 -> node27_0[label="a=0, N=1, V=4.6174"];
+node9_1 -> node27_1[label="a=0, N=1, V=6.18646"];
+subgraph cluster_node_21{
+node21_0[label="V=4.26085, N=1 
+ Ag.0"];
+node21_1[label="V=5.67299, N=1 
+ Ag.1"];
+label= "ID 21";
+graph[style=dotted]; }
+node9_0 -> node21_0[label="a=1, N=1, V=3.83476"];
+node9_1 -> node21_1[label="a=1, N=1, V=5.10569"];
+node5_0 -> node9_0[label="a=1, N=3, V=3.74935"];
+node5_1 -> node9_1[label="a=1, N=3, V=4.9445"];
+node2_0 -> node5_0[label="a=1, N=6, V=3.42854"];
+node2_1 -> node5_1[label="a=1, N=6, V=4.48354"];
+node1_0 -> node2_0[label="a=1, N=15, V=3.36089"];
+node1_1 -> node2_1[label="a=1, N=15, V=4.01149"];
+subgraph cluster_node_3{
+node3_0[label="V=3.52584, N=14 
+ Ag.0"];
+node3_1[label="V=4.72457, N=14 
+ Ag.1"];
+label= "ID 3";
+graph[style=dotted]; }
+subgraph cluster_node_6{
+node6_0[label="V=4.25371, N=7 
+ Ag.0"];
+node6_1[label="V=5.77876, N=7 
+ Ag.1"];
+label= "ID 6";
+graph[style=dotted]; }
+subgraph cluster_node_12{
+node12_0[label="V=4.29889, N=3 
+ Ag.0"];
+node12_1[label="V=5.8848, N=3 
+ Ag.1"];
+label= "ID 12";
+graph[style=dotted]; }
+subgraph cluster_node_28{
+node28_0[label="V=4.99246, N=1 
+ Ag.0"];
+node28_1[label="V=6.92956, N=1 
+ Ag.1"];
+label= "ID 28";
+graph[style=dotted]; }
+node12_0 -> node28_0[label="a=0, N=1, V=4.49321"];
+node12_1 -> node28_1[label="a=0, N=1, V=6.2366"];
+subgraph cluster_node_20{
+node20_0[label="V=5.21197, N=1 
+ Ag.0"];
+node20_1[label="V=7.14907, N=1 
+ Ag.1"];
+label= "ID 20";
+graph[style=dotted]; }
+node12_0 -> node20_0[label="a=1, N=1, V=4.69077"];
+node12_1 -> node20_1[label="a=1, N=1, V=6.43416"];
+node6_0 -> node12_0[label="a=0, N=3, V=3.869"];
+node6_1 -> node12_1[label="a=0, N=3, V=5.29632"];
+subgraph cluster_node_8{
+node8_0[label="V=4.76007, N=3 
+ Ag.0"];
+node8_1[label="V=6.48229, N=3 
+ Ag.1"];
+label= "ID 8";
+graph[style=dotted]; }
+subgraph cluster_node_24{
+node24_0[label="V=4.40399, N=1 
+ Ag.0"];
+node24_1[label="V=5.81614, N=1 
+ Ag.1"];
+label= "ID 24";
+graph[style=dotted]; }
+node8_0 -> node24_0[label="a=0, N=1, V=3.96359"];
+node8_1 -> node24_1[label="a=0, N=1, V=5.23452"];
+subgraph cluster_node_16{
+node16_0[label="V=5.44489, N=1 
+ Ag.0"];
+node16_1[label="V=7.38199, N=1 
+ Ag.1"];
+label= "ID 16";
+graph[style=dotted]; }
+node8_0 -> node16_0[label="a=1, N=1, V=4.9004"];
+node8_1 -> node16_1[label="a=1, N=1, V=6.64379"];
+node6_0 -> node8_0[label="a=1, N=3, V=4.28406"];
+node6_1 -> node8_1[label="a=1, N=3, V=5.83406"];
+node3_0 -> node6_0[label="a=0, N=7, V=3.82834"];
+node3_1 -> node6_1[label="a=0, N=7, V=5.20088"];
+subgraph cluster_node_4{
+node4_0[label="V=3.32836, N=6 
+ Ag.0"];
+node4_1[label="V=4.36639, N=6 
+ Ag.1"];
+label= "ID 4";
+graph[style=dotted]; }
+subgraph cluster_node_14{
+node14_0[label="V=3.84582, N=3 
+ Ag.0"];
+node14_1[label="V=5.07909, N=3 
+ Ag.1"];
+label= "ID 14";
+graph[style=dotted]; }
+subgraph cluster_node_26{
+node26_0[label="V=4.53441, N=1 
+ Ag.0"];
+node26_1[label="V=6.10346, N=1 
+ Ag.1"];
+label= "ID 26";
+graph[style=dotted]; }
+node14_0 -> node26_0[label="a=0, N=1, V=4.08097"];
+node14_1 -> node26_1[label="a=0, N=1, V=5.49311"];
+subgraph cluster_node_18{
+node18_0[label="V=3.37532, N=1 
+ Ag.0"];
+node18_1[label="V=4.64625, N=1 
+ Ag.1"];
+label= "ID 18";
+graph[style=dotted]; }
+node14_0 -> node18_0[label="a=1, N=1, V=3.03779"];
+node14_1 -> node18_1[label="a=1, N=1, V=4.18163"];
+node4_0 -> node14_0[label="a=0, N=3, V=3.46124"];
+node4_1 -> node14_1[label="a=0, N=3, V=4.57119"];
+subgraph cluster_node_10{
+node10_0[label="V=2.78764, N=2 
+ Ag.0"];
+node10_1[label="V=3.42929, N=2 
+ Ag.1"];
+label= "ID 10";
+graph[style=dotted]; }
+subgraph cluster_node_22{
+node22_0[label="V=2.5854, N=1 
+ Ag.0"];
+node22_1[label="V=3.26082, N=1 
+ Ag.1"];
+label= "ID 22";
+graph[style=dotted]; }
+node10_0 -> node22_0[label="a=1, N=1, V=2.32686"];
+node10_1 -> node22_1[label="a=1, N=1, V=2.93474"];
+node4_0 -> node10_0[label="a=1, N=2, V=2.50887"];
+node4_1 -> node10_1[label="a=1, N=2, V=3.08636"];
+node3_0 -> node4_0[label="a=1, N=6, V=2.99552"];
+node3_1 -> node4_1[label="a=1, N=6, V=3.92976"];
+node1_0 -> node3_0[label="a=0, N=15, V=3.07791"];
+node1_1 -> node3_1[label="a=0, N=15, V=4.50051"];
+}

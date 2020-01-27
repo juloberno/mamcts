@@ -10,8 +10,10 @@
 
 #include "stage_node.h"
 #include "heuristic.h"
+#include "hypothesis/hypothesis_belief_tracker.h"
 #include <chrono>  // for high_resolution_clock
 #include "common.h"
+#include "mcts_parameters.h"
 #include <string>
  
 
@@ -32,11 +34,20 @@ public:
     using StageNodeSPtr = std::shared_ptr<StageNode<S,SE,SO, H>>;
     using StageNodeWPtr = std::weak_ptr<StageNode<S,SE,SO, H>>;
 
-    Mcts() : root_(), num_iterations(0), heuristic_() {};
+    Mcts(const MctsParameters& mcts_parameters) : root_(),
+                                                  num_iterations(0),
+                                                  mcts_parameters_(mcts_parameters), 
+                                                  heuristic_(mcts_parameters)
+                                                  {}
 
     ~Mcts() {}
+    
+    template< class Q = S>
+    typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
+    search(const S& current_state, HypothesisBeliefTracker& belief_tracker, unsigned int max_search_time_ms, unsigned int max_iterations);
 
     void search(const S& current_state, unsigned int max_search_time_ms, unsigned int max_iterations);
+    
     int numIterations();
     std::string nodeInfo();
     ActionIdx returnBestAction();
@@ -52,6 +63,8 @@ private:
 
     unsigned int num_iterations;
 
+    const MctsParameters mcts_parameters_;
+
     H heuristic_;
 
     std::string sprintf(const StageNodeSPtr& root_node) const;
@@ -60,32 +73,42 @@ private:
 };
 
 template<class S, class SE, class SO, class H>
+template<class Q>
+typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
+Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker& belief_tracker,
+                                     unsigned int max_search_time_ms, unsigned int max_iterations) {
+    auto start = std::chrono::high_resolution_clock::now();
+    StageNode<S,SE, SO, H>::reset_counter();
+
+    root_ = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
+            const unsigned int&> (nullptr, current_state.clone(),JointAction(),0,  mcts_parameters_);
+    num_iterations = 0;
+    while (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ms && num_iterations<max_iterations) {
+        belief_tracker.sample_current_hypothesis();
+        iterate(root_);
+        num_iterations += 1;
+    }
+}
+
+template<class S, class SE, class SO, class H>
 void Mcts<S,SE,SO,H>::search(const S& current_state, unsigned int max_search_time_ms, unsigned int max_iterations)
 {
-    namespace chr = std::chrono;
     auto start = std::chrono::high_resolution_clock::now();
 
     StageNode<S,SE, SO, H>::reset_counter();
 
-#ifdef PLAN_DEBUG_INFO
-    std::cout << "starting state: " << current_state.sprintf();
-#endif
-
     root_ = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
-            const unsigned int&> (nullptr, current_state.clone(),JointAction(),0);
-   
+            const unsigned int&> (nullptr, current_state.clone(), JointAction(),0, mcts_parameters_);
     num_iterations = 0;
     while (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ms && num_iterations<max_iterations) {
         iterate(root_);
         num_iterations += 1;
     }
-
 }
 
 template<class S, class SE, class SO, class H>
 void Mcts<S,SE,SO,H>::iterate(const StageNodeSPtr& root_node)
 {
-
     StageNodeSPtr node = root_node;
     StageNodeSPtr node_p;
 
@@ -95,11 +118,11 @@ void Mcts<S,SE,SO,H>::iterate(const StageNodeSPtr& root_node)
 
     // -------------- Heuristic Update ----------------
     // Heuristic until terminal node
-    std::vector<SE> calculated_heuristic = heuristic_.get_heuristic_values(node);
-    node->update_statistics(calculated_heuristic);
+    const auto& heuristics = heuristic_.calculate_heuristic_values(node);
+    node->update_statistics(heuristics.first, heuristics.second);
     
     // --------------- Backpropagation ----------------
-    // Backpropagate starting from parent node of newly expanded node
+    // Backpropagate, starting from parent node of newly expanded node
     node_p = node->get_parent().lock();
     while(true)
     {
@@ -112,7 +135,6 @@ void Mcts<S,SE,SO,H>::iterate(const StageNodeSPtr& root_node)
         {
             node = node->get_parent().lock();
             node_p = node_p->get_parent().lock();
-
         }
     }
 

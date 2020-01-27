@@ -4,19 +4,18 @@
 // For a copy, see <https://opensource.org/licenses/MIT>.
 // ========================================================
 
-#ifndef MCTSTEST_H
-#define MCTSTEST_H
+#ifndef UCT_TEST_H
+#define UCT_TEST_H
 
 #include "mcts/mcts.h"
 #include "mcts/heuristics/random_heuristic.h"
 #include "mcts/statistics/uct_statistic.h"
-#include "test/simple_state.h"
 
 using namespace mcts;
 using namespace std;
 
 
-class mcts::MctsTest
+class mcts::UctTest
 {
 
 public:
@@ -37,7 +36,7 @@ public:
             const AgentIdx num_agents = start_node->state_->get_agent_idx().size();
 
 
-            std::vector<UctStatistic> expected_statistics(num_agents, UctStatistic(start_node->get_state()->get_num_actions(0)));
+            std::vector<UctStatistic> expected_statistics(num_agents, UctStatistic(start_node->get_state()->get_num_actions(0), 0, MctsParameters()));
 
             // ----- RECURSIVE ESTIMATION OF QVALUES AND COUNTS downwards tree -----------------------
             for(auto it = start_node->children_.begin(); it != start_node->children_.end(); ++it) {
@@ -55,8 +54,9 @@ public:
 
                 auto& child = it->second;
                 std::vector<Reward> rewards;
+                Cost ego_cost; // todo check
                 auto& joint_action = child->joint_action_;
-                auto new_state =  start_node->state_->execute(joint_action, rewards);
+                auto new_state =  start_node->state_->execute(joint_action, rewards, ego_cost);
 
                 // ---------------------- Expected statistics calculation --------------------------
                 bool is_first_child_and_not_parent_root = (it == start_node->children_.begin()) && (!start_node->is_root());
@@ -177,4 +177,4 @@ private:
         }
     }
 };
-#endif
+#endif // UCT_TEST_H

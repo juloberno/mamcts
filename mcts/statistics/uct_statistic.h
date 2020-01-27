@@ -19,26 +19,31 @@ class UctStatistic : public mcts::NodeStatistic<UctStatistic>, mcts::RandomGener
 public:
     MCTS_TEST
 
-    UctStatistic(ActionIdx num_actions) :
-             NodeStatistic<UctStatistic>(num_actions),
+    UctStatistic(ActionIdx num_actions, AgentIdx agent_idx, const MctsParameters & mcts_parameters) :
+             NodeStatistic<UctStatistic>(num_actions, agent_idx, mcts_parameters),
+             RandomGenerator(mcts_parameters.RANDOM_SEED),
              value_(0.0f),
              latest_return_(0.0),
              ucb_statistics_([&]() -> std::map<ActionIdx, UcbPair>{
              std::map<ActionIdx, UcbPair> map;
-             for (auto ai = 0; ai < num_actions; ++ai) { map[ai] = UcbPair();}
+             for (ActionIdx ai = 0; ai < num_actions; ++ai) { map[ai] = UcbPair();}
              return map;
              }()),
              total_node_visits_(0),
-             upper_bound(mcts::MctsParameters::UPPER_BOUND),
-             lower_bound(mcts::MctsParameters::LOWER_BOUND),
-             k_discount_factor(mcts::MctsParameters::DISCOUNT_FACTOR), 
-             k_exploration_constant(mcts::MctsParameters::EXPLORATION_CONSTANT) {};
+             unexpanded_actions_(num_actions),
+             upper_bound(mcts_parameters.uct_statistic.UPPER_BOUND),
+             lower_bound(mcts_parameters.uct_statistic.LOWER_BOUND),
+             k_discount_factor(mcts_parameters.DISCOUNT_FACTOR), 
+             k_exploration_constant(mcts_parameters.uct_statistic.EXPLORATION_CONSTANT) {
+                 // initialize action indexes from 0 to (number of actions -1)
+                 std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
+             }
 
     ~UctStatistic() {};
 
     template <class S>
-    ActionIdx choose_next_action(const S& state, std::vector<int>& unexpanded_actions) {
-        if(unexpanded_actions.empty())
+    ActionIdx choose_next_action(const S& state) {
+        if(unexpanded_actions_.empty())
         {
             // Select an action based on the UCB formula
             std::vector<double> values;
@@ -50,10 +55,10 @@ public:
         } else
         {
             // Select randomly an unexpanded action
-            std::uniform_int_distribution<ActionIdx> random_action_selection(0,unexpanded_actions.size()-1);
+            std::uniform_int_distribution<ActionIdx> random_action_selection(0,unexpanded_actions_.size()-1);
             ActionIdx array_idx = random_action_selection(random_generator_);
-            ActionIdx selected_action = unexpanded_actions[array_idx];
-            unexpanded_actions.erase(unexpanded_actions.begin()+array_idx);
+            ActionIdx selected_action = unexpanded_actions_[array_idx];
+            unexpanded_actions_.erase(unexpanded_actions_.begin()+array_idx);
             return selected_action;
         }
     }
@@ -94,13 +99,10 @@ public:
         value_ = value_ + (latest_return_ - value_) / total_node_visits_;
     }
 
-    void set_heuristic_estimate(const Reward& accum_rewards)
+    void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost)
     {
        value_ = accum_rewards;
     }
-
-
-public:
 
     std::string print_node_information() const
     {
@@ -139,11 +141,13 @@ public:
             values[idx] = action_value_normalized + 2 * k_exploration_constant * sqrt( (2* log(total_node_visits_)) / ( ucb_statistics.at(idx).action_count_)  );
         }
     }
+private:
 
     double value_;
     double latest_return_;   // tracks the return during backpropagation
     std::map<ActionIdx, UcbPair> ucb_statistics_; // first: action selection count, action-value
     unsigned int total_node_visits_;
+    std::vector<int> unexpanded_actions_; // contains all action indexes which have not been expanded yet
 
     // PARAMS
     const double upper_bound;

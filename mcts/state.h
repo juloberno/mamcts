@@ -23,6 +23,7 @@ typedef unsigned char AgentIdx;
 typedef std::vector<ActionIdx> JointAction;
 
 typedef double Reward;
+typedef double Cost;
 
     template <typename T>
 inline std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
@@ -60,7 +61,9 @@ template<typename Implementation>
 class StateInterface {
 public:
 
-    std::shared_ptr<Implementation> execute(const JointAction &joint_action, std::vector<Reward>& rewards) const;
+    std::shared_ptr<Implementation> execute(const JointAction &joint_action,
+                                            std::vector<Reward>& rewards,
+                                            Cost& ego_cost) const;
 
     std::shared_ptr<Implementation> clone() const;
 
@@ -74,17 +77,20 @@ public:
 
     std::string sprintf() const;
 
-    virtual ~StateInterface() {};
+    virtual ~StateInterface() {}; // todo: why is this virtual? do we need it
 
-private:
+    static const Implementation& cast();
+
     CRTP_INTERFACE(Implementation)
     CRTP_CONST_INTERFACE(Implementation)
 
-
 };
 
+
 template<typename Implementation>
-inline std::shared_ptr<Implementation> StateInterface<Implementation>::execute(const JointAction &joint_action, std::vector<Reward>& rewards) const {
+inline std::shared_ptr<Implementation> StateInterface<Implementation>::execute(const JointAction &joint_action,
+                                                                               std::vector<Reward>& rewards,
+                                                                               Cost& ego_cost) const {
    return impl().execute(joint_action, rewards);
 }
 

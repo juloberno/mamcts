@@ -10,10 +10,10 @@
 
 namespace mcts {
 
-class MctsTest;
+class UctTest;
 
 #ifdef UNIT_TESTING
-#define MCTS_TEST friend class MctsTest;
+#define MCTS_TEST friend class UctTest;
 #else
 #define MCTS_TEST
 #endif
@@ -43,7 +43,15 @@ class MctsTest;
         }
 #endif
 
+
+
 #define MCTS_EXPECT_TRUE(cond)
+
+struct RequiresHypothesis 
+{};
+
+struct RequiresCost 
+{};
 
 } // namespace mcts
 #endif
