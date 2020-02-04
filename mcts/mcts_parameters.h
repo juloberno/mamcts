@@ -18,6 +18,8 @@ struct MctsParameters{
   //MCTS
   double DISCOUNT_FACTOR;
   unsigned int RANDOM_SEED;
+  unsigned int MAX_NUMBER_OF_ITERATIONS;
+  unsigned int MAX_SEARCH_TIME;
 
   struct RandomHeuristicParameters {
       double MAX_SEARCH_TIME;
@@ -59,6 +61,8 @@ inline MctsParameters mcts_default_parameters() {
   MctsParameters parameters;
   parameters.DISCOUNT_FACTOR = 0.9;
   parameters.RANDOM_SEED = 1000;
+  parameters.MAX_NUMBER_OF_ITERATIONS = 10000;
+  parameters.MAX_SEARCH_TIME = 1000;
   
   parameters.random_heuristic.MAX_SEARCH_TIME = 10;
   parameters.random_heuristic.MAX_NUMBER_OF_ITERATIONS = 1000;

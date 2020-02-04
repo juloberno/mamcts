@@ -44,9 +44,9 @@ public:
     
     template< class Q = S>
     typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
-    search(const S& current_state, HypothesisBeliefTracker& belief_tracker, unsigned int max_search_time_ms, unsigned int max_iterations);
+    search(const S& current_state, HypothesisBeliefTracker& belief_tracker);
 
-    void search(const S& current_state, unsigned int max_search_time_ms, unsigned int max_iterations);
+    void search(const S& current_state);
     
     int numIterations();
     std::string nodeInfo();
@@ -75,10 +75,12 @@ private:
 template<class S, class SE, class SO, class H>
 template<class Q>
 typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
-Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker& belief_tracker,
-                                     unsigned int max_search_time_ms, unsigned int max_iterations) {
+Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker& belief_tracker) {
     auto start = std::chrono::high_resolution_clock::now();
     StageNode<S,SE, SO, H>::reset_counter();
+
+    const auto max_iterations = mcts_parameters_.MAX_NUMBER_OF_ITERATIONS;
+    const auto max_search_time_ms = mcts_parameters_.MAX_SEARCH_TIME;
 
     root_ = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
             const unsigned int&> (nullptr, current_state.clone(),JointAction(),0,  mcts_parameters_);
@@ -91,11 +93,14 @@ Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker& beli
 }
 
 template<class S, class SE, class SO, class H>
-void Mcts<S,SE,SO,H>::search(const S& current_state, unsigned int max_search_time_ms, unsigned int max_iterations)
+void Mcts<S,SE,SO,H>::search(const S& current_state)
 {
     auto start = std::chrono::high_resolution_clock::now();
 
     StageNode<S,SE, SO, H>::reset_counter();
+
+    const auto max_iterations = mcts_parameters_.MAX_NUMBER_OF_ITERATIONS;
+    const auto max_search_time_ms = mcts_parameters_.MAX_SEARCH_TIME;
 
     root_ = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
             const unsigned int&> (nullptr, current_state.clone(), JointAction(),0, mcts_parameters_);

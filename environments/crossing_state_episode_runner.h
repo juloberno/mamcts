@@ -33,8 +33,6 @@ class CrossingStateEpisodeRunner {
                   last_state_(),
                   belief_tracker_(mcts_parameters),
                   max_steps_(max_steps),
-                  mcts_max_search_time_(mcts_max_search_time),
-                  mcts_max_iterations_(mcts_max_iterations),
                   mcts_parameters_(mcts_parameters),
                   crossing_state_parameters_(crossing_state_parameters),
                   viewer_(viewer)  {
@@ -64,7 +62,7 @@ class CrossingStateEpisodeRunner {
         if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
           // Plan for ego agent with hypothesis-based search
           Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts(mcts_parameters_);
-          mcts.search(*current_state_, belief_tracker_, mcts_max_search_time_, mcts_max_iterations_);
+          mcts.search(*current_state_, belief_tracker_);
           jointaction[agent_idx] = mcts.returnBestAction();
         } else {
           // Other agents act according to unknown true agents policy
@@ -135,8 +133,6 @@ class CrossingStateEpisodeRunner {
     HypothesisBeliefTracker belief_tracker_; // todo: pass params
     std::unordered_map<AgentIdx, AgentPolicyCrossingState<Domain>> agents_true_policies_;
     const unsigned int max_steps_;
-    const unsigned int mcts_max_search_time_;
-    const unsigned int mcts_max_iterations_;
     const MctsParameters mcts_parameters_;
     const CrossingStateParameters<Domain> crossing_state_parameters_;
 };

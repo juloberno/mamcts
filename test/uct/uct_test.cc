@@ -23,6 +23,8 @@ MctsParameters default_uct_params() {
   MctsParameters parameters;
   parameters.DISCOUNT_FACTOR = 0.9;
   parameters.RANDOM_SEED = 1000;
+  parameters.MAX_NUMBER_OF_ITERATIONS = 10000;
+  parameters.MAX_SEARCH_TIME = 1000;
   
   parameters.random_heuristic.MAX_SEARCH_TIME = 10;
   parameters.random_heuristic.MAX_NUMBER_OF_ITERATIONS = 1000;
@@ -39,7 +41,7 @@ TEST(test_mcts, verify_uct )
     Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts(default_uct_params());
     SimpleState state(4);
     
-    mcts.search(state, 50000, 20000);
+    mcts.search(state);
 
     UctTest test;
     test.verify_uct(mcts,1);
@@ -51,7 +53,7 @@ TEST(test_mcts, generate_dot_file )
     Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts(default_uct_params());
     SimpleState state(4);
     
-    mcts.search(state, 50000, 20);
+    mcts.search(state);
     mcts.printTreeToDotFile("test_tree");
 }
 
