@@ -35,7 +35,7 @@ public:
     using StageNodeWPtr = std::weak_ptr<StageNode<S,SE,SO, H>>;
 
     Mcts(const MctsParameters& mcts_parameters) : root_(),
-                                                  num_iterations(0),
+                                                  num_iterations_(0),
                                                   mcts_parameters_(mcts_parameters), 
                                                   heuristic_(mcts_parameters)
                                                   {}
@@ -48,7 +48,8 @@ public:
 
     void search(const S& current_state);
     
-    int numIterations();
+    unsigned int numIterations();
+    unsigned int searchTime();
     std::string nodeInfo();
     ActionIdx returnBestAction();
     void printTreeToDotFile(std::string filename="tree");
@@ -61,7 +62,9 @@ private:
 
     StageNodeSPtr root_;
 
-    unsigned int num_iterations;
+    unsigned int num_iterations_;
+
+    unsigned int search_time_;
 
     const MctsParameters mcts_parameters_;
 
@@ -84,12 +87,13 @@ Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker& beli
 
     root_ = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
             const unsigned int&> (nullptr, current_state.clone(),JointAction(),0,  mcts_parameters_);
-    num_iterations = 0;
-    while (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ms && num_iterations<max_iterations) {
+    num_iterations_ = 0;
+    while (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ms && num_iterations_<max_iterations) {
         belief_tracker.sample_current_hypothesis();
         iterate(root_);
-        num_iterations += 1;
+        num_iterations_ += 1;
     }
+    search_time_ = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count();
 }
 
 template<class S, class SE, class SO, class H>
@@ -104,11 +108,12 @@ void Mcts<S,SE,SO,H>::search(const S& current_state)
 
     root_ = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
             const unsigned int&> (nullptr, current_state.clone(), JointAction(),0, mcts_parameters_);
-    num_iterations = 0;
-    while (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ms && num_iterations<max_iterations) {
+    num_iterations_ = 0;
+    while (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ms && num_iterations_<max_iterations) {
         iterate(root_);
-        num_iterations += 1;
+        num_iterations_ += 1;
     }
+    search_time_ = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count();
 }
 
 template<class S, class SE, class SO, class H>
@@ -156,8 +161,13 @@ std::string Mcts<S,SE,SO,H>::sprintf(const StageNodeSPtr& root_node) const
 }
 
 template<class S, class SE, class SO, class H>
-int Mcts<S,SE,SO,H>::numIterations(){
-    return this->num_iterations;
+unsigned int Mcts<S,SE,SO,H>::numIterations(){
+    return this->num_iterations_;
+}
+
+template<class S, class SE, class SO, class H>
+unsigned int Mcts<S,SE,SO,H>::searchTime(){
+    return this->search_time_;
 }
 
 template<class S, class SE, class SO, class H>
