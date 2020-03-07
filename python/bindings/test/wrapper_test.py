@@ -18,6 +18,8 @@ def pu(object):
 def is_equal_mcts_params(mctsp1, mctsp2):
     return mctsp1.DISCOUNT_FACTOR == mctsp2.DISCOUNT_FACTOR and \
         mctsp1.RANDOM_SEED == mctsp2.RANDOM_SEED and \
+        mctsp1.MAX_SEARCH_TIME == mctsp2.MAX_SEARCH_TIME and \
+        mctsp1.MAX_NUMBER_OF_ITERATIONS == mctsp2.MAX_NUMBER_OF_ITERATIONS and \
         mctsp1.random_heuristic.MAX_SEARCH_TIME == mctsp2.random_heuristic.MAX_SEARCH_TIME and \
         mctsp1.random_heuristic.MAX_NUMBER_OF_ITERATIONS == mctsp2.random_heuristic.MAX_NUMBER_OF_ITERATIONS and \
         mctsp1.uct_statistic.LOWER_BOUND == mctsp2.uct_statistic.LOWER_BOUND and \
@@ -63,6 +65,9 @@ class WrapperTests(unittest.TestCase):
         params_mcts = MctsParameters()
         params_mcts.DISCOUNT_FACTOR = 0.9
         params_mcts.RANDOM_SEED = 1000
+        params_mcts.MAX_SEARCH_TIME = 12323
+        params_mcts.MAX_NUMBER_OF_ITERATIONS = 102343400
+
         params_mcts.random_heuristic.MAX_SEARCH_TIME = 10
         params_mcts.random_heuristic.MAX_NUMBER_OF_ITERATIONS = 1000
 
