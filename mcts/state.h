@@ -77,7 +77,7 @@ public:
 
     std::string sprintf() const;
 
-    virtual ~StateInterface() {}; // todo: why is this virtual? do we need it
+    ~StateInterface() {};
 
     static const Implementation& cast();
 
