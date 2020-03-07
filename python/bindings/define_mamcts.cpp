@@ -25,6 +25,8 @@ void define_mamcts(py::module m)
       })
       .def_readwrite("RANDOM_SEED", &MctsParameters::RANDOM_SEED)
       .def_readwrite("DISCOUNT_FACTOR", &MctsParameters::DISCOUNT_FACTOR)
+      .def_readwrite("MAX_SEARCH_TIME", &MctsParameters::MAX_SEARCH_TIME)
+      .def_readwrite("MAX_NUMBER_OF_ITERATIONS", &MctsParameters::MAX_NUMBER_OF_ITERATIONS)
       .def_readwrite("hypothesis_statistic", &MctsParameters::hypothesis_statistic)
       .def_readwrite("uct_statistic", &MctsParameters::uct_statistic)
       .def_readwrite("random_heuristic", &MctsParameters::random_heuristic)
@@ -35,6 +37,8 @@ void define_mamcts(py::module m)
             py::dict d;
             d["RANDOM_SEED"] = p.RANDOM_SEED;
             d["DISCOUNT_FACTOR"] = p.DISCOUNT_FACTOR;
+            d["MAX_SEARCH_TIME"] = p.MAX_SEARCH_TIME;
+            d["MAX_NUMBER_OF_ITERATIONS"] = p.MAX_NUMBER_OF_ITERATIONS;
             d["hypothesis_statistic"] = p.hypothesis_statistic;
             d["uct_statistic"] = p.uct_statistic;
             d["random_heuristic"] = p.random_heuristic;
@@ -42,13 +46,15 @@ void define_mamcts(py::module m)
             return d;
         },
         [](py::dict d) { // __setstate__
-            if (d.size() != 6)
+            if (d.size() != 8)
                 throw std::runtime_error("Invalid MctsParameters state!");
 
             /* Create a new C++ instance */
             MctsParameters p;
             p.RANDOM_SEED = d["RANDOM_SEED"].cast<unsigned int>();
             p.DISCOUNT_FACTOR = d["DISCOUNT_FACTOR"].cast<double>();
+            p.MAX_SEARCH_TIME = d["MAX_SEARCH_TIME"].cast<unsigned int>();
+            p.MAX_NUMBER_OF_ITERATIONS = d["MAX_NUMBER_OF_ITERATIONS"].cast<double>();
             p.hypothesis_statistic = d["hypothesis_statistic"].cast<MctsParameters::HypothesisStatisticParameters>();
             p.uct_statistic = d["uct_statistic"].cast<MctsParameters::UctStatisticParameters>();
             p.random_heuristic = d["random_heuristic"].cast<MctsParameters::RandomHeuristicParameters>();
