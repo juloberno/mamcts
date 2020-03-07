@@ -21,11 +21,12 @@ public:
     ~BeliefTrackerTestState() {};
 
     template<typename ActionType = int>
-    Probability get_probability(const HypothesisId& hypothesis, const AgentIdx& agent_idx, const ActionType& action) const {
+    Probability get_probability_last_action(const HypothesisId& hypothesis, const AgentIdx& agent_idx) const {
+        const auto last_action = get_last_action(agent_idx);
         if(hypothesis == 0) {
-            return get_prob_hy1(action);
+            return get_prob_hy1(last_action);
         } else if(hypothesis==1) {
-            return get_prob_hy2(action);
+            return get_prob_hy2(last_action);
         } else {
             throw;
         }
