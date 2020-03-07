@@ -70,20 +70,12 @@ public:
     };
 
     template<typename ActionType = Domain>
-    Probability get_probability(const HypothesisId& hypothesis, const AgentIdx& agent_idx, const Domain& action) const { 
+    Probability get_probability_last_action(const HypothesisId& hypothesis, const AgentIdx& agent_idx) const { 
+        const auto last_action = get_last_action(agent_idx);
         if (agent_idx == this->ego_agent_idx) {
-            return hypothesis_.at(hypothesis).get_probability(ego_state_, ego_state_, action);
+            return hypothesis_.at(hypothesis).get_probability(ego_state_, ego_state_, last_action);
         } else {
-            return hypothesis_.at(hypothesis).get_probability(other_agent_states_[agent_idx-1], ego_state_, action);
-        }
-    }
-
-    template<typename ActionType = Domain>
-    ActionType get_last_action(const AgentIdx& agent_idx) const {
-        if (agent_idx == this->ego_agent_idx) {
-            return ego_state_.last_action;
-        } else {
-            return other_agent_states_[agent_idx-1].last_action;
+            return hypothesis_.at(hypothesis).get_probability(other_agent_states_[agent_idx-1], ego_state_, last_action);
         }
     }
 
@@ -285,6 +277,16 @@ public:
 
     typedef Domain ActionType;
 private:
+    template<typename ActionType = Domain>
+    ActionType get_last_action(const AgentIdx& agent_idx) const {
+        if (agent_idx == this->ego_agent_idx) {
+            return ego_state_.last_action;
+        } else {
+            return other_agent_states_[agent_idx-1].last_action;
+        }
+    }
+
+
     std::vector<AgentPolicyCrossingState<Domain>> hypothesis_;
 
     std::vector<AgentState<Domain>> other_agent_states_;
