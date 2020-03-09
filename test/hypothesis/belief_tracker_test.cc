@@ -26,7 +26,8 @@ TEST(belief_tracker, simple_tracking_state)
 
     // Inits reference to current sampled hypothesis
     BeliefTrackerTestState state(tracker.sample_current_hypothesis()); 
-    tracker.belief_update(state, state); //< last action equal in both states
+    BeliefTrackerTestState state2(tracker.sample_current_hypothesis()); 
+    tracker.belief_update(state, state2); //< last action equal in both states
     auto beliefs = tracker.get_beliefs();
     EXPECT_NEAR(beliefs[0][0], 0.5*0.3/(0.5*0.3 +  0.7*0.7), 0.001); // prior x prob(last_action) / normalize by total agent belief
     EXPECT_NEAR(beliefs[1][0], 0.6*0.2/( 0.6*0.2 + 0.4*0.4), 0.001); //  -- "" --
@@ -35,7 +36,7 @@ TEST(belief_tracker, simple_tracking_state)
 
     const auto& sampled_hypothesis = tracker.sample_current_hypothesis();
 
-    tracker.belief_update(state, state); //< last action equal in both states
+    tracker.belief_update(state, state2); //< last action equal in both states
     beliefs = tracker.get_beliefs();
     EXPECT_NEAR(beliefs[0][0], 0.5*0.3*0.3/(0.5*0.3*0.3 +  0.7*0.7*0.7), 0.001); // prior x prob(last_action)
     EXPECT_NEAR(beliefs[1][0], 0.6*0.2*0.2/( 0.6*0.2*0.2 + 0.4*0.4*0.4), 0.001); //  -- "" --
@@ -70,7 +71,8 @@ TEST(belief_tracker, fixed_hypothesis_set)
 
   // Inits reference to current sampled hypothesis
   BeliefTrackerTestState state(tracker.sample_current_hypothesis()); 
-  tracker.belief_update(state, state); //< last action equal in both states
+  BeliefTrackerTestState state2(tracker.sample_current_hypothesis()); 
+  tracker.belief_update(state, state2); //< last action equal in both states
   const auto& sampled_hypothesis = tracker.sample_current_hypothesis();
   EXPECT_EQ(mcts_parameters.hypothesis_belief_tracker.FIXED_HYPOTHESIS_SET, sampled_hypothesis);
 }

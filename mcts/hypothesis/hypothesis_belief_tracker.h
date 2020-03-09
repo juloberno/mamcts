@@ -87,11 +87,14 @@ void HypothesisBeliefTracker::belief_update(const HypothesisStateInterface<S>& s
     auto& probability_track_agent = tracked_probabilities_[agent_idx];
     float belief_sum = 0.0f;
     for (HypothesisId hid = 0; hid < belief_track_agent.size(); ++hid) {
-        // add latest hypothesis probability 
-        const auto& last_action = next_state.template get_last_action<typename S::ActionType>(agent_idx);
-        probability_track_agent[hid].push_back(state.template get_probability<typename S::ActionType>(hid, agent_idx, last_action));
-        if (probability_track_agent[hid].size()>history_length_) {
-          probability_track_agent[hid].pop_front();
+        // add latest hypothesis probability if states are different
+        // otherwise this step is skipped initializing only with prior
+        if (std::addressof(state) != std::addressof(next_state)) {
+          const auto& last_action = next_state.template get_last_action<typename S::ActionType>(agent_idx);
+          probability_track_agent[hid].push_back(state.template get_probability<typename S::ActionType>(hid, agent_idx, last_action));
+          if (probability_track_agent[hid].size()>history_length_) {
+            probability_track_agent[hid].pop_front();
+          }
         }
 
         // calculate belief
