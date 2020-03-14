@@ -19,7 +19,7 @@ namespace mcts {
 
 
 typedef std::size_t ActionIdx;
-typedef unsigned char AgentIdx;
+typedef unsigned int AgentIdx;
 typedef std::vector<ActionIdx> JointAction;
 
 typedef double Reward;

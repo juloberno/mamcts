@@ -47,7 +47,7 @@ struct MctsParameters{
       unsigned int HISTORY_LENGTH;
       float PROBABILITY_DISCOUNT;
       int POSTERIOR_TYPE;
-      std::unordered_map<unsigned char, unsigned int> FIXED_HYPOTHESIS_SET;
+      std::unordered_map<unsigned int, unsigned int> FIXED_HYPOTHESIS_SET;
   };
 
   HypothesisStatisticParameters hypothesis_statistic;

@@ -197,7 +197,7 @@ void define_mamcts(py::module m)
             p.PROBABILITY_DISCOUNT = d["PROBABILITY_DISCOUNT"].cast<float>();
             p.POSTERIOR_TYPE = d["POSTERIOR_TYPE"].cast<int>();
             p.FIXED_HYPOTHESIS_SET = d["FIXED_HYPOTHESIS_SET"].cast<
-                        std::unordered_map<unsigned char, unsigned int>>();
+                        std::unordered_map<unsigned int, unsigned int>>();
             return p;
         }
     ));
