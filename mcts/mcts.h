@@ -127,10 +127,12 @@ void Mcts<S,SE,SO,H>::iterate(const StageNodeSPtr& root_node)
     while(node->select_or_expand(node));
 
     // -------------- Heuristic Update ----------------
-    // Heuristic until terminal node
-    const auto& heuristics = heuristic_.calculate_heuristic_values(node);
-    node->update_statistics(heuristics.first, heuristics.second);
-    
+    // Heuristic until terminal node only if state not terminal
+    if(!node->get_state()->is_terminal()) {
+      const auto& heuristics = heuristic_.calculate_heuristic_values(node);
+      node->update_statistics(heuristics.first, heuristics.second);
+    }
+
     // --------------- Backpropagation ----------------
     // Backpropagate, starting from parent node of newly expanded node
     node_p = node->get_parent().lock();

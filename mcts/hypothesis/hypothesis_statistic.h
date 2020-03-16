@@ -100,7 +100,7 @@ public:
         ego_cost_value_ = heuristic_statistic_impl.ego_cost_value_;
         latest_ego_cost_ = ego_cost_value_;
         auto& node_visits_hypothesis = total_node_visits_hypothesis_[hypothesis_id_current_iteration_];
-        MCTS_EXPECT_TRUE(node_visits_hypothesis == 0); // This should be the first visit
+        MCTS_EXPECT_TRUE(total_node_visits_ == 0); // This should be the first visit
         node_visits_hypothesis += 1;
         total_node_visits_ += 1;
     }
