@@ -45,7 +45,19 @@ class UctTest;
 
 
 
-#define MCTS_EXPECT_TRUE(cond)
+
+#ifndef NDEBUG
+#   define MCTS_EXPECT_TRUE(condition) \
+    do { \
+        if (! (condition)) { \
+            std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
+                      << " line " << __LINE__ <<  std::endl; \
+            std::terminate(); \
+        } \
+    } while (false)
+#else
+#   define MCTS_EXPECT_TRUE(condition, message) do { } while (false)
+#endif
 
 struct RequiresHypothesis 
 {};

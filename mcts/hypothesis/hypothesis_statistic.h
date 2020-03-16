@@ -66,10 +66,10 @@ public:
         /* Init hypothesis node count and Q-Values if not visited under this hypothesis yet */
         init_hypothesis_variables(hypothesis_id_current_iteration_);
 
-        if(progressive_widening_hypothesis_based_ &&
-           require_progressive_widening_hypothesis_based(hypothesis_id_current_iteration_) ||
-           !progressive_widening_hypothesis_based_ &&
-           require_progressive_widening_total(hypothesis_id_current_iteration_)) {
+        if((progressive_widening_hypothesis_based_ &&
+           require_progressive_widening_hypothesis_based(hypothesis_id_current_iteration_)) ||
+           (!progressive_widening_hypothesis_based_ &&
+           require_progressive_widening_total(hypothesis_id_current_iteration_))) {
             /* Sample new action:
             1) Sample action from hypothesis
             2) Initialized UCBPair for this acion for this hypothesis (counts are updated during backprop.)
@@ -100,7 +100,7 @@ public:
         ego_cost_value_ = heuristic_statistic_impl.ego_cost_value_;
         latest_ego_cost_ = ego_cost_value_;
         auto& node_visits_hypothesis = total_node_visits_hypothesis_[hypothesis_id_current_iteration_];
-        MCTS_EXPECT_TRUE(total_node_visits_hypothesis_ == 0); // This should be the first visit
+        MCTS_EXPECT_TRUE(node_visits_hypothesis == 0); // This should be the first visit
         node_visits_hypothesis += 1;
         total_node_visits_ += 1;
     }
@@ -147,8 +147,8 @@ public:
         for (const auto& ucb_pair : ucb_statistics) 
         {
             double action_cost_normalized = (ucb_pair.second.action_ego_cost_-lower_cost_bound)/(upper_cost_bound-lower_cost_bound); 
-            MCTS_EXPECT_TRUE(action_value_normalized>=0);
-            MCTS_EXPECT_TRUE(action_value_normalized<=1);
+            MCTS_EXPECT_TRUE(action_cost_normalized>=0);
+            MCTS_EXPECT_TRUE(action_cost_normalized<=1);
             const double ucb_cost = action_cost_normalized + 2 * k_exploration_constant * sqrt( (2* std::log(node_visits)) / (ucb_pair.second.action_count_)  );
             if (ucb_cost > largest_cost) {
                 largest_cost = ucb_cost;

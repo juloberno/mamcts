@@ -25,7 +25,7 @@ class AgentPolicyCrossingState : public RandomGenerator {
                             RandomGenerator(parameters.OTHER_AGENTS_POLICY_RANDOM_SEED),
                             desired_gap_range_(desired_gap_range),
                             parameters_(parameters) {
-                                MCTS_EXPECT_TRUE(desired_gap_range.first <= desired_gap_range.second)
+                                MCTS_EXPECT_TRUE(desired_gap_range.first <= desired_gap_range.second);
                             }
 
     Domain act(const AgentState<Domain>& agent_state, const AgentState<Domain>& ego_state) const;
@@ -103,7 +103,6 @@ template <>
 inline Probability AgentPolicyCrossingState<float>::get_probability(const AgentState<float>& agent_state, const AgentState<float>& ego_state, const float& action) const {
     const float gap_discretization = 0.001f;
     MCTS_EXPECT_TRUE((desired_gap_range_.second-desired_gap_range_.first) > gap_discretization);
-    MCTS_EXPECT_TRUE((desired_gap_range_.second-desired_gap_range_.first) % gap_discretization == 0);
     auto prob_between = [&](float left, float right, float uniform_prob) -> Probability {
         return std::max(right - left, gap_discretization) * uniform_prob;
     };
