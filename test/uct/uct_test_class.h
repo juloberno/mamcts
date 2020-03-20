@@ -33,7 +33,7 @@ public:
             }
 
 
-            const AgentIdx num_agents = start_node->state_->get_agent_idx().size();
+            const AgentIdx num_agents = start_node->state_->get_num_agents();
 
 
             std::vector<UctStatistic> expected_statistics(num_agents, UctStatistic(start_node->get_state()->get_num_actions(0), 0, MctsParameters()));

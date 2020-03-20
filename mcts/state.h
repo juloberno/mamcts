@@ -71,7 +71,11 @@ public:
 
     bool is_terminal() const;
 
-    const std::vector<AgentIdx> get_agent_idx() const;
+    const std::vector<AgentIdx> get_other_agent_idx() const;
+
+    const AgentIdx get_ego_agent_idx() const;
+
+    const AgentIdx get_num_agents() const;
 
     static const AgentIdx ego_agent_idx;
 
@@ -110,8 +114,18 @@ inline bool StateInterface<Implementation>::is_terminal() const {
 }
 
 template<typename Implementation>
-inline const std::vector<AgentIdx> StateInterface<Implementation>::get_agent_idx() const {
-    return impl().get_agent_idx();
+inline const std::vector<AgentIdx> StateInterface<Implementation>::get_other_agent_idx() const {
+    return impl().get_other_agent_idx();
+}
+
+template<typename Implementation>
+inline const AgentIdx StateInterface<Implementation>::get_ego_agent_idx() const {
+    return impl().get_ego_agent_idx();
+}
+
+template<typename Implementation>
+inline const AgentIdx StateInterface<Implementation>::get_num_agents() const {
+    return impl().get_other_agent_idx().size() + 1; // num other agents + ego agent
 }
 
 

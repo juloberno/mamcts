@@ -119,8 +119,8 @@ struct container_hash {
     other_int_nodes_([this, mcts_parameters]()-> InterNodeVector {
         // Initialize the intermediate nodes of other agents
         InterNodeVector vec;
-        // vec.resize(state_.get_agent_idx().size()-1);
-        for (AgentIdx ai = S::ego_agent_idx+1; ai < AgentIdx(state_->get_agent_idx().size()); ++ai ) {
+        // vec.resize(state_.get_num_agents()-1);
+        for (AgentIdx ai = S::ego_agent_idx+1; ai < AgentIdx(state_->get_num_agents()); ++ai ) {
             vec.emplace_back(*state_,ai,state_->get_num_actions(ai), mcts_parameters);
         }
         return vec;
@@ -128,7 +128,7 @@ struct container_hash {
     joint_action_(joint_action),
     max_num_joint_actions_([this]()-> unsigned int{
         ActionIdx num_actions(state_->get_num_actions(S::ego_agent_idx));
-        for(auto ai = S::ego_agent_idx+1; ai < AgentIdx(state_->get_agent_idx().size()); ++ai ) {
+        for(auto ai = S::ego_agent_idx+1; ai < AgentIdx(state_->get_num_agents()); ++ai ) {
             num_actions *=state_->get_num_actions(ai);
         }
         return num_actions; }() ),
@@ -152,9 +152,9 @@ struct container_hash {
         // helper function to fill rewards and costs
         auto fill_rewards = [this](const std::vector<Reward>& reward_list, const Cost& ego_cost, const JointAction& ja) {
             ego_int_node_.collect(reward_list[S::ego_agent_idx], ego_cost, ja[S::ego_agent_idx]);
-            for (auto it = other_int_nodes_.begin(); it != other_int_nodes_.end(); ++it)
+            for (AgentIdx ai = 1; ai < other_int_nodes_.size()+1; ++ai)
             {
-                it->collect(reward_list[it->get_agent_idx()], ego_cost, ja[it->get_agent_idx()] );
+                other_int_nodes_[ai-1].collect(reward_list[ai], ego_cost, ja[ai] );
             }
         };
 
@@ -165,11 +165,11 @@ struct container_hash {
         }
 
         // Let each agent select an action according to its statistic model -> yields joint_action
-        JointAction joint_action(state_->get_agent_idx().size());
-        joint_action[ego_int_node_.get_agent_idx()] = ego_int_node_.choose_next_action();
-        for(auto it = other_int_nodes_.begin(); it != other_int_nodes_.end(); ++it)
+        JointAction joint_action(state_->get_num_agents());
+        joint_action[S::ego_agent_idx] = ego_int_node_.choose_next_action();
+        for (AgentIdx ai = 1; ai < other_int_nodes_.size()+1; ++ai)
         {
-            joint_action[it->get_agent_idx()] = it->choose_next_action();
+            joint_action[ai] = other_int_nodes_[ai-1].choose_next_action();
         }
 
         // Check if joint action was already expanded
@@ -233,9 +233,9 @@ struct container_hash {
     template<class S, class SE, class SO, class H>
     void StageNode<S,SE, SO, H>::update_statistics(const StageNodeSPtr &changed_child_node) {
         ego_int_node_.update_statistic(changed_child_node->ego_int_node_);
-        for (auto it = other_int_nodes_.begin(); it != other_int_nodes_.end(); ++it)
+        for (AgentIdx ai = 0; ai < other_int_nodes_.size() ; ++ai)
         {
-            it->update_statistic(changed_child_node->other_int_nodes_[it->get_agent_idx()-1]); // -1: Ego Agent is at zero, but not contained in other int nodes
+            other_int_nodes_[ai].update_statistic(changed_child_node->other_int_nodes_[ai]);
         }
     }
 

@@ -66,9 +66,14 @@ public:
 
     HypothesisId get_num_hypothesis(const AgentIdx& agent_idx) const {return 2;}
 
-    const std::vector<AgentIdx> get_agent_idx() const {
-        return std::vector<AgentIdx>{0,1};
+    const std::vector<AgentIdx> get_other_agent_idx() const {
+        return std::vector<AgentIdx>{0, 1};
     }
+
+    const AgentIdx get_ego_agent_idx() const {
+        return 10;
+    }
+
 
     typedef int ActionType;
 

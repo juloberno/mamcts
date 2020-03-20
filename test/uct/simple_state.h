@@ -61,9 +61,14 @@ public:
         return state_length_ >= winning_state_length_ || state_length_ <= loosing_state_length_;
     }
 
-    const std::vector<AgentIdx> get_agent_idx() const {
-        return std::vector<AgentIdx>{0,1};
+    const std::vector<AgentIdx> get_other_agent_idx() const {
+        return std::vector<AgentIdx>{1};
     }
+
+    const AgentIdx get_ego_agent_idx() const {
+        return 0;
+    }
+
 
     std::string sprintf() const
     {

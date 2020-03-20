@@ -153,10 +153,14 @@ public:
         return terminal_;
     }
 
-    const std::vector<AgentIdx> get_agent_idx() const {
-        std::vector<AgentIdx> agent_idx(other_agent_states_.size()+1);
-        std::iota(agent_idx.begin(), agent_idx.end(),0);
+    const std::vector<AgentIdx> get_other_agent_idx() const {
+        std::vector<AgentIdx> agent_idx(other_agent_states_.size());
+        std::iota(agent_idx.begin(), agent_idx.end(), 1); // start from 1 since 0 is ego agent
         return agent_idx; // adapt to number of agents
+    }
+
+    const AgentIdx get_ego_agent_idx() const {
+        return 0;
     }
 
     std::string sprintf() const

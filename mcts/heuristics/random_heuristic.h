@@ -24,16 +24,15 @@ public:
     std::pair<SE, std::unordered_map<AgentIdx, SO>> calculate_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node) {
         //catch case where newly expanded state is terminal
         if(node->get_state()->is_terminal()){
-            const AgentIdx num_agents = node->get_state()->get_agent_idx().size();
             const ActionIdx num_ego_actions = node->get_state()->get_num_actions(S::ego_agent_idx); 
-            SE ego_heuristic(num_ego_actions, S::ego_agent_idx, mcts_parameters_);
+            SE ego_heuristic(num_ego_actions, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
             ego_heuristic.set_heuristic_estimate(0.0f, 0.0f);
             std::unordered_map<AgentIdx, SO> other_heuristic_estimates;
-            for (AgentIdx ai = S::ego_agent_idx+1; ai < num_agents; ++ai)
-            {   
-                SO statistic(node->get_state()->get_num_actions(ai), ai, mcts_parameters_);
-                statistic.set_heuristic_estimate(0.0f, 0.0f);
-                other_heuristic_estimates.insert(std::pair<AgentIdx, SO>(ai, statistic));
+            for (const auto& ai : node->get_state()->get_other_agent_idx())
+            { 
+              SO statistic(node->get_state()->get_num_actions(ai), ai, mcts_parameters_);
+              statistic.set_heuristic_estimate(0.0f, 0.0f);
+              other_heuristic_estimates.insert(std::pair<AgentIdx, SO>(ai, statistic));
             }
             return std::pair<SE, std::unordered_map<AgentIdx, SO>>(ego_heuristic, other_heuristic_estimates) ;
         }
@@ -41,10 +40,10 @@ public:
         namespace chr = std::chrono;
         auto start = std::chrono::high_resolution_clock::now();
         std::shared_ptr<S> state = node->get_state()->clone();
-        const AgentIdx num_agents = node->get_state()->get_agent_idx().size();
+        const AgentIdx num_agents = node->get_state()->get_num_agents();
 
         std::vector<Reward> accum_rewards(num_agents);
-        std::vector<Reward> step_rewards(state->get_agent_idx().size());
+        std::vector<Reward> step_rewards(state->get_num_agents());
         Cost ego_cost;
         Cost accum_cost = 0.0f;
         const double k_discount_factor = mcts_parameters_.DISCOUNT_FACTOR; 
@@ -60,10 +59,12 @@ public:
              SE ego_statistic(node->get_state()->get_num_actions(S::ego_agent_idx), S::ego_agent_idx,
                             mcts_parameters_);
              jointaction[S::ego_agent_idx] = ego_statistic.choose_next_action(*state);
-             for (AgentIdx ai = S::ego_agent_idx+1; ai < num_agents; ++ai)
-             {   
+             AgentIdx action_idx = 1;
+             for (const auto& ai : node->get_state()->get_other_agent_idx())
+             {  
                 SO statistic(node->get_state()->get_num_actions(ai), ai, mcts_parameters_);
-                jointaction[ai] = statistic.choose_next_action(*state);
+                jointaction[action_idx] = statistic.choose_next_action(*state);
+                action_idx++;
              }
 
              auto new_state = state->execute(jointaction, step_rewards, ego_cost);
@@ -79,14 +80,16 @@ public:
 
          };
         // generate an extra node statistic for each agent
-        SE ego_heuristic(0, S::ego_agent_idx, mcts_parameters_);
+        SE ego_heuristic(0, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
         ego_heuristic.set_heuristic_estimate(accum_rewards[S::ego_agent_idx], accum_cost);
         std::unordered_map<AgentIdx, SO> other_heuristic_estimates;
-        for (AgentIdx ai = S::ego_agent_idx+1; ai < num_agents; ++ai)
+        AgentIdx reward_idx=1;
+        for (auto agent_idx : node->get_state()->get_other_agent_idx())
         {
-            SO statistic(0, ai, mcts_parameters_);
-            statistic.set_heuristic_estimate(accum_rewards[ai], accum_cost);
-            other_heuristic_estimates.insert(std::pair<AgentIdx, SO>(ai, statistic));
+            SO statistic(0, agent_idx, mcts_parameters_);
+            statistic.set_heuristic_estimate(accum_rewards[reward_idx], accum_cost);
+            other_heuristic_estimates.insert(std::pair<AgentIdx, SO>(agent_idx, statistic));
+            reward_idx++;
         }
         return std::pair<SE, std::unordered_map<AgentIdx, SO>>(ego_heuristic, other_heuristic_estimates);
     }

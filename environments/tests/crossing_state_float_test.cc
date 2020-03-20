@@ -167,14 +167,11 @@ TEST(hypothesis_crossing_state_float, collision )
     bool collision = false;
 
     // All agents move forward 
-    auto jointaction = JointAction(state->get_agent_idx().size());
-    for (auto agent_idx : state->get_agent_idx()) {
-      if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
-        jointaction[agent_idx] = 2;
-      } else {
+    auto jointaction = JointAction(state->get_num_agents());
+    jointaction[CrossingState<Domain>::ego_agent_idx] = 2;
+    for (ActionIdx action_idx =1; action_idx < state->get_other_agent_idx().size()+1; ++action_idx) {
         const auto action = aconv<Domain>(1.0f);
-        jointaction[agent_idx] = action;
-      }
+        jointaction[action_idx] = action;
     }
     for(int i = 0; i< 100; ++i) {
       state = state->execute(jointaction, rewards, cost);
@@ -206,14 +203,11 @@ TEST(hypothesis_crossing_state_float, collision_2 )
     bool collision = false;
 
     // All agents move forward 
-    auto jointaction = JointAction(state->get_agent_idx().size());
-    for (auto agent_idx : state->get_agent_idx()) {
-      if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
-        jointaction[agent_idx] = 4;
-      } else {
+    auto jointaction = JointAction(state->get_num_agents());
+    jointaction[CrossingState<Domain>::ego_agent_idx] = 4;
+    for (ActionIdx action_idx =1; action_idx < state->get_other_agent_idx().size()+1; ++action_idx) {
         const auto action = aconv<Domain>(6.0f);
-        jointaction[agent_idx] = action;
-      }
+        jointaction[action_idx] = action;
     }
     state = state->execute(jointaction, rewards, cost);
     if (state->is_terminal() && !state->ego_goal_reached()) {
@@ -239,14 +233,13 @@ TEST(hypothesis_crossing_state_float, hypothesis_friendly)
     // Ego agent moves forward other agents stick to deterministic hypothesis keeping distance of 5
     for(int i = 0; i< 100; ++i) {
       belief_tracker.sample_current_hypothesis();
-      auto jointaction = JointAction(state->get_agent_idx().size());
-      for (auto agent_idx : state->get_agent_idx()) {
-        if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
-          jointaction[agent_idx] = 2;
-        } else {
+      auto jointaction = JointAction(state->get_num_agents());
+      jointaction[CrossingState<Domain>::ego_agent_idx] = aconv<Domain>(1.0f);
+      AgentIdx action_idx = 1;
+      for (auto agent_idx : state->get_other_agent_idx()) {
           const auto action = state->plan_action_current_hypothesis(agent_idx);
-          jointaction[agent_idx] = action;
-        }
+          jointaction[action_idx] = action;
+          action_idx++;
       }
       state = state->execute(jointaction, rewards, cost);
       if (state->is_terminal() && !state->ego_goal_reached()) {
@@ -286,15 +279,14 @@ TEST(hypothesis_crossing_state_float, hypothesis_belief_correct)
 
     for(int i = 0; i < 200; ++i) {
       belief_tracker.sample_current_hypothesis();
-      auto jointaction = JointAction(state->get_agent_idx().size());
-      for (auto agent_idx : state->get_agent_idx()) {
-        if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
-          jointaction[agent_idx] =  2;
-        } else {
-          const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
-                                                     state->get_ego_state());
-          jointaction[agent_idx] = aconv<Domain>(action);
-        }
+      auto jointaction = JointAction(state->get_num_agents());
+      jointaction[CrossingState<Domain>::ego_agent_idx] =  2;
+      AgentIdx action_idx = 1;
+      for (auto agent_idx : state->get_other_agent_idx()) {
+        const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
+                                                    state->get_ego_state());
+        jointaction[action_idx] = aconv<Domain>(action);
+        action_idx++;
       }
       std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;
       next_state = state->execute(jointaction, rewards, cost);
@@ -333,20 +325,20 @@ TEST(crossing_state, mcts_goal_reached_true_hypothesis)
     bool collision = false;
 
     for(int i = 0; i< 20; ++i) {
-      auto jointaction = JointAction(state->get_agent_idx().size());
-      for (auto agent_idx : state->get_agent_idx()) {
-        if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
-          // Plan for ego agent with hypothesis-based search
-          Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts(mcts_default_parameters());
-          mcts.search(*state, belief_tracker);
-          jointaction[agent_idx] = mcts.returnBestAction();
-          std::cout << "best uct action: " << state->idx_to_ego_crossing_action(jointaction[agent_idx]) << ", num iterations: " << mcts.numIterations() << std::endl;
-        } else {
+      auto jointaction = JointAction(state->get_num_agents());
+      // Plan for ego agent with hypothesis-based search
+        Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts(mcts_default_parameters());
+        mcts.search(*state, belief_tracker);
+        jointaction[CrossingState<Domain>::ego_agent_idx] = mcts.returnBestAction();
+        std::cout << "best uct action: " << 
+            state->idx_to_ego_crossing_action(jointaction[CrossingState<Domain>::ego_agent_idx]) << ", num iterations: " << mcts.numIterations() << std::endl;
+        AgentIdx action_idx = 1;
+        for (auto agent_idx : state->get_other_agent_idx()) {
           // Other agents act according to unknown true agents policy
           const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
-                                                     state->get_ego_state());
+                                                      state->get_ego_state());
           jointaction[agent_idx] = aconv<Domain>(action);
-        }
+          action_idx++;
       }
       std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;
       next_state = state->execute(jointaction, rewards, cost);
@@ -379,20 +371,19 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
     bool collision = false;
 
     for(int i = 0; i< 30; ++i) {
-      auto jointaction = JointAction(state->get_agent_idx().size());
-      for (auto agent_idx : state->get_agent_idx()) {
-        if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
-          // Plan for ego agent with hypothesis-based search
-          Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts(mcts_default_parameters());
-          mcts.search(*state, belief_tracker);
-          jointaction[agent_idx] = mcts.returnBestAction();
-          std::cout << "best uct action: " << state->idx_to_ego_crossing_action(jointaction[agent_idx]) << std::endl;
-        } else {
-          // Other agents act according to unknown true agents policy
-          const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
-                                                     state->get_ego_state());
-          jointaction[agent_idx] = aconv<Domain>(action);
-        }
+      auto jointaction = JointAction(state->get_num_agents());
+      Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts(mcts_default_parameters());
+      mcts.search(*state, belief_tracker);
+      jointaction[CrossingState<Domain>::ego_agent_idx] = mcts.returnBestAction();
+      std::cout << "best uct action: " << 
+          state->idx_to_ego_crossing_action(jointaction[CrossingState<Domain>::ego_agent_idx]) << std::endl;
+      AgentIdx action_idx=1;
+      for (auto agent_idx : state->get_other_agent_idx()) {
+        // Other agents act according to unknown true agents policy
+        const auto action = true_agents_policy.act(state->get_agent_state(agent_idx),
+                                                    state->get_ego_state());
+        jointaction[action_idx] = aconv<Domain>(action);
+        action_idx++;
       }
       std::cout << "Step " << i << ", Action = " << jointaction << ", " << state->sprintf() << std::endl;
       next_state = state->execute(jointaction, rewards, cost);

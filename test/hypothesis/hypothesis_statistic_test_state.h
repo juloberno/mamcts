@@ -43,8 +43,12 @@ public:
 
     void change_actions() {use_first_action_ = !use_first_action_;}
 
-    const std::vector<AgentIdx> get_agent_idx() const {
-        return std::vector<AgentIdx>{0,1};
+    const std::vector<AgentIdx> get_other_agent_idx() const {
+        return std::vector<AgentIdx>{1};
+    }
+
+    const AgentIdx get_ego_agent_idx() const {
+        return 0;
     }
 
     typedef int ActionType;

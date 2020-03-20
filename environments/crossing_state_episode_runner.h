@@ -57,19 +57,18 @@ class CrossingStateEpisodeRunner {
       std::vector<Reward> rewards;
       Cost cost;
 
-      JointAction jointaction(current_state_->get_agent_idx().size());
-      for (auto agent_idx : current_state_->get_agent_idx()) {
-        if (agent_idx == CrossingState<Domain>::ego_agent_idx ) {
-          // Plan for ego agent with hypothesis-based search
-          Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts(mcts_parameters_);
-          mcts.search(*current_state_, belief_tracker_);
-          jointaction[agent_idx] = mcts.returnBestAction();
-        } else {
+      JointAction jointaction(current_state_->get_num_agents());
+      Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts(mcts_parameters_);
+      mcts.search(*current_state_, belief_tracker_);
+      jointaction[CrossingState<Domain>::ego_agent_idx] = mcts.returnBestAction();
+
+      AgentIdx action_idx = 1;
+      for (auto agent_idx : current_state_->get_other_agent_idx()) {
           // Other agents act according to unknown true agents policy
           const auto action = agents_true_policies_.at(agent_idx).act(current_state_->get_agent_state(agent_idx),
                                                       current_state_->get_ego_state());
-          jointaction[agent_idx] = aconv(action);
-        }
+          jointaction[action_idx] = aconv(action);
+          action_idx++;
       }
 
       last_state_ = current_state_;
