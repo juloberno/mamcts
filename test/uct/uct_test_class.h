@@ -67,7 +67,8 @@ public:
                 // ---------------------- Expected statistics calculation --------------------------
                 bool is_first_child_and_not_parent_root = (it == start_node->children_.begin()) && (!start_node->is_root());
                 expected_statistics = expected_total_node_visits(it->second->ego_int_node_, ego_agent_id, is_first_child_and_not_parent_root, expected_statistics);
-                expected_statistics = expected_action_count(it->second->ego_int_node_, ego_agent_id, joint_action, is_first_child_and_not_parent_root, expected_statistics);
+                expected_statistics = expected_action_count(it->second->ego_int_node_, ego_agent_id, joint_action,
+                                                       is_first_child_and_not_parent_root, expected_statistics, S::ego_agent_idx);
                 expected_statistics = expected_action_value(it->second->ego_int_node_, start_node->ego_int_node_,
                                  ego_agent_id, joint_action, rewards, expected_statistics,
                                   action_occurence(start_node, joint_action[S::ego_agent_idx] , ego_agent_id), S::ego_agent_idx);
@@ -75,14 +76,15 @@ public:
                 for (uint i = 0; i < child->other_int_nodes_.size(); ++i)  {
                     const auto child_int_node = child->other_int_nodes_[i];
                     const auto parent_int_node = start_node->other_int_nodes_[i];
-                    expected_statistics = expected_total_node_visits(child_int_node, child_int_node.get_agent_idx(), is_first_child_and_not_parent_root, expected_statistics);
-                    expected_statistics = expected_action_count(child_int_node, child_int_node.get_agent_idx(),joint_action, is_first_child_and_not_parent_root, expected_statistics );
-                  
                     auto other_agent_idx = start_node->state_->get_other_agent_idx();
                     auto action_it = std::find(other_agent_idx.begin(),
                                       other_agent_idx.end(),
                                         child_int_node.get_agent_idx());
                     auto action_idx = std::distance(other_agent_idx.begin(), action_it);
+                    expected_statistics = expected_total_node_visits(child_int_node, child_int_node.get_agent_idx(), is_first_child_and_not_parent_root, expected_statistics);
+                    expected_statistics = expected_action_count(child_int_node, child_int_node.get_agent_idx(), 
+                                        joint_action, is_first_child_and_not_parent_root, expected_statistics, action_idx);
+
                     expected_statistics = expected_action_value(child_int_node, parent_int_node, child_int_node.get_agent_idx(), joint_action, rewards, expected_statistics,
                                             action_occurence(start_node,joint_action[child_int_node.get_agent_idx()] , child_int_node.get_agent_idx()), action_idx);
                 }
@@ -132,9 +134,13 @@ private:
 
     std::unordered_map<AgentIdx, UctStatistic> expected_action_count(const UctStatistic& child_stat, const AgentIdx& agent_idx,
          const JointAction& joint_action, bool is_first_child_and_not_parent_root,
-         std::unordered_map<AgentIdx, UctStatistic> expected_statistics) {
+         std::unordered_map<AgentIdx, UctStatistic> expected_statistics, const ActionIdx& action_idx) {
         UctStatistic&  stat = expected_statistics.at(agent_idx);
-        stat.ucb_statistics_[joint_action[agent_idx]].action_count_ +=  child_stat.total_node_visits_;
+        auto action_ucb_parent = stat.ucb_statistics_.find(joint_action[action_idx]);
+        if(action_ucb_parent ==  stat.ucb_statistics_.end()) {
+            throw;
+        }
+        stat.ucb_statistics_[joint_action[action_idx]].action_count_ +=  child_stat.total_node_visits_;
 
         return expected_statistics;
     }
@@ -152,8 +158,8 @@ private:
         UctStatistic&  stat = expected_statistics.at(agent_idx);
         const auto& total_action_count = action_ucb_parent->second.action_count_;
         const auto& child_action_count = child_stat.total_node_visits_;
-        stat.ucb_statistics_[joint_action[agent_idx]].action_value_ +=
-                         1/float(total_action_count) * child_action_count * (rewards[agent_idx] + parent_stat.k_discount_factor*child_stat.value_);
+        stat.ucb_statistics_[joint_action[action_idx]].action_value_ +=
+                         1/float(total_action_count) * child_action_count * (rewards[action_idx] + parent_stat.k_discount_factor*child_stat.value_);
 
         return expected_statistics;
     }
