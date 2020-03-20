@@ -62,11 +62,11 @@ public:
     }
 
     const std::vector<AgentIdx> get_other_agent_idx() const {
-        return std::vector<AgentIdx>{1};
+        return std::vector<AgentIdx>{5};
     }
 
     const AgentIdx get_ego_agent_idx() const {
-        return 0;
+        return 4;
     }
 
 

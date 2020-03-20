@@ -21,26 +21,32 @@ class mcts::UctTest
 public:
     template< class S, class SE, class SO, class H>
     void verify_uct(const Mcts<S, SE, SO, H>& mcts, unsigned int depth) {
-        std::vector<UctStatistic> expected_root_statistics = verify_uct(mcts.root_, depth);
+        std::unordered_map<AgentIdx, UctStatistic> expected_root_statistics = verify_uct(mcts.root_, depth);
     }
 
     template< class S, class H>
-    std::vector<UctStatistic> verify_uct(const StageNodeSPtr<S,UctStatistic,UctStatistic,H>& start_node, unsigned int depth)
+    std::unordered_map<AgentIdx, UctStatistic> verify_uct(const StageNodeSPtr<S,UctStatistic,UctStatistic,H>& start_node, unsigned int depth)
     {
             if(start_node->children_.empty())
             {
-               return std::vector<UctStatistic>();
+               return std::unordered_map<AgentIdx, UctStatistic>();
             }
 
 
             const AgentIdx num_agents = start_node->state_->get_num_agents();
 
 
-            std::vector<UctStatistic> expected_statistics(num_agents, UctStatistic(start_node->get_state()->get_num_actions(0), 0, MctsParameters()));
-
+            std::unordered_map<AgentIdx, UctStatistic> expected_statistics;
+            auto ego_agent_id = start_node->state_->get_ego_agent_idx();
+            expected_statistics.insert(std::pair<AgentIdx, UctStatistic>(ego_agent_id,
+               UctStatistic(start_node->get_state()->get_num_actions(ego_agent_id), ego_agent_id, MctsParameters())));
+            for (AgentIdx other_agent_idx : start_node->state_->get_other_agent_idx()) {
+              expected_statistics.insert(std::pair<AgentIdx, UctStatistic>(other_agent_idx,
+                     UctStatistic(start_node->get_state()->get_num_actions(other_agent_idx), other_agent_idx, MctsParameters())));
+            } 
             // ----- RECURSIVE ESTIMATION OF QVALUES AND COUNTS downwards tree -----------------------
             for(auto it = start_node->children_.begin(); it != start_node->children_.end(); ++it) {
-                std::vector<UctStatistic> expected_child_statistics = verify_uct(it->second,depth);
+                std::unordered_map<AgentIdx, UctStatistic> expected_child_statistics = verify_uct(it->second,depth);
 
                 // check joint actions are different
                 auto it_other_child = it;
@@ -60,19 +66,25 @@ public:
 
                 // ---------------------- Expected statistics calculation --------------------------
                 bool is_first_child_and_not_parent_root = (it == start_node->children_.begin()) && (!start_node->is_root());
-                expected_statistics = expected_total_node_visits(it->second->ego_int_node_, S::ego_agent_idx, is_first_child_and_not_parent_root, expected_statistics);
-                expected_statistics = expected_action_count(it->second->ego_int_node_, S::ego_agent_idx, joint_action, is_first_child_and_not_parent_root, expected_statistics);
+                expected_statistics = expected_total_node_visits(it->second->ego_int_node_, ego_agent_id, is_first_child_and_not_parent_root, expected_statistics);
+                expected_statistics = expected_action_count(it->second->ego_int_node_, ego_agent_id, joint_action, is_first_child_and_not_parent_root, expected_statistics);
                 expected_statistics = expected_action_value(it->second->ego_int_node_, start_node->ego_int_node_,
-                                 S::ego_agent_idx, joint_action, rewards, expected_statistics,
-                                  action_occurence(start_node,joint_action[S::ego_agent_idx] , S::ego_agent_idx));
+                                 ego_agent_id, joint_action, rewards, expected_statistics,
+                                  action_occurence(start_node, joint_action[S::ego_agent_idx] , ego_agent_id), S::ego_agent_idx);
 
                 for (uint i = 0; i < child->other_int_nodes_.size(); ++i)  {
                     const auto child_int_node = child->other_int_nodes_[i];
                     const auto parent_int_node = start_node->other_int_nodes_[i];
                     expected_statistics = expected_total_node_visits(child_int_node, child_int_node.get_agent_idx(), is_first_child_and_not_parent_root, expected_statistics);
                     expected_statistics = expected_action_count(child_int_node, child_int_node.get_agent_idx(),joint_action, is_first_child_and_not_parent_root, expected_statistics );
+                  
+                    auto other_agent_idx = start_node->state_->get_other_agent_idx();
+                    auto action_it = std::find(other_agent_idx.begin(),
+                                      other_agent_idx.end(),
+                                        child_int_node.get_agent_idx());
+                    auto action_idx = std::distance(other_agent_idx.begin(), action_it);
                     expected_statistics = expected_action_value(child_int_node, parent_int_node, child_int_node.get_agent_idx(), joint_action, rewards, expected_statistics,
-                                            action_occurence(start_node,joint_action[child_int_node.get_agent_idx()] , child_int_node.get_agent_idx()));
+                                            action_occurence(start_node,joint_action[child_int_node.get_agent_idx()] , child_int_node.get_agent_idx()), action_idx);
                 }
             }
 
@@ -107,48 +119,52 @@ private:
     }
 
     // update expected ucb_stat, this functions gets called once for each agent for each child (= number agents x number childs)
-    std::vector<UctStatistic> expected_total_node_visits(const UctStatistic& child_stat,
-             const AgentIdx& agent_idx, bool is_first_child_and_not_parent_root, std::vector<UctStatistic> expected_statistics) {
-        expected_statistics[agent_idx].total_node_visits_ += child_stat.total_node_visits_; // total count for childs + 1 (first expansion of child_stat)
+    std::unordered_map<AgentIdx, UctStatistic> expected_total_node_visits(const UctStatistic& child_stat,
+             const AgentIdx& agent_idx, bool is_first_child_and_not_parent_root, std::unordered_map<AgentIdx, UctStatistic> expected_statistics) {
+        UctStatistic&  stat = expected_statistics.at(agent_idx);
+        stat.total_node_visits_ += child_stat.total_node_visits_; // total count for childs + 1 (first expansion of child_stat)
         if(is_first_child_and_not_parent_root) {
-            expected_statistics[agent_idx].total_node_visits_ += 1;
+            stat.total_node_visits_ += 1;
         }
 
         return expected_statistics;
     }
 
-    std::vector<UctStatistic> expected_action_count(const UctStatistic& child_stat, const AgentIdx& agent_idx,
+    std::unordered_map<AgentIdx, UctStatistic> expected_action_count(const UctStatistic& child_stat, const AgentIdx& agent_idx,
          const JointAction& joint_action, bool is_first_child_and_not_parent_root,
-         std::vector<UctStatistic> expected_statistics) {
-        expected_statistics[agent_idx].ucb_statistics_[joint_action[agent_idx]].action_count_ +=  child_stat.total_node_visits_;
+         std::unordered_map<AgentIdx, UctStatistic> expected_statistics) {
+        UctStatistic&  stat = expected_statistics.at(agent_idx);
+        stat.ucb_statistics_[joint_action[agent_idx]].action_count_ +=  child_stat.total_node_visits_;
 
         return expected_statistics;
     }
 
-    std::vector<UctStatistic> expected_action_value(const UctStatistic& child_stat,
+    std::unordered_map<AgentIdx, UctStatistic> expected_action_value(const UctStatistic& child_stat,
              const UctStatistic& parent_stat, const AgentIdx& agent_idx, const JointAction& joint_action, std::vector<Reward> rewards,
-             std::vector<UctStatistic> expected_statistics, int action_occurence) {
-        auto action_ucb_parent = parent_stat.ucb_statistics_.find(joint_action[agent_idx]);
+             std::unordered_map<AgentIdx, UctStatistic> expected_statistics, int action_occurence, const ActionIdx& action_idx) {
+        auto action_ucb_parent = parent_stat.ucb_statistics_.find(joint_action[action_idx]);
         if(action_ucb_parent ==  parent_stat.ucb_statistics_.end()) {
             throw;
         }
         // Q(s,a) = ( (reward1+discount*value_child1)*n_visits_child1 + (reward2+discount*value_child1*n_visits_child2 +...)/total_action_count
         // total_action_count == n_visits_child1 + n_visits_child2 + ...
         // REMARK: This tests also correctness of the value estimates
+        UctStatistic&  stat = expected_statistics.at(agent_idx);
         const auto& total_action_count = action_ucb_parent->second.action_count_;
         const auto& child_action_count = child_stat.total_node_visits_;
-        expected_statistics[agent_idx].ucb_statistics_[joint_action[agent_idx]].action_value_ +=
+        stat.ucb_statistics_[joint_action[agent_idx]].action_value_ +=
                          1/float(total_action_count) * child_action_count * (rewards[agent_idx] + parent_stat.k_discount_factor*child_stat.value_);
 
         return expected_statistics;
     }
 
     template<class S, class Stats>
-    void compare_expected_existing(const std::vector<UctStatistic>& expected_statistics,  const IntermediateNode<S,Stats>& inter_node,
+    void compare_expected_existing(const std::unordered_map<AgentIdx, UctStatistic>& expected_statistics,  const IntermediateNode<S,Stats>& inter_node,
                                    unsigned id, unsigned depth) {
         // Compare node visits
+        const UctStatistic&  stat = expected_statistics.at(inter_node.get_agent_idx());
         const AgentIdx agent_idx = inter_node.get_agent_idx();
-        auto recursive_node_visit = expected_statistics[agent_idx].total_node_visits_;
+        auto recursive_node_visit = stat.total_node_visits_;
         auto existing_node_visit = inter_node.total_node_visits_;
         EXPECT_EQ(existing_node_visit, recursive_node_visit) << "Unexpected recursive node visits for node " << id << " at depth " << depth << " for agent " << (int)agent_idx;
 
@@ -157,18 +173,18 @@ private:
         {   
             ActionIdx action_idx = action_it->first;
             
-            if(expected_statistics[agent_idx].ucb_statistics_.find(action_idx) ==  expected_statistics[agent_idx].ucb_statistics_.end()) {
+            if(stat.ucb_statistics_.find(action_idx) ==  stat.ucb_statistics_.end()) {
                 std::cout << "skipping ucb statistic pair due to missing entry." << std::endl;
                 continue; // UCBStatistic class initialized map for all available actions, but during search are only some of them expanded.
                         // Only the expanded actions are recursively estimated 
             }    
 
-            auto recursively_expected_qvalue = expected_statistics[agent_idx].ucb_statistics_.at(action_idx).action_value_;
+            auto recursively_expected_qvalue = stat.ucb_statistics_.at(action_idx).action_value_;
             double existing_qvalue = inter_node.ucb_statistics_.at(action_idx).action_value_;
             EXPECT_NEAR(existing_qvalue, recursively_expected_qvalue, 0.001) << "Unexpected recursive q-value for node "
                      << id << " at depth " << depth << " for agent " << (int)agent_idx <<  " and action " << (int)action_idx; 
 
-            auto recursively_expected_count = expected_statistics[agent_idx].ucb_statistics_.at(action_idx).action_count_;
+            auto recursively_expected_count = stat.ucb_statistics_.at(action_idx).action_count_;
             unsigned existing_count = inter_node.ucb_statistics_.at(action_idx).action_count_; 
 
             EXPECT_EQ(existing_count, recursively_expected_count) << "Unexpected recursive action count for node "

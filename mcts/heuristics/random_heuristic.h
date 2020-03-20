@@ -24,7 +24,8 @@ public:
     std::pair<SE, std::unordered_map<AgentIdx, SO>> calculate_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node) {
         //catch case where newly expanded state is terminal
         if(node->get_state()->is_terminal()){
-            const ActionIdx num_ego_actions = node->get_state()->get_num_actions(S::ego_agent_idx); 
+            const auto ego_agent_idx = node->get_state()->get_ego_agent_idx();
+            const ActionIdx num_ego_actions = node->get_state()->get_num_actions(ego_agent_idx); 
             SE ego_heuristic(num_ego_actions, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
             ego_heuristic.set_heuristic_estimate(0.0f, 0.0f);
             std::unordered_map<AgentIdx, SO> other_heuristic_estimates;

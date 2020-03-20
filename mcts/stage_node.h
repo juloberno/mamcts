@@ -115,21 +115,21 @@ struct container_hash {
     children_(),
     joint_rewards_(),
     ego_costs_(),
-    ego_int_node_(*state_,S::ego_agent_idx,state_->get_num_actions(S::ego_agent_idx), mcts_parameters),
+    ego_int_node_(*state_,state_->get_ego_agent_idx(),state_->get_num_actions(state_->get_ego_agent_idx()), mcts_parameters),
     other_int_nodes_([this, mcts_parameters]()-> InterNodeVector {
         // Initialize the intermediate nodes of other agents
         InterNodeVector vec;
         // vec.resize(state_.get_num_agents()-1);
-        for (AgentIdx ai = S::ego_agent_idx+1; ai < AgentIdx(state_->get_num_agents()); ++ai ) {
-            vec.emplace_back(*state_,ai,state_->get_num_actions(ai), mcts_parameters);
+        for (auto agent_idx : state_->get_other_agent_idx()) {
+            vec.emplace_back(*state_, agent_idx, state_->get_num_actions(agent_idx), mcts_parameters);
         }
         return vec;
     }()),
     joint_action_(joint_action),
     max_num_joint_actions_([this]()-> unsigned int{
-        ActionIdx num_actions(state_->get_num_actions(S::ego_agent_idx));
-        for(auto ai = S::ego_agent_idx+1; ai < AgentIdx(state_->get_num_agents()); ++ai ) {
-            num_actions *=state_->get_num_actions(ai);
+        ActionIdx num_actions(state_->get_num_actions(state_->get_ego_agent_idx()));
+        for(auto agent_idx  : state_->get_other_agent_idx()) {
+            num_actions *=state_->get_num_actions(agent_idx);
         }
         return num_actions; }() ),
     id_(++num_nodes_),
