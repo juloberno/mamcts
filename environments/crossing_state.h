@@ -155,12 +155,12 @@ public:
 
     const std::vector<AgentIdx> get_other_agent_idx() const {
         std::vector<AgentIdx> agent_idx(other_agent_states_.size());
-        std::iota(agent_idx.begin(), agent_idx.end(), 6); // start from 1 since 0 is ego agent
+        std::iota(agent_idx.begin(), agent_idx.end(), 1); // start from 1 since 0 is ego agent
         return agent_idx; // adapt to number of agents
     }
 
     const AgentIdx get_ego_agent_idx() const {
-        return 5;
+        return 0;
     }
 
     std::string sprintf() const
