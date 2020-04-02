@@ -50,6 +50,8 @@ class HypothesisBeliefTracker : public mcts::RandomGenerator {
 
     std::string sprintf() const;
 
+    void update_fixed_hypothesis_set(const std::unordered_map<AgentIdx, HypothesisId>& hypothesis_set);
+
 private:
     unsigned int history_length_;
     float probability_discount_;
@@ -156,6 +158,10 @@ inline std::string HypothesisBeliefTracker::sprintf() const {
     ss << std::endl;
   }
   return ss.str();
+}
+
+inline void HypothesisBeliefTracker::update_fixed_hypothesis_set(const std::unordered_map<AgentIdx, HypothesisId>& hypothesis_set) {
+  fixed_hypothesis_set_ = hypothesis_set;
 }
 
 } // namespace mcts
