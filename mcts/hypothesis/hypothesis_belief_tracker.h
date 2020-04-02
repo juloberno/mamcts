@@ -69,7 +69,7 @@ void HypothesisBeliefTracker::belief_update(const HypothesisStateInterface<S>& s
     return;
   }
 
-  for(auto agent_idx : state.get_other_agent_idx() ) {
+  for(auto agent_idx : next_state.get_other_agent_idx() ) {
     auto belief_track_it = tracked_beliefs_.find(agent_idx);
     if(belief_track_it == tracked_beliefs_.end()) {
       // Init belief and probability tracking
