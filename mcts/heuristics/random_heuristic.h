@@ -42,9 +42,12 @@ public:
         auto start = std::chrono::high_resolution_clock::now();
         std::shared_ptr<S> state = node->get_state()->clone();
 
-        std::vector<Reward> accum_rewards(state->get_num_agents(), 0.0f);
-        std::vector<Reward> step_rewards(state->get_num_agents());
-        Cost ego_cost;
+        Reward ego_accum_reward = 0.0f;
+        std::unordered_map<AgentIdx, Reward> other_accum_rewards;
+        for (const auto& ai : state->get_other_agent_idx()) {
+          other_accum_rewards[ai] = 0.0f;
+        }
+
         Cost accum_cost = 0.0f;
         const double k_discount_factor = mcts_parameters_.DISCOUNT_FACTOR; 
         double modified_discount_factor = k_discount_factor;
@@ -52,43 +55,51 @@ public:
         
         while((!state->is_terminal())&&(num_iterations<mcts_parameters_.random_heuristic.MAX_NUMBER_OF_ITERATIONS)&&
                 (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() 
-                    < mcts_parameters_.random_heuristic.MAX_SEARCH_TIME ))
-        {
-             // Build joint action by calling statistics for each agent
-             JointAction jointaction(state->get_num_agents());
-             SE ego_statistic(state->get_num_actions(state->get_ego_agent_idx()),
-                            state->get_ego_agent_idx(),
-                            mcts_parameters_);
-             jointaction[S::ego_agent_idx] = ego_statistic.choose_next_action(*state);
-             AgentIdx action_idx = 1;
-             for (const auto& ai : state->get_other_agent_idx())
-             {  
-                SO statistic(state->get_num_actions(ai), ai, mcts_parameters_);
-                jointaction[action_idx] = statistic.choose_next_action(*state);
-                action_idx++;
-             }
+                    < mcts_parameters_.random_heuristic.MAX_SEARCH_TIME )) {
+            // Build joint action by calling statistics for each agent
+            JointAction jointaction(state->get_num_agents());
+            SE ego_statistic(state->get_num_actions(state->get_ego_agent_idx()),
+                          state->get_ego_agent_idx(),
+                          mcts_parameters_);
+            jointaction[S::ego_agent_idx] = ego_statistic.choose_next_action(*state);
+            AgentIdx action_idx = 1;
+            for (const auto& ai : state->get_other_agent_idx()) {
+              SO statistic(state->get_num_actions(ai), ai, mcts_parameters_);
+              jointaction[action_idx] = statistic.choose_next_action(*state);
+              action_idx++;
+            }
 
-             auto new_state = state->execute(jointaction, step_rewards, ego_cost);
-             state = new_state->clone();
-             num_iterations +=1;
-             // discount the rewards of the current step
-             for(uint i=0; i<step_rewards.size(); i++){
-                 step_rewards.at(i) = step_rewards.at(i)*modified_discount_factor;
-             }
-             accum_rewards += step_rewards;
-             accum_cost += modified_discount_factor*ego_cost;
-             modified_discount_factor = modified_discount_factor*k_discount_factor;
+            Cost ego_cost;
+            std::vector<Reward> step_rewards(state->get_num_agents());
+            auto new_state = state->execute(jointaction, step_rewards, ego_cost);
 
+            // discount the rewards of the current step
+            for(uint i=0; i<step_rewards.size(); i++){
+                step_rewards.at(i) = step_rewards.at(i)*modified_discount_factor;
+            }
+
+            ego_accum_reward += step_rewards[S::ego_agent_idx];
+            AgentIdx reward_idx = 1;
+            for (const auto& ai : state->get_other_agent_idx()) {
+              other_accum_rewards[ai] = step_rewards[reward_idx];
+              action_idx++;
+            }
+
+            accum_cost += modified_discount_factor*ego_cost;
+            modified_discount_factor = modified_discount_factor*k_discount_factor;
+
+            state = new_state->clone();
+            num_iterations +=1;
          };
         // generate an extra node statistic for each agent
         SE ego_heuristic(0, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
-        ego_heuristic.set_heuristic_estimate(accum_rewards[S::ego_agent_idx], accum_cost);
+        ego_heuristic.set_heuristic_estimate(ego_accum_reward, accum_cost);
         std::unordered_map<AgentIdx, SO> other_heuristic_estimates;
         AgentIdx reward_idx=1;
         for (auto agent_idx : node->get_state()->get_other_agent_idx())
         {
             SO statistic(0, agent_idx, mcts_parameters_);
-            statistic.set_heuristic_estimate(accum_rewards[reward_idx], accum_cost);
+            statistic.set_heuristic_estimate(other_accum_rewards[agent_idx], accum_cost);
             other_heuristic_estimates.insert(std::pair<AgentIdx, SO>(agent_idx, statistic));
             reward_idx++;
         }
