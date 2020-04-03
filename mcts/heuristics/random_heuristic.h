@@ -41,9 +41,8 @@ public:
         namespace chr = std::chrono;
         auto start = std::chrono::high_resolution_clock::now();
         std::shared_ptr<S> state = node->get_state()->clone();
-        const AgentIdx num_agents = node->get_state()->get_num_agents();
 
-        std::vector<Reward> accum_rewards(num_agents);
+        std::vector<Reward> accum_rewards(state->get_num_agents(), 0.0f);
         std::vector<Reward> step_rewards(state->get_num_agents());
         Cost ego_cost;
         Cost accum_cost = 0.0f;
@@ -56,14 +55,15 @@ public:
                     < mcts_parameters_.random_heuristic.MAX_SEARCH_TIME ))
         {
              // Build joint action by calling statistics for each agent
-             JointAction jointaction(num_agents);
-             SE ego_statistic(node->get_state()->get_num_actions(S::ego_agent_idx), S::ego_agent_idx,
+             JointAction jointaction(state->get_num_agents());
+             SE ego_statistic(state->get_num_actions(state->get_ego_agent_idx()),
+                            state->get_ego_agent_idx(),
                             mcts_parameters_);
              jointaction[S::ego_agent_idx] = ego_statistic.choose_next_action(*state);
              AgentIdx action_idx = 1;
-             for (const auto& ai : node->get_state()->get_other_agent_idx())
+             for (const auto& ai : state->get_other_agent_idx())
              {  
-                SO statistic(node->get_state()->get_num_actions(ai), ai, mcts_parameters_);
+                SO statistic(state->get_num_actions(ai), ai, mcts_parameters_);
                 jointaction[action_idx] = statistic.choose_next_action(*state);
                 action_idx++;
              }
