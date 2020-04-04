@@ -46,6 +46,20 @@ cc_library(
     )
 
     _maybe(
+      git_repository,
+      name = "com_github_gflags_gflags",
+      commit = "addd749114fab4f24b7ea1e0f2f837584389e52c",
+      remote = "https://github.com/gflags/gflags"
+    )
+
+    _maybe(
+      git_repository,
+      name = "com_github_google_glog",
+      commit = "3ba8976592274bc1f907c402ce22558011d6fc5e",
+      remote = "https://github.com/google/glog"
+    )
+
+    _maybe(
     http_archive, 
     name = "com_github_eigen_eigen",
     build_file_content = """
