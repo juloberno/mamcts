@@ -128,9 +128,14 @@ public:
         ego_cost_value_ = accum_ego_cost;
     };
 
-    std::string print_node_information() const {return "";};
-
     std::string print_edge_information(const ActionIdx& action) const { return "";};
+
+    std::string print_node_information() const
+    {
+        std::stringstream ss;
+        ss << std::setprecision(2) << "V=" << ego_cost_value_ << ", N=" << total_node_visits_;
+        return ss.str();
+    }
 
     typedef struct UcbPair
     {
