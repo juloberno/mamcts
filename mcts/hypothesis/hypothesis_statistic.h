@@ -110,11 +110,11 @@ public:
 
         //Action Value update step
         UcbPair& ucb_pair = ucb_statistics_[hypothesis_id_current_iteration_][collected_cost_.first]; // we remembered for which action we got the reward, must be the same as during backprop, if we linked parents and childs correctly
-        //action value: Q'(s,a) = Q(s,a) + (latest_return - Q'(s,a))/N
+        //action value: Q'(s,a) = Q(s,a) + (latest_return - Q(s,a))/N =  1/(N+1 ( latest_return + N*Q(s,a))
         latest_ego_cost_ = collected_cost_.second + k_discount_factor * changed_uct_statistic.latest_ego_cost_;
         ucb_pair.action_count_ += 1;
         ucb_pair.action_ego_cost_ = ucb_pair.action_ego_cost_ + (latest_ego_cost_ - ucb_pair.action_ego_cost_) / ucb_pair.action_count_;
-        
+        VLOG_EVERY_N(3, 10) << "Agent "<< agent_idx_ <<", Action ego cost, action " << collected_cost_.first << ", C(s,a) = " << ucb_pair.action_ego_cost_;
         auto& node_visits_hypothesis = total_node_visits_hypothesis_[hypothesis_id_current_iteration_];
         node_visits_hypothesis += 1;
         ego_cost_value_ = ego_cost_value_ + (latest_ego_cost_ - ego_cost_value_) / node_visits_hypothesis;
@@ -122,7 +122,7 @@ public:
     }
 
     
-    ActionIdx get_best_action() { throw std::logic_error("Not at meaningful call for this statistic");};
+    ActionIdx get_best_action() { throw std::logic_error("Not a meaningful call for this statistic");};
 
     void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost) {
         ego_cost_value_ = accum_ego_cost;

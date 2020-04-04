@@ -73,15 +73,10 @@ public:
             std::vector<Reward> step_rewards(state->get_num_agents());
             auto new_state = state->execute(jointaction, step_rewards, ego_cost);
 
-            // discount the rewards of the current step
-            for(uint i=0; i<step_rewards.size(); i++){
-                step_rewards.at(i) = step_rewards.at(i)*modified_discount_factor;
-            }
-
-            ego_accum_reward += step_rewards[S::ego_agent_idx];
+            ego_accum_reward += modified_discount_factor*step_rewards[S::ego_agent_idx];
             AgentIdx reward_idx = 1;
             for (const auto& ai : state->get_other_agent_idx()) {
-              other_accum_rewards[ai] = step_rewards[reward_idx];
+              other_accum_rewards[ai] = modified_discount_factor*step_rewards[reward_idx];
               action_idx++;
             }
 

@@ -90,11 +90,11 @@ public:
 
         //Action Value update step
         UcbPair& ucb_pair = ucb_statistics_[collected_reward_.first]; // we remembered for which action we got the reward, must be the same as during backprop, if we linked parents and childs correctly
-        //action value: Q'(s,a) = Q(s,a) + (latest_return - Q'(s,a))/N
+        //action value: Q'(s,a) = Q(s,a) + (latest_return - Q(s,a))/N =  1/(N+1 ( latest_return + N*Q(s,a))
         latest_return_ = collected_reward_.second + k_discount_factor * changed_uct_statistic.latest_return_;
         ucb_pair.action_count_ += 1;
         ucb_pair.action_value_ = ucb_pair.action_value_ + (latest_return_ - ucb_pair.action_value_) / ucb_pair.action_count_;
-        
+        VLOG_EVERY_N(3, 10) << "Agent "<< agent_idx_ <<", Action reward, action " << collected_cost_.first << ", Q(s,a) = " << ucb_pair.action_value_;
         total_node_visits_ += 1;
         value_ = value_ + (latest_return_ - value_) / total_node_visits_;
     }

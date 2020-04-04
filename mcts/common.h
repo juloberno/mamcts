@@ -7,6 +7,7 @@
 #ifndef MCTS_COMMON_H
 #define MCTS_COMMON_H
 
+#include "glog/logging.h"
 
 namespace mcts {
 
