@@ -18,9 +18,6 @@
 namespace mcts {
 
 constexpr HypothesisId HYPOTHESIS_ID_NOT_SET = 100000;
-constexpr double EGO_COST_VALUE_NOT_SET = 100000;
-constexpr double LATEST_EGO_COST_NOT_SET = 100000;
-
 class HypothesisStatistic : public mcts::NodeStatistic<HypothesisStatistic>,
                                    mcts::RandomGenerator,
                                    mcts::RequiresHypothesis
@@ -31,8 +28,8 @@ public:
     HypothesisStatistic(ActionIdx num_actions, AgentIdx agent_idx, const MctsParameters& mcts_parameters) :
                     NodeStatistic<HypothesisStatistic>(num_actions, agent_idx, mcts_parameters),
                     RandomGenerator(mcts_parameters.RANDOM_SEED),
-                    ego_cost_value_(EGO_COST_VALUE_NOT_SET),
-                    latest_ego_cost_(LATEST_EGO_COST_NOT_SET),
+                    ego_cost_value_(0.0f),
+                    latest_ego_cost_(0.0f),
                     ucb_statistics_(),
                     total_node_visits_hypothesis_(),
                     num_expanded_actions_(0),

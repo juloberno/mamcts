@@ -81,7 +81,6 @@ public:
         const UctStatistic& heuristic_statistic_impl = heuristic_statistic.impl();
         value_ = heuristic_statistic_impl.value_;
         latest_return_ = value_;
-        MCTS_EXPECT_TRUE(total_node_visits_ == 0); // This should be the first visit
         total_node_visits_ += 1;
     }
 
