@@ -93,7 +93,7 @@ public:
         latest_return_ = collected_reward_.second + k_discount_factor * changed_uct_statistic.latest_return_;
         ucb_pair.action_count_ += 1;
         ucb_pair.action_value_ = ucb_pair.action_value_ + (latest_return_ - ucb_pair.action_value_) / ucb_pair.action_count_;
-        VLOG_EVERY_N(3, 10) << "Agent "<< agent_idx_ <<", Action reward, action " << collected_cost_.first << ", Q(s,a) = " << ucb_pair.action_value_;
+        VLOG_EVERY_N(6, 10) << "Agent "<< agent_idx_ <<", Action reward, action " << collected_cost_.first << ", Q(s,a) = " << ucb_pair.action_value_;
         total_node_visits_ += 1;
         value_ = value_ + (latest_return_ - value_) / total_node_visits_;
     }

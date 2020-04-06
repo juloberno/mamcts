@@ -111,7 +111,7 @@ public:
         latest_ego_cost_ = collected_cost_.second + k_discount_factor * changed_uct_statistic.latest_ego_cost_;
         ucb_pair.action_count_ += 1;
         ucb_pair.action_ego_cost_ = ucb_pair.action_ego_cost_ + (latest_ego_cost_ - ucb_pair.action_ego_cost_) / ucb_pair.action_count_;
-        VLOG_EVERY_N(3, 10) << "Agent "<< agent_idx_ <<", Action ego cost, action " << collected_cost_.first << ", C(s,a) = " << ucb_pair.action_ego_cost_;
+        VLOG_EVERY_N(6, 10) << "Agent "<< agent_idx_ <<", Action ego cost, action " << collected_cost_.first << ", C(s,a) = " << ucb_pair.action_ego_cost_;
         auto& node_visits_hypothesis = total_node_visits_hypothesis_[hypothesis_id_current_iteration_];
         node_visits_hypothesis += 1;
         ego_cost_value_ = ego_cost_value_ + (latest_ego_cost_ - ego_cost_value_) / node_visits_hypothesis;
