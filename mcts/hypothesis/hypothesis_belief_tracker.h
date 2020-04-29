@@ -148,6 +148,14 @@ inline const std::unordered_map<AgentIdx, HypothesisId>& HypothesisBeliefTracker
 
 inline std::string HypothesisBeliefTracker::sprintf() const {
   std::stringstream ss;
+  if (!fixed_hypothesis_set_.empty()) {
+    ss << "Fixed Hypothesis Set:";
+    for (const auto& hyp_pair : fixed_hypothesis_set_) {
+      ss << "Ag. " << hyp_pair.first << ": " << hyp_pair.second;
+    }
+    ss << std::endl;
+    return ss.str();
+  }
   // Beliefs
   ss << "Beliefs: " << std::endl;
   for (const auto& belief : get_beliefs()) {
