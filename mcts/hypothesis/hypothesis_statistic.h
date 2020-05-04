@@ -149,8 +149,10 @@ public:
         for (const auto& ucb_pair : ucb_statistics) 
         {
             double action_cost_normalized = (ucb_pair.second.action_ego_cost_-lower_cost_bound)/(upper_cost_bound-lower_cost_bound); 
-            MCTS_EXPECT_TRUE(action_cost_normalized>=0);
-            MCTS_EXPECT_TRUE(action_cost_normalized<=1);
+            if(action_cost_normalized < 0 || action_cost_normalized > 1) {
+              LOG(FATAL) << "Cost normalization wrong: " << action_cost_normalized << ", at ace=" << ucb_pair.second.action_ego_cost_ << ", lcb=" << 
+                  lower_cost_bound << ", ucb=" << upper_cost_bound;
+            }
             const double ucb_cost = action_cost_normalized + 2 * k_exploration_constant * sqrt( (2* std::log(node_visits)) / (ucb_pair.second.action_count_)  );
             if (ucb_cost > largest_cost) {
                 largest_cost = ucb_cost;
