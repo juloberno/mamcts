@@ -118,7 +118,6 @@ public:
         total_node_visits_ += 1;
     }
 
-    
     ActionIdx get_best_action() { throw std::logic_error("Not a meaningful call for this statistic");};
 
     void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost) {
@@ -136,7 +135,7 @@ public:
 
     typedef struct UcbPair
     {
-        UcbPair() : action_count_(0), action_ego_cost_(0.0f) {};
+        explicit UcbPair() : action_count_(0), action_ego_cost_(0.0f) {};
         unsigned action_count_;
         double action_ego_cost_;
     } UcbPair;
@@ -150,7 +149,7 @@ public:
         {
             double action_cost_normalized = (ucb_pair.second.action_ego_cost_-lower_cost_bound)/(upper_cost_bound-lower_cost_bound); 
             if(action_cost_normalized < 0 || action_cost_normalized > 1) {
-              LOG(FATAL) << "Cost normalization wrong: " << action_cost_normalized << ", at ace=" << ucb_pair.second.action_ego_cost_ << ", lcb=" << 
+              LOG(ERROR) << "Cost normalization wrong: " << action_cost_normalized << ", at ace=" << ucb_pair.second.action_ego_cost_ << ", lcb=" << 
                   lower_cost_bound << ", ucb=" << upper_cost_bound;
             }
             const double ucb_cost = action_cost_normalized + 2 * k_exploration_constant * sqrt( (2* std::log(node_visits)) / (ucb_pair.second.action_count_)  );
