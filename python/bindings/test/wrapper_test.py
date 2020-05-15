@@ -20,6 +20,7 @@ def is_equal_mcts_params(mctsp1, mctsp2):
         mctsp1.RANDOM_SEED == mctsp2.RANDOM_SEED and \
         mctsp1.MAX_SEARCH_TIME == mctsp2.MAX_SEARCH_TIME and \
         mctsp1.MAX_NUMBER_OF_ITERATIONS == mctsp2.MAX_NUMBER_OF_ITERATIONS and \
+        mctsp1.MAX_SEARCH_DEPTH == mctsp2.MAX_SEARCH_DEPTH and \
         mctsp1.random_heuristic.MAX_SEARCH_TIME == mctsp2.random_heuristic.MAX_SEARCH_TIME and \
         mctsp1.random_heuristic.MAX_NUMBER_OF_ITERATIONS == mctsp2.random_heuristic.MAX_NUMBER_OF_ITERATIONS and \
         mctsp1.uct_statistic.LOWER_BOUND == mctsp2.uct_statistic.LOWER_BOUND and \

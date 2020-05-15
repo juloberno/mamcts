@@ -25,6 +25,7 @@ MctsParameters default_uct_params() {
   parameters.RANDOM_SEED = 1000;
   parameters.MAX_NUMBER_OF_ITERATIONS = 10000;
   parameters.MAX_SEARCH_TIME = 1000;
+  parameters.MAX_SEARCH_DEPTH = 1000;
   
   parameters.random_heuristic.MAX_SEARCH_TIME = 10;
   parameters.random_heuristic.MAX_NUMBER_OF_ITERATIONS = 1000;
@@ -44,8 +45,20 @@ TEST(test_mcts, verify_uct )
     mcts.search(state);
 
     UctTest test;
-    test.verify_uct(mcts,1);
+    test.verify_uct(mcts, 1000);
 
+}
+
+TEST(test_mcts, small_search_depth )
+{
+    auto params = default_uct_params();
+    params.MAX_SEARCH_DEPTH = 2;
+    Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts(params);
+    SimpleState state(4);
+    
+    mcts.search(state);
+
+    UctTest test;
 }
 
 TEST(test_mcts, generate_dot_file )

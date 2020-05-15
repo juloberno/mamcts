@@ -76,7 +76,7 @@ struct container_hash {
                   const JointAction& joint_action, const unsigned int& depth,
                   const MctsParameters & mcts_parameters);
         ~StageNode();
-        bool select_or_expand(StageNodeSPtr& next_node);
+        std::pair<bool, bool> select_or_expand(StageNodeSPtr& next_node);
         void update_statistics(const SE& ego_heuristic_estimate, const std::unordered_map<AgentIdx, SO>& other_heuristic_estimates);
         void update_statistics(const StageNodeSPtr& changed_child_node);
         bool each_agents_actions_expanded();
@@ -93,6 +93,7 @@ struct container_hash {
         double getEgoAgentValue();
         int getEgoNodeVisits();
         double getActionValue(int action);
+        unsigned int get_depth() const;
 
         static void reset_counter();
 
@@ -148,7 +149,7 @@ struct container_hash {
     }
 
     template<class S, class SE, class SO, class H>
-    bool StageNode<S,SE, SO, H>::select_or_expand(StageNodeSPtr& next_node) {
+    std::pair<bool, bool> StageNode<S,SE, SO, H>::select_or_expand(StageNodeSPtr& next_node) {
         // helper function to fill rewards and costs
         auto fill_rewards = [this](const std::vector<Reward>& reward_list, const Cost& ego_cost, const JointAction& ja) {
             ego_int_node_.collect(reward_list[S::ego_agent_idx], ego_cost, ja[S::ego_agent_idx]);
@@ -159,9 +160,9 @@ struct container_hash {
         };
 
         // First check if state of node is terminal
-        if(this->get_state()->is_terminal()) {
+        if(this->get_state()->is_terminal() || depth_ == mcts_parameters_.MAX_SEARCH_DEPTH) {
             next_node = get_shared();
-            return false;
+            return std::make_pair(false, false);
         }
 
         // Let each agent select an action according to its statistic model -> yields joint_action
@@ -179,7 +180,7 @@ struct container_hash {
             // SELECT EXISTING NODE
             next_node = it->second;
             fill_rewards(joint_rewards_[joint_action], ego_costs_[joint_action], joint_action);
-            return true;
+            return std::make_pair(true, true);
         }
         else
         {   // EXPAND NEW NODE BASED ON NEW JOINT ACTION
@@ -201,7 +202,7 @@ struct container_hash {
             joint_rewards_[joint_action] = rewards;
             ego_costs_[joint_action] = ego_cost;
 
-            return false;
+            return std::make_pair(false, true);
         }
 
     }
@@ -288,6 +289,11 @@ struct container_hash {
         outfile << "}" << std::endl;
         outfile.close();
     };
+
+    template<class S, class SE, class SO, class H>
+    unsigned int StageNode<S,SE, SO, H>::get_depth() const {
+      return depth_;
+    }
 
     template<class S, class SE, class SO, class H>
     void StageNode<S,SE, SO, H>::printLayer(std::string filename, const unsigned int& max_depth) {

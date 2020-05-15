@@ -124,11 +124,14 @@ void Mcts<S,SE,SO,H>::iterate(const StageNodeSPtr& root_node)
 
     // --------------Select & Expand  -----------------
     // We descend the tree for all joint actions already available -> last node is the newly expanded one
-    while(node->select_or_expand(node));
+    std::pair<bool, bool> traversing_result(true, true);
+    while(traversing_result.first) {
+        traversing_result = node->select_or_expand(node);
+    }
 
     // -------------- Heuristic Update ----------------
-    // Heuristic until terminal node only if state not terminal
-    if(!node->get_state()->is_terminal()) {
+    // Heuristic until terminal node only if state not terminal or max depth not reached
+    if(traversing_result.second) {
       const auto& heuristics = heuristic_.calculate_heuristic_values(node);
       node->update_statistics(heuristics.first, heuristics.second);
     }

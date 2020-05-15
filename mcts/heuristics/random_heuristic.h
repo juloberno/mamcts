@@ -52,10 +52,12 @@ public:
         const double k_discount_factor = mcts_parameters_.DISCOUNT_FACTOR; 
         double modified_discount_factor = k_discount_factor;
         int num_iterations = 0;
+        auto current_depth = node->get_depth();
         
         while((!state->is_terminal())&&(num_iterations<mcts_parameters_.random_heuristic.MAX_NUMBER_OF_ITERATIONS)&&
                 (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() 
-                    < mcts_parameters_.random_heuristic.MAX_SEARCH_TIME )) {
+                    < mcts_parameters_.random_heuristic.MAX_SEARCH_TIME ) &&
+                  current_depth <= mcts_parameters_.MAX_SEARCH_DEPTH) {
             // Build joint action by calling statistics for each agent
             JointAction jointaction(state->get_num_agents());
             SE ego_statistic(state->get_num_actions(state->get_ego_agent_idx()),
@@ -85,6 +87,7 @@ public:
 
             state = new_state->clone();
             num_iterations +=1;
+            current_depth += 1;
          };
         // generate an extra node statistic for each agent
         SE ego_heuristic(0, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
