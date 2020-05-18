@@ -5,6 +5,7 @@ cc_library(
     deps = 
     [
         "@com_github_google_glog//:glog",
-        "@boost//:system"
+        "@boost//:functional",
+        "@boost//:variant"
     ]
 )
