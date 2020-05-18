@@ -197,8 +197,8 @@ private: // methods
     }
 private: // members
 
-    double ego_cost_value_; // average over all previous actions and heuristic calls going out from this node
-    double latest_ego_cost_;   // tracks the ego cost during backpropagation (one action)
+    Reward ego_cost_value_; // average over all previous actions and heuristic calls going out from this node
+    Reward latest_ego_cost_;   // tracks the ego cost during backpropagation (one action)
     std::unordered_map<HypothesisId, std::unordered_map<ActionIdx, UcbPair>> ucb_statistics_; // first: action selection count, action-ego_cost_qvalue
     std::unordered_map<HypothesisId, unsigned int> total_node_visits_hypothesis_;
     HypothesisId hypothesis_id_current_iteration_; // persist hypothesis id between action selection and backpropagation
@@ -206,8 +206,8 @@ private: // members
     unsigned int num_expanded_actions_;
 
     // PARAMS
-    const double upper_cost_bound;
-    const double lower_cost_bound;
+    const Reward upper_cost_bound;
+    const Reward lower_cost_bound;
     const double k_discount_factor;
     const double k_exploration_constant;
 

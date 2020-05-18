@@ -19,6 +19,12 @@ class UctTest;
 #define MCTS_TEST
 #endif
 
+#ifdef UCT_COST_CONSTRAINED_STATISTIC_H
+#define FRIEND_COST_CONSTRAINED_STATISTIC friend class CostConstrainedStatistic;
+#else
+#define FRIEND_COST_CONSTRAINED_STATISTIC
+#endif
+
 
 #ifdef CRTP_DYNAMIC_INTERFACE
 #define CRTP_INTERFACE(type) inline Implementation& impl()  { \

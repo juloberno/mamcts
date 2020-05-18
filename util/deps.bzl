@@ -46,6 +46,13 @@ cc_library(
     )
 
     _maybe(
+    git_repository,
+    name = "com_github_nelhage_rules_boost",
+    branch = "master",
+    remote = "https://github.com/nelhage/rules_boost"
+    )
+
+    _maybe(
       git_repository,
       name = "com_github_gflags_gflags",
       commit = "addd749114fab4f24b7ea1e0f2f837584389e52c",
