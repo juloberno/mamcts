@@ -33,6 +33,16 @@ struct MctsParameters{
       double EXPLORATION_CONSTANT;
   };
 
+  struct CostConstrainedStatisticParameters {
+      double LAMBDA;
+      double COST_UPPER_BOUND;
+      double COST_LOWER_BOUND;
+      double REWARD_UPPER_BOUND;
+      double REWARD_LOWER_BOUND;
+      double COST_CONSTRAINT;
+      double EXPLORATION_CONSTANT;
+  };
+
   struct HypothesisStatisticParameters {
       bool COST_BASED_ACTION_SELECTION;
       bool PROGRESSIVE_WIDENING_HYPOTHESIS_BASED;
@@ -55,6 +65,7 @@ struct MctsParameters{
   UctStatisticParameters uct_statistic;
   RandomHeuristicParameters random_heuristic;
   HypothesisBeliefTrackerParameters hypothesis_belief_tracker;
+  CostConstrainedStatisticParameters cost_constrained_statistic;
 };
 
 

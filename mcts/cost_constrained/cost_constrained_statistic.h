@@ -33,6 +33,15 @@ public:
     }
 
     ActionIdx get_best_action() {
+        // Here sampling of greedy policy
+        // why is this non-const overall?
+    }
+
+    static double calculate_next_lambda() {
+        // should be called only at root statistic 
+        // computes gradient and does clipping, the it returns new lambda
+        // should be made const
+        // returned lambda is set in parameters for next iteration
     }
 
     void update_from_heuristic(const NodeStatistic<CostConstrainedStatistic>& heuristic_statistic)
@@ -64,10 +73,12 @@ public:
 
     std::string print_node_information() const
     {
+        return "";
     }
 
     std::string print_edge_information(const ActionIdx& action ) const
     {
+        return "";
     }
 
 private:

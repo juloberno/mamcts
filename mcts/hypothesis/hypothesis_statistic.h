@@ -118,7 +118,7 @@ public:
         total_node_visits_ += 1;
     }
 
-    ActionIdx get_best_action() { throw std::logic_error("Not a meaningful call for this statistic");};
+    ActionIdx get_best_action() const { throw std::logic_error("Not a meaningful call for this statistic");};
 
     void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost) {
         ego_cost_value_ = accum_ego_cost;

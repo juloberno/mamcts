@@ -37,7 +37,7 @@ namespace mcts {
 
         ActionIdx choose_next_action();
 
-        ActionIdx get_best_action();
+        ActionIdx get_best_action() const ;
 
         AgentIdx get_agent_idx() const;
 
@@ -65,7 +65,7 @@ namespace mcts {
     }
 
     template<class S, class Stats>
-    ActionIdx IntermediateNode<S, Stats>::get_best_action() {
+    ActionIdx IntermediateNode<S, Stats>::get_best_action() const {
             return NodeStatistic<Stats>::get_best_action();
     }
 

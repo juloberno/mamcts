@@ -32,7 +32,7 @@ public:
     ActionIdx choose_next_action(const StateInterface<S>& state);
     void update_statistic(const NodeStatistic<Implementation>& changed_child_statistic); // update statistic during backpropagation from child node
     void update_from_heuristic(const NodeStatistic<Implementation>& heuristic_statistic); // update statistic during backpropagation from heuristic estimate
-    ActionIdx get_best_action();
+    ActionIdx get_best_action() const;
 
     void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost);
 
@@ -70,7 +70,7 @@ ActionIdx NodeStatistic<Implementation>::choose_next_action(const StateInterface
 }
 
 template <class Implementation>
-ActionIdx NodeStatistic<Implementation>::get_best_action()  {
+ActionIdx NodeStatistic<Implementation>::get_best_action() const {
     return impl().get_best_action();
 }
 

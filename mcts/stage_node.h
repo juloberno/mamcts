@@ -85,7 +85,7 @@ struct container_hash {
         const S* get_state() const {return state_.get();}
         StageNodeWPtr get_parent() {return parent_;}
         bool is_root() const {return !parent_.lock();}
-        ActionIdx get_best_action();
+        ActionIdx get_best_action() const;
 
         std::string sprintf() const;
         void printTree(std::string filename, const unsigned int& max_depth = 5);
@@ -241,7 +241,7 @@ struct container_hash {
     }
 
     template<class S, class SE, class SO, class H>
-    ActionIdx StageNode<S,SE, SO, H>::get_best_action(){
+    ActionIdx StageNode<S,SE, SO, H>::get_best_action() const{
         ActionIdx best = ego_int_node_.get_best_action();
         return best;
     }
