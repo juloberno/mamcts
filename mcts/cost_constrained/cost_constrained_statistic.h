@@ -7,7 +7,7 @@
 #ifndef UCT_COST_CONSTRAINED_STATISTIC_H
 #define UCT_COST_CONSTRAINED_STATISTIC_H
 
-#include "mcts/statistics/uct_statistic.h
+#include "mcts/statistics/uct_statistic.h"
 #include <iostream>
 #include <iomanip>
 
@@ -21,6 +21,8 @@ public:
 
     CostConstrainedStatistic(ActionIdx num_actions, AgentIdx agent_idx, const MctsParameters & mcts_parameters) :
              NodeStatistic<CostConstrainedStatistic>(num_actions, agent_idx, mcts_parameters),
+             reward_statistic_(num_actions, agent_idx, mcts_parameters_),
+             cost_statistic_(num_actions, agent_idx, mcts_parameters_),
              RandomGenerator(mcts_parameters.RANDOM_SEED) 
              {}
 
@@ -35,26 +37,29 @@ public:
 
     void update_from_heuristic(const NodeStatistic<CostConstrainedStatistic>& heuristic_statistic)
     {
-      const CostConstrainedStatistic& heuristic_statistic_impl = heuristic_statistic.impl();
+      const CostConstrainedStatistic& statistic_impl = heuristic_statistic.impl();
 
-      auto& uct_reward_statistics = heuristic_statistic_impl.reward_statistic_.uct_statistics_;
-      const auto heuristic_reward_value = heuristic_statistic_impl.reward_statistic_.value_;
-      reward_statistic_.update_from_heuristic_from_backpropagated_value(uct_reward_statistics, heuristic_reward_value);
+      const auto heuristic_reward_value = statistic_impl.reward_statistic_.value_;
+      reward_statistic_.update_from_heuristic_from_backpropagated(heuristic_reward_value);
 
-      auto& uct_cost_statistics = heuristic_statistic_impl.cost_statistic_.uct_statistics_;
-      const auto heuristic_cost_value = heuristic_statistic_impl.cost_statistic_.value_;
-      cost_statistic_.update_from_heuristic_from_backpropagated_value(uct_cost_statistics, heuristic_cost_value);
+      const auto heuristic_cost_value = statistic_impl.cost_statistic_.value_;
+      cost_statistic_.update_from_heuristic_from_backpropagated(heuristic_cost_value);
     }
 
     void update_statistic(const NodeStatistic<CostConstrainedStatistic>& changed_child_statistic) {
+      const CostConstrainedStatistic& statistic_impl = changed_child_statistic.impl();
 
+      const auto reward_latest_return = statistic_impl.reward_statistic_.latest_return_;
+      reward_statistic_.update_statistics_from_backpropagated(reward_latest_return);
+
+      const auto cost_latest_return = statistic_impl.cost_statistic_.latest_return_;
+      cost_statistic_.update_statistics_from_backpropagated(cost_latest_return);
     }
 
     void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost)
     {
-      todo wrong 
-       reward_statistic_.set_heuristic_estimate(accum_rewards);
-       cost_statistic_.set_heuristic_estimate(accum_ego_cost);
+       reward_statistic_.set_heuristic_estimate_from_backpropagated(accum_rewards);
+       cost_statistic_.set_heuristic_estimate_from_backpropagated(accum_ego_cost);
     }
 
     std::string print_node_information() const
