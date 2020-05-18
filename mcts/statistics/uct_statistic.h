@@ -140,6 +140,10 @@ public:
         double action_value_;
     } UcbPair;
 
+    Reward get_normalized_ucb_value(const ActionIdx& action) const {
+      toodooo
+    }
+
     void calculate_ucb_values(const std::map<ActionIdx, UcbPair>& ucb_statistics, std::vector<double>& values ) const
     {
         values.resize(ucb_statistics.size());

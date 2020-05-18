@@ -30,9 +30,11 @@ public:
 
     template <class S>
     ActionIdx choose_next_action(const S& state) {
+      // either expand unexpanded if all expanded 
+      // return get_best_action
     }
 
-    ActionIdx get_best_action() {
+    ActionIdx get_best_action() const {
         // Here sampling of greedy policy
         // why is this non-const overall?
     }
@@ -81,12 +83,25 @@ public:
         return "";
     }
 
+    void calculate_ucb_values(std::vector<double>& values ) const
+    {
+        values.resize(ucb_statistics.size());
+
+        for (size_t idx = 0; idx < ucb_statistics.size(); ++idx)
+        {
+            double action_value_normalized = (ucb_statistics.at(idx).action_value_-lower_bound)/(upper_bound-lower_bound); 
+            MCTS_EXPECT_TRUE(action_value_normalized>=0);
+            MCTS_EXPECT_TRUE(action_value_normalized<=1);
+            values[idx] = action_value_normalized + 2 * k_exploration_constant * sqrt( (2* log(total_node_visits_)) / ( ucb_statistics.at(idx).action_count_)  );
+        }
+    }
+
 private:
 
     UctStatistic reward_statistic_;
     UctStatistic cost_statistic_;
-    
 
+    // Todo: add parameters again here, or do normalization in uct_stat with const& stat_typ get_ucb_value(action_idx) const;
 };
 
 } // namespace mcts
