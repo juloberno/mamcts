@@ -10,6 +10,7 @@
 #include "mcts/statistics/uct_statistic.h"
 #include <iostream>
 #include <iomanip>
+#include <random>
 
 namespace mcts {
 
@@ -21,29 +22,105 @@ public:
 
     CostConstrainedStatistic(ActionIdx num_actions, AgentIdx agent_idx, const MctsParameters & mcts_parameters) :
              NodeStatistic<CostConstrainedStatistic>(num_actions, agent_idx, mcts_parameters),
-             reward_statistic_(num_actions, agent_idx, mcts_parameters_),
-             cost_statistic_(num_actions, agent_idx, mcts_parameters_),
-             RandomGenerator(mcts_parameters.RANDOM_SEED) 
-             {}
+             reward_statistic_(num_actions, agent_idx,  make_reward_statistic_parameters(mcts_parameters)),
+             cost_statistic_(num_actions, agent_idx, make_cost_statistic_parameters(mcts_parameters)),
+             RandomGenerator(mcts_parameters.RANDOM_SEED),
+             lambda(mcts_parameters.cost_constrained_statistic.LAMBDA),
+             exploration_constant(mcts_parameters.cost_constrained_statistic.EXPLORATION_CONSTANT),
+             action_filter_factor(mcts_parameters.cost_constrained_statistic.ACTION_FILTER_FACTOR),
+             cost_constraint(mcts_parameters.cost_constrained_statistic.COST_CONSTRAINT)
+             {
+             }
 
     ~CostConstrainedStatistic() {};
 
     template <class S>
     ActionIdx choose_next_action(const S& state) {
-      // either expand unexpanded if all expanded 
-      // return get_best_action
+      return get_best_action();
     }
 
     ActionIdx get_best_action() const {
-        // Here sampling of greedy policy
-        // why is this non-const overall?
+      // Greedy Policy
+      std::vector<double> ucb_values;
+      calculate_ucb_values(ucb_values);
+      const auto feasible_actions = filter_feasible_actions(ucb_values);
+      const ActionIdx sampled_action = solve_LP_and_sample(feasible_actions);
+      return sampled_action;
     }
 
-    static double calculate_next_lambda() {
-        // should be called only at root statistic 
-        // computes gradient and does clipping, the it returns new lambda
-        // should be made const
-        // returned lambda is set in parameters for next iteration
+    void calculate_ucb_values(std::vector<double>& values) const {
+      const auto& reward_stats = reward_statistic_.ucb_statistics_;
+      const auto& cost_stats = cost_statistic_.ucb_statistics_;
+      MCTS_EXPECT_TRUE(reward_stats.size() ==  cost_stats.size());
+
+      values.resize(reward_statistic_.ucb_statistics_.size(), 0.0f);
+      for (size_t idx = 0; idx < reward_stats.size(); ++idx)
+      {
+          double cost_value_normalized = cost_statistic_.get_normalized_ucb_value(idx);
+          double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(idx);
+
+          values[idx] = reward_value_normalized - lambda * cost_value_normalized 
+                 + 2 * exploration_constant * sqrt( (2* log(reward_statistic_.total_node_visits_)) / ( reward_statistic_.ucb_statistics_.at(idx).action_count_)  );
+      }
+    }
+
+    std::vector<ActionIdx> filter_feasible_actions(const std::vector<double>& values) const {
+      std::vector<ActionIdx> filtered_actions;
+      const ActionIdx maximizing_action = std::distance(values.begin(), std::max_element(values.begin(), values.end()));
+      const Reward max_val = values[maximizing_action];
+      const double node_counts_maximizing = sqrt( log( reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_) /
+                                                  ( reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_) );
+      for (size_t action_idx = 0; action_idx < values.size(); ++action_idx) {
+          const double value_difference = values[action_idx] - max_val;
+          const double node_count_relations = sqrt( log( reward_statistic_.ucb_statistics_.at(action_idx).action_count_) /
+                                                  ( reward_statistic_.ucb_statistics_.at(action_idx).action_count_) ) + 
+                                              node_counts_maximizing;
+          if(value_difference <= action_filter_factor * node_count_relations) {
+            filtered_actions.push_back(action_idx);
+          }
+      }
+      return filtered_actions;
+    }
+
+    ActionIdx solve_LP_and_sample(const std::vector<ActionIdx>& feasible_actions) const {
+      // Solved for K=1
+      const auto& cost_stats = cost_statistic_.ucb_statistics_;
+      const ActionIdx maximizing_action = std::distance(cost_stats.begin(), std::max_element(cost_stats.begin(), cost_stats.end()));
+      const ActionIdx minimizing_action = std::distance(cost_stats.begin(), std::min_element(cost_stats.begin(), cost_stats.end()));
+
+      // Three cases
+      const double max_val = cost_stats.at(maximizing_action).action_value_;
+      const double min_val = cost_stats.at(minimizing_action).action_value_;
+      if( min_val >= cost_constraint) {
+          // amin gets probability one, amax gets probability zero
+          return minimizing_action;
+      } else if( max_val <= cost_constraint) {
+         // amax gets probability one, amin gets probability zero
+         return maximizing_action;
+      } else {
+         const double probability_maximizer = (cost_constraint - min_val) / (max_val - min_val);
+         std::uniform_real_distribution<double> unif(0, 1);
+         double sample = unif(random_generator_);
+         if(sample <= probability_maximizer) {
+           return maximizing_action;
+         } else {
+           return minimizing_action;
+         }
+      }
+    }
+
+    static double calculate_next_lambda(const double& current_lambda,
+                                        const double& gradient_update_step,
+                                        const double& cost_constraint,
+                                        const double& tau_gradient_clip,
+                                        const CostConstrainedStatistic& root_statistic) {
+        const ActionIdx policy_sampled_action = root_statistic.get_best_action();
+        const double new_lambda = current_lambda + gradient_update_step * (
+             root_statistic.get_normalized_cost_action_value(policy_sampled_action) - cost_constraint);
+        const double clip_upper_limit = (root_statistic.reward_statistic_.upper_bound - root_statistic.reward_statistic_.lower_bound) /
+                                         (tau_gradient_clip * ( 1 - root_statistic.reward_statistic_.k_discount_factor));
+        const double clipped_new_lambda = std::min(std::max(new_lambda, double(0.0f)), clip_upper_limit);
+        return clipped_new_lambda;
     }
 
     void update_from_heuristic(const NodeStatistic<CostConstrainedStatistic>& heuristic_statistic)
@@ -83,25 +160,36 @@ public:
         return "";
     }
 
-    void calculate_ucb_values(std::vector<double>& values ) const
-    {
-        values.resize(ucb_statistics.size());
-
-        for (size_t idx = 0; idx < ucb_statistics.size(); ++idx)
-        {
-            double action_value_normalized = (ucb_statistics.at(idx).action_value_-lower_bound)/(upper_bound-lower_bound); 
-            MCTS_EXPECT_TRUE(action_value_normalized>=0);
-            MCTS_EXPECT_TRUE(action_value_normalized<=1);
-            values[idx] = action_value_normalized + 2 * k_exploration_constant * sqrt( (2* log(total_node_visits_)) / ( ucb_statistics.at(idx).action_count_)  );
-        }
+    Reward get_normalized_cost_action_value(const ActionIdx& action) const {
+      return cost_statistic_.get_normalized_ucb_value(action);
     }
+
+    MctsParameters make_cost_statistic_parameters(const MctsParameters& mcts_parameters) const {
+      MctsParameters cost_statistic_parameters(mcts_parameters);
+      cost_statistic_parameters.uct_statistic.EXPLORATION_CONSTANT = mcts_parameters.cost_constrained_statistic.EXPLORATION_CONSTANT;
+      cost_statistic_parameters.uct_statistic.LOWER_BOUND = mcts_parameters.cost_constrained_statistic.COST_LOWER_BOUND;
+      cost_statistic_parameters.uct_statistic.UPPER_BOUND = mcts_parameters.cost_constrained_statistic.COST_UPPER_BOUND;
+      return cost_statistic_parameters;
+    }
+
+    MctsParameters make_reward_statistic_parameters(const MctsParameters& mcts_parameters) const {
+      MctsParameters reward_statistic_parameters(mcts_parameters);
+      reward_statistic_parameters.uct_statistic.EXPLORATION_CONSTANT = mcts_parameters.cost_constrained_statistic.EXPLORATION_CONSTANT;
+      reward_statistic_parameters.uct_statistic.LOWER_BOUND = mcts_parameters.cost_constrained_statistic.REWARD_LOWER_BOUND;
+      reward_statistic_parameters.uct_statistic.UPPER_BOUND = mcts_parameters.cost_constrained_statistic.REWARD_UPPER_BOUND;
+      return reward_statistic_parameters;
+    }
+
 
 private:
 
     UctStatistic reward_statistic_;
     UctStatistic cost_statistic_;
 
-    // Todo: add parameters again here, or do normalization in uct_stat with const& stat_typ get_ucb_value(action_idx) const;
+    const double lambda;
+    const double exploration_constant;
+    const double action_filter_factor;
+    const double cost_constraint;
 };
 
 } // namespace mcts

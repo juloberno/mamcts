@@ -35,7 +35,7 @@ public:
              upper_bound(mcts_parameters.uct_statistic.UPPER_BOUND),
              lower_bound(mcts_parameters.uct_statistic.LOWER_BOUND),
              k_discount_factor(mcts_parameters.DISCOUNT_FACTOR), 
-             k_exploration_constant(mcts_parameters.uct_statistic.EXPLORATION_CONSTANT) {
+             exploration_constant(mcts_parameters.uct_statistic.EXPLORATION_CONSTANT) {
                  // initialize action indexes from 0 to (number of actions -1)
                  std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
              }
@@ -141,7 +141,18 @@ public:
     } UcbPair;
 
     Reward get_normalized_ucb_value(const ActionIdx& action) const {
-      toodooo
+      double action_value_normalized =  (ucb_statistics_.at(action).action_value_-lower_bound)/(upper_bound-lower_bound); 
+      MCTS_EXPECT_TRUE(action_value_normalized>=0);
+      MCTS_EXPECT_TRUE(action_value_normalized<=1);
+      return action_value_normalized;
+    }
+
+    Reward get_reward_lower_bound() const {
+      return lower_bound;
+    }
+
+    Reward get_reward_upper_bound() const {
+      return upper_bound;
     }
 
     void calculate_ucb_values(const std::map<ActionIdx, UcbPair>& ucb_statistics, std::vector<double>& values ) const
@@ -153,7 +164,7 @@ public:
             double action_value_normalized = (ucb_statistics.at(idx).action_value_-lower_bound)/(upper_bound-lower_bound); 
             MCTS_EXPECT_TRUE(action_value_normalized>=0);
             MCTS_EXPECT_TRUE(action_value_normalized<=1);
-            values[idx] = action_value_normalized + 2 * k_exploration_constant * sqrt( (2* log(total_node_visits_)) / ( ucb_statistics.at(idx).action_count_)  );
+            values[idx] = action_value_normalized + 2 * exploration_constant * sqrt( (2* log(total_node_visits_)) / ( ucb_statistics.at(idx).action_count_)  );
         }
     }
 private:
@@ -168,7 +179,7 @@ private:
     const double upper_bound;
     const double lower_bound;
     const double k_discount_factor;
-    const double k_exploration_constant;
+    const double exploration_constant;
 
 };
 

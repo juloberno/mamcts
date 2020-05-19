@@ -38,7 +38,7 @@ public:
                     upper_cost_bound(mcts_parameters.hypothesis_statistic.UPPER_COST_BOUND),
                     lower_cost_bound(mcts_parameters.hypothesis_statistic.LOWER_COST_BOUND),
                     k_discount_factor(mcts_parameters.DISCOUNT_FACTOR), 
-                    k_exploration_constant(mcts_parameters.hypothesis_statistic.EXPLORATION_CONSTANT),
+                    exploration_constant(mcts_parameters.hypothesis_statistic.EXPLORATION_CONSTANT),
                     cost_based_action_selection_(mcts_parameters.hypothesis_statistic.COST_BASED_ACTION_SELECTION),
                     progressive_widening_hypothesis_based_(mcts_parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_HYPOTHESIS_BASED),
                     progressive_widening_k(mcts_parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_K),
@@ -152,7 +152,7 @@ public:
               LOG(ERROR) << "Cost normalization wrong: " << action_cost_normalized << ", at ace=" << ucb_pair.second.action_ego_cost_ << ", lcb=" << 
                   lower_cost_bound << ", ucb=" << upper_cost_bound;
             }
-            const double ucb_cost = action_cost_normalized + 2 * k_exploration_constant * sqrt( (2* std::log(node_visits)) / (ucb_pair.second.action_count_)  );
+            const double ucb_cost = action_cost_normalized + 2 * exploration_constant * sqrt( (2* std::log(node_visits)) / (ucb_pair.second.action_count_)  );
             if (ucb_cost > largest_cost) {
                 largest_cost = ucb_cost;
                 worst_action = ucb_pair.first;
@@ -209,7 +209,7 @@ private: // members
     const Reward upper_cost_bound;
     const Reward lower_cost_bound;
     const double k_discount_factor;
-    const double k_exploration_constant;
+    const double exploration_constant;
 
     const bool cost_based_action_selection_;
     const bool progressive_widening_hypothesis_based_;
