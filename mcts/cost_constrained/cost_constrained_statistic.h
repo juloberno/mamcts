@@ -85,8 +85,11 @@ public:
     ActionIdx solve_LP_and_sample(const std::vector<ActionIdx>& feasible_actions) const {
       // Solved for K=1
       const auto& cost_stats = cost_statistic_.ucb_statistics_;
-      const ActionIdx maximizing_action = std::distance(cost_stats.begin(), std::max_element(cost_stats.begin(), cost_stats.end()));
-      const ActionIdx minimizing_action = std::distance(cost_stats.begin(), std::min_element(cost_stats.begin(), cost_stats.end()));
+      auto stat_compare = [](const std::pair<const long unsigned int, mcts::UctStatistic::UcbPair>& a,
+                             const std::pair<const long unsigned int, mcts::UctStatistic::UcbPair>& b) {
+                                return a.second.action_value_ < b.second.action_value_; };
+      const ActionIdx maximizing_action = std::distance(cost_stats.begin(), std::max_element(cost_stats.begin(), cost_stats.end(), stat_compare));
+      const ActionIdx minimizing_action = std::distance(cost_stats.begin(), std::min_element(cost_stats.begin(), cost_stats.end(), stat_compare));
 
       // Three cases
       const double max_val = cost_stats.at(maximizing_action).action_value_;
