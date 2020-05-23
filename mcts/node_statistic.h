@@ -14,8 +14,6 @@
 
 namespace mcts {
 
-
-
 template <class Implementation>
 class NodeStatistic
 {
@@ -40,6 +38,10 @@ public:
 
     std::string print_node_information() const;
     std::string print_edge_information(const ActionIdx& action) const;
+
+    static MctsParameters update_statistic_parameters(const Implementation& root_statistic,
+                                      const MctsParameters& current_parameters,
+                                      const unsigned int& current_iteration);
 
     Implementation& impl();
     const Implementation& impl() const;
@@ -103,6 +105,13 @@ void NodeStatistic<Implementation>::collect(const mcts::Reward &reward, const mc
 template <class Implementation>
 void NodeStatistic<Implementation>::set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost) {
     return impl().set_heuristic_estimate(accum_rewards, accum_ego_cost);
+}
+
+template <class Implementation>
+MctsParameters NodeStatistic<Implementation>::update_statistic_parameters(const Implementation& root_statistic, 
+                                                                          const MctsParameters& current_parameters,
+                                                                          const unsigned int& current_iteration) {
+  return current_parameters;
 }
 
 

@@ -86,6 +86,7 @@ struct container_hash {
         StageNodeWPtr get_parent() {return parent_;}
         bool is_root() const {return !parent_.lock();}
         ActionIdx get_best_action() const;
+        const  IntermediateNode<S, SE>& get_ego_int_node() const { return ego_int_node_; };
 
         std::string sprintf() const;
         void printTree(std::string filename, const unsigned int& max_depth = 5);

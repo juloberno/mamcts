@@ -19,6 +19,7 @@ class CostConstrainedStatistic : public mcts::NodeStatistic<CostConstrainedStati
 {
 public:
     MCTS_TEST
+    FRIEND_COST_CONSTRAINED_STATISTIC
 
     CostConstrainedStatistic(ActionIdx num_actions, AgentIdx agent_idx, const MctsParameters & mcts_parameters) :
              NodeStatistic<CostConstrainedStatistic>(num_actions, agent_idx, mcts_parameters),
@@ -194,6 +195,13 @@ private:
     const double action_filter_factor;
     const double cost_constraint;
 };
+
+// template <>
+// MctsParameters NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(const CostConstrainedStatistic& root_statistic, 
+//                                                                           const MctsParameters& current_parameters,
+//                                                                           const unsigned int& current_iteration) {
+//   return current_parameters;
+// }
 
 } // namespace mcts
 
