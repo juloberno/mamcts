@@ -12,6 +12,7 @@
 #define PLAN_DEBUG_INFO
 #include "mcts/cost_constrained/cost_constrained_statistic.h"
 #include "test/cost_constrained/cost_constrained_statistic_test_state.h"
+#include "mcts/heuristics/random_heuristic.h"
 #include <cstdio>
 
 using namespace std;
@@ -23,6 +24,16 @@ TEST(cost_constrained_statistic, backprop_cost_reward_updates) {
 
   CostConstrainedStatisticTestState state(5);
   CostConstrainedStatistic stat_parent(5, 1, mcts_default_parameters());
+
+}
+
+TEST(cost_constrained_statistic, search) {
+
+  CostConstrainedStatisticTestState state(5);
+   Mcts<CostConstrainedStatisticTestState, CostConstrainedStatistic,
+               UctStatistic, RandomHeuristic> mcts(mcts_default_parameters());
+
+  mcts.search(state);
 }
 
 
