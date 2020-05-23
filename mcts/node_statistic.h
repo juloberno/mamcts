@@ -39,9 +39,9 @@ public:
     std::string print_node_information() const;
     std::string print_edge_information(const ActionIdx& action) const;
 
-    static MctsParameters update_statistic_parameters(const Implementation& root_statistic,
-                                      const MctsParameters& current_parameters,
-                                      const unsigned int& current_iteration);
+    static void update_statistic_parameters(MctsParameters& parameters,
+                                            const Implementation& root_statistic,
+                                            const unsigned int& current_iteration);
 
     Implementation& impl();
     const Implementation& impl() const;
@@ -108,10 +108,10 @@ void NodeStatistic<Implementation>::set_heuristic_estimate(const Reward& accum_r
 }
 
 template <class Implementation>
-MctsParameters NodeStatistic<Implementation>::update_statistic_parameters(const Implementation& root_statistic, 
-                                                                          const MctsParameters& current_parameters,
-                                                                          const unsigned int& current_iteration) {
-  return current_parameters;
+void NodeStatistic<Implementation>::update_statistic_parameters(MctsParameters& parameters,
+                                            const Implementation& root_statistic,
+                                            const unsigned int& current_iteration) {
+  return;
 }
 
 

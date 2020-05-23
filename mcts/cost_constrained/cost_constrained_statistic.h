@@ -61,7 +61,7 @@ public:
           double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(idx);
 
           values[idx] = reward_value_normalized - lambda * cost_value_normalized 
-                 + 2 * exploration_constant * sqrt( (2* log(reward_statistic_.total_node_visits_)) / ( reward_statistic_.ucb_statistics_.at(idx).action_count_)  );
+                 + 2 * exploration_constant * sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(idx).action_count_)  );
       }
     }
 
@@ -196,12 +196,25 @@ private:
     const double cost_constraint;
 };
 
-// template <>
-// MctsParameters NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(const CostConstrainedStatistic& root_statistic, 
-//                                                                           const MctsParameters& current_parameters,
-//                                                                           const unsigned int& current_iteration) {
-//   return current_parameters;
-// }
+template <>
+void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsParameters& parameters,
+                                            const CostConstrainedStatistic& root_statistic,
+                                            const unsigned int& current_iteration) {
+  const double current_lambda = parameters.cost_constrained_statistic.LAMBDA;
+  const double gradient_update_step =
+     parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP*float(current_iteration-1)/
+                                                                float(current_iteration);
+  const double cost_constraint = parameters.cost_constrained_statistic.COST_CONSTRAINT;
+  const double tau_gradient_clip = parameters.cost_constrained_statistic.TAU_GRADIENT_CLIP;
+  const double new_lambda =  CostConstrainedStatistic::calculate_next_lambda(current_lambda,
+                                                                            gradient_update_step,
+                                                                            cost_constraint,
+                                                                            tau_gradient_clip,
+                                                                            root_statistic);
+  parameters.cost_constrained_statistic.LAMBDA = new_lambda;
+  VLOG_EVERY_N(5, int(std::ceil(parameters.MAX_NUMBER_OF_ITERATIONS/100.0))) << "Updated lambda from " << current_lambda << 
+    " to " << new_lambda << " in iteration " << current_iteration;
+}
 
 } // namespace mcts
 
