@@ -44,13 +44,13 @@ TEST(cost_constrained_mcts, one_step_higher_reward_higher_risk_constraint_eq) {
   mcts_parameters.cost_constrained_statistic.COST_LOWER_BOUND = 0.0f;
   mcts_parameters.cost_constrained_statistic.COST_UPPER_BOUND = 1.0f;
   mcts_parameters.cost_constrained_statistic.EXPLORATION_CONSTANT = 0.7f;
-  mcts_parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP = 0.1f;
+  mcts_parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP = 4.0f;
   mcts_parameters.cost_constrained_statistic.TAU_GRADIENT_CLIP = 1.0f;
   mcts_parameters.cost_constrained_statistic.ACTION_FILTER_FACTOR = 1.0f;
   mcts_parameters.DISCOUNT_FACTOR = 0.9;
   mcts_parameters.MAX_SEARCH_TIME = 1000000000;
   mcts_parameters.MAX_NUMBER_OF_ITERATIONS = 10000;
-  mcts_parameters.cost_constrained_statistic.LAMBDA = 1.0f/(1.0f-mcts_parameters.DISCOUNT_FACTOR)*0.2;
+  mcts_parameters.cost_constrained_statistic.LAMBDA = 1.0f/(1.0f-mcts_parameters.DISCOUNT_FACTOR);
   Mcts<CostConstrainedStatisticTestState, CostConstrainedStatistic,
                UctStatistic, RandomHeuristic> mcts(mcts_parameters);
   mcts.search(state);

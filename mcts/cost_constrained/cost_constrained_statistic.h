@@ -19,7 +19,6 @@ class CostConstrainedStatistic : public mcts::NodeStatistic<CostConstrainedStati
 {
 public:
     MCTS_TEST
-    FRIEND_COST_CONSTRAINED_STATISTIC
 
     CostConstrainedStatistic(ActionIdx num_actions, AgentIdx agent_idx, const MctsParameters & mcts_parameters) :
              NodeStatistic<CostConstrainedStatistic>(num_actions, agent_idx, mcts_parameters),
@@ -64,6 +63,10 @@ public:
       return sampled_action;
     }
 
+    bool policy_is_ready() const {
+      return unexpanded_actions_.empty();
+    }
+
     void calculate_ucb_values(std::vector<double>& values) const {
       const auto& reward_stats = reward_statistic_.ucb_statistics_;
       const auto& cost_stats = cost_statistic_.ucb_statistics_;
@@ -87,7 +90,7 @@ public:
       const double node_counts_maximizing = sqrt( log( reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_) /
                                                   ( reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_) );
       for (size_t action_idx = 0; action_idx < values.size(); ++action_idx) {
-          const double value_difference = values[action_idx] - max_val;
+          const double value_difference = std::abs(values[action_idx] - max_val);
           const double node_count_relations = sqrt( log( reward_statistic_.ucb_statistics_.at(action_idx).action_count_) /
                                                   ( reward_statistic_.ucb_statistics_.at(action_idx).action_count_) ) + 
                                               node_counts_maximizing;
@@ -101,11 +104,25 @@ public:
     ActionIdx solve_LP_and_sample(const std::vector<ActionIdx>& feasible_actions) const {
       // Solved for K=1
       const auto& cost_stats = cost_statistic_.ucb_statistics_;
-      auto stat_compare = [](const std::pair<const long unsigned int, mcts::UctStatistic::UcbPair>& a,
-                             const std::pair<const long unsigned int, mcts::UctStatistic::UcbPair>& b) {
-                                return a.second.action_value_ < b.second.action_value_; };
-      const ActionIdx maximizing_action = std::distance(cost_stats.begin(), std::max_element(cost_stats.begin(), cost_stats.end(), stat_compare));
-      const ActionIdx minimizing_action = std::distance(cost_stats.begin(), std::min_element(cost_stats.begin(), cost_stats.end(), stat_compare));
+      auto stat_compare = [&](const ActionIdx& a,
+                             const ActionIdx& b) {
+                                return cost_stats.at(a).action_value_ < cost_stats.at(b).action_value_; };
+      ActionIdx maximizing_action = feasible_actions.at(0);
+      ActionIdx minimizing_action = feasible_actions.at(0);
+      for (const auto& feasible_action : feasible_actions ) {
+        if(cost_stats.at(feasible_action).action_value_ > cost_stats.at(maximizing_action).action_value_) {
+          maximizing_action = feasible_action;
+          continue;
+        }
+        if(cost_stats.at(feasible_action).action_value_ < cost_stats.at(minimizing_action).action_value_) {
+          minimizing_action = feasible_action;
+          continue;
+        }
+      }
+
+      if(minimizing_action == maximizing_action) {
+        return minimizing_action;
+      }
 
       // Three cases
       const double max_val = cost_stats.at(maximizing_action).action_value_;
@@ -218,10 +235,13 @@ template <>
 void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsParameters& parameters,
                                             const CostConstrainedStatistic& root_statistic,
                                             const unsigned int& current_iteration) {
+  if(!root_statistic.policy_is_ready()) {
+    return;
+  }
   const double current_lambda = parameters.cost_constrained_statistic.LAMBDA;
-  const double gradient_update_step =
-     parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP*float(current_iteration)/
-                                                                float(current_iteration+1);
+  const double gradient_update_step = 0.05 +
+     parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP*float(current_iteration+1)/
+                                                                float(current_iteration+2);
   const double cost_constraint = parameters.cost_constrained_statistic.COST_CONSTRAINT;
   const double tau_gradient_clip = parameters.cost_constrained_statistic.TAU_GRADIENT_CLIP;
   const double new_lambda =  CostConstrainedStatistic::calculate_next_lambda(current_lambda,
