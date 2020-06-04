@@ -19,11 +19,11 @@ class CostConstrainedStatisticTestState : public mcts::StateInterface<CostConstr
 public:
     CostConstrainedStatisticTestState(int n_steps, Cost collision_risk1, Cost collision_risk2,
                                      Reward reward_goal1, Reward reward_goal2, bool is_terminal) : 
-                                     RandomGenerator(1000)
-          current_state_(0), n_steps_(n_steps),
-          collision_risk1_(collision_risk1_), collision_risk2_(collision_risk2_),
-          reward_goal1_(reward_goal1), reward_goal2_(reward_goal2),
-          is_terminal_(is_terminal) {};
+                                     RandomGenerator(1000),
+                                      current_state_(0), n_steps_(n_steps),
+                                      collision_risk1_(collision_risk1_), collision_risk2_(collision_risk2_),
+                                      reward_goal1_(reward_goal1), reward_goal2_(reward_goal2),
+                                      is_terminal_(is_terminal) {}
     ~CostConstrainedStatisticTestState() {};
 
     std::shared_ptr<CostConstrainedStatisticTestState> clone() const

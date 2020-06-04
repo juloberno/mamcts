@@ -1,7 +1,7 @@
 cc_test(
-    name = "cost_constrained_statistic_test",
+    name = "cost_constrained_test",
     srcs = [
-        "cost_constrained_statistic_test.cc",
+        "cost_constrained_test.cc",
         "cost_constrained_statistic_test_state.h"
     ],
     copts = ["-Iexternal/gtest/include"],
