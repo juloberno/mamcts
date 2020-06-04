@@ -8,7 +8,12 @@
 #define COST_CONSTRAINED_TEST_STATE_H
 
 #include <iostream>
+#include <cmath>
+#include <random>
+#include "mcts/random_generator.h"
 #include "mcts/state.h"
+
+typedef double Probability;
 
 using namespace mcts;
 
@@ -32,9 +37,10 @@ public:
 
     std::shared_ptr<CostConstrainedStatisticTestState> execute(const JointAction& joint_action, std::vector<Reward>& rewards, Cost& ego_cost) const {
         rewards.resize(1);
-        rewards[0] = 0;
 
         if(joint_action == JointAction{0}) {
+            rewards[0] = 0;
+            ego_cost = 0.0f;
             return std::make_shared<CostConstrainedStatisticTestState>(*this);
         } else {
             bool is_terminal = false;

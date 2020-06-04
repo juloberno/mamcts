@@ -57,7 +57,7 @@ public:
       // Greedy Policy
       std::vector<double> ucb_values;
       calculate_ucb_values(ucb_values);
-      VLOG_EVERY_N(5, 100) << "Ucb values: " << ucb_values[0] << ", " << ucb_values[1] << ", " << ucb_values[2];
+      
       const auto feasible_actions = filter_feasible_actions(ucb_values);
       const ActionIdx sampled_action = solve_LP_and_sample(feasible_actions);
       return sampled_action;
@@ -81,6 +81,15 @@ public:
           values[idx] = reward_value_normalized - lambda * cost_value_normalized 
                  + 2 * exploration_constant * sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(idx).action_count_)  );
       }
+
+      VLOG_EVERY_N(5, 100) << "\nReward stats: " << reward_stats.at(0).action_value_ << ", "
+                                              << reward_stats.at(1).action_value_ <<
+                                              ", " << reward_stats.at(2).action_value_ << "\n"
+                            << "Cost stats: " << cost_stats.at(0).action_value_ << ", "
+                                              << cost_stats.at(1).action_value_ <<
+                                              ", " << cost_stats.at(2).action_value_ << "\n"
+                            << "Ucb values: " << values[0] << ", " << values[1] << ", " << values[2] << "\n" 
+                            << "--------------------------------------------------------------------------------------------";
     }
 
     std::vector<ActionIdx> filter_feasible_actions(const std::vector<double>& values) const {
@@ -239,9 +248,9 @@ void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsPa
     return;
   }
   const double current_lambda = parameters.cost_constrained_statistic.LAMBDA;
-  const double gradient_update_step = 0.05 +
-     parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP*float(current_iteration+1)/
-                                                                float(current_iteration+2);
+  const double gradient_update_step = parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP - 
+                                      parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP * 
+                                      float(parameters.MAX_NUMBER_OF_ITERATIONS)/float(current_iteration);
   const double cost_constraint = parameters.cost_constrained_statistic.COST_CONSTRAINT;
   const double tau_gradient_clip = parameters.cost_constrained_statistic.TAU_GRADIENT_CLIP;
   const double new_lambda =  CostConstrainedStatistic::calculate_next_lambda(current_lambda,
@@ -250,8 +259,7 @@ void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsPa
                                                                             tau_gradient_clip,
                                                                             root_statistic);
   parameters.cost_constrained_statistic.LAMBDA = new_lambda;
-  parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP = gradient_update_step;
-  VLOG_EVERY_N(5, int(std::ceil(parameters.MAX_NUMBER_OF_ITERATIONS/100.0))) << "Updated lambda from " << current_lambda << 
+  VLOG_EVERY_N(5, 10) << "Updated lambda from " << current_lambda << 
     " to " << new_lambda << " in iteration " << current_iteration;
 }
 
