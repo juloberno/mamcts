@@ -157,9 +157,6 @@ void Mcts<S,SE,SO,H>::iterate(const StageNodeSPtr& root_node)
         }
     }
 
-#ifdef PLAN_DEBUG_INFO
-    sprintf(root_node);
-#endif
 }
 
 
