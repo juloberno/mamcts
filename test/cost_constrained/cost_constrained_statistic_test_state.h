@@ -47,7 +47,8 @@ public:
         if(ego_agent_action == 0) {
             rewards[0] = 0;
             ego_cost = 0.0f;
-            return std::make_shared<CostConstrainedStatisticTestState>(*this);
+            return std::make_shared<CostConstrainedStatisticTestState>(0, n_steps_, collision_risk1_, collision_risk2_,
+                                                            reward_goal1_, reward_goal2_, true);
         } else {
             bool is_terminal = false;
             bool collision = false;

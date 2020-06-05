@@ -27,7 +27,7 @@ TEST(cost_constrained_statistic, backprop_cost_reward_updates) {
 
 TEST(cost_constrained_mcts, one_step_higher_reward_higher_risk_constraint_eq) {
   FLAGS_alsologtostderr = true;
-  FLAGS_v = 5;
+  FLAGS_v = 3;
   google::InitGoogleLogging("test");
   int n_steps = 1;
   const Cost risk_action1 = 0.8f;
