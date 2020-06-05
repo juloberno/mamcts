@@ -13,6 +13,7 @@
 #include "mcts/cost_constrained/cost_constrained_statistic.h"
 #include "test/cost_constrained/cost_constrained_statistic_test_state.h"
 #include "mcts/heuristics/random_heuristic.h"
+#include "mcts/statistics/random_actions.h"
 #include <cstdio>
 
 using namespace std;
@@ -29,7 +30,7 @@ TEST(cost_constrained_mcts, one_step_higher_reward_higher_risk_constraint_eq) {
   FLAGS_v = 5;
   google::InitGoogleLogging("test");
   int n_steps = 1;
-  const Cost risk_action1 = 0.1f;
+  const Cost risk_action1 = 0.8f;
   const Reward goal_reward1 = 1.0f;
   const Cost risk_action2 = 0.3f;
   const Reward goal_reward2 = 0.1f;
@@ -52,10 +53,10 @@ TEST(cost_constrained_mcts, one_step_higher_reward_higher_risk_constraint_eq) {
   mcts_parameters.MAX_NUMBER_OF_ITERATIONS = 10000;
   mcts_parameters.cost_constrained_statistic.LAMBDA = 1.0f/(1.0f-mcts_parameters.DISCOUNT_FACTOR);
   Mcts<CostConstrainedStatisticTestState, CostConstrainedStatistic,
-               UctStatistic, RandomHeuristic> mcts(mcts_parameters);
+               RandomActions, RandomHeuristic> mcts(mcts_parameters);
   mcts.search(state);
   auto best_action = mcts.returnBestAction();
-  EXPECT_EQ(best_action, 2);
+  EXPECT_EQ(best_action, 1);
 }
 
 

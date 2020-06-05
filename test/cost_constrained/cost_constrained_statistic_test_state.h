@@ -43,8 +43,8 @@ public:
 
     std::shared_ptr<CostConstrainedStatisticTestState> execute(const JointAction& joint_action, std::vector<Reward>& rewards, Cost& ego_cost) const {
         rewards.resize(1);
-
-        if(joint_action == JointAction{0}) {
+        const auto ego_agent_action = joint_action[CostConstrainedStatisticTestState::ego_agent_idx];
+        if(ego_agent_action == 0) {
             rewards[0] = 0;
             ego_cost = 0.0f;
             return std::make_shared<CostConstrainedStatisticTestState>(*this);
@@ -54,14 +54,15 @@ public:
             auto new_state = current_state_;
             std::uniform_real_distribution<> dist(0, 1);
             const auto sample = dist(random_generator_);
-            const Probability to_goal_prob = get_transition_to_goal_probability(joint_action);
-            if(joint_action == JointAction{1}) {
+            VLOG_EVERY_N(5, 100) << "Sampled decision value: "  << sample;
+            const Probability to_goal_prob = get_transition_to_goal_probability(ego_agent_action);
+            if(ego_agent_action == 1) {
               if(sample <= to_goal_prob) {
                 new_state += 1;
               } else {
                 collision = true;
               }
-            } else if(joint_action == JointAction{2}) {
+            } else if(ego_agent_action == 2) {
               if(sample <= to_goal_prob) {
                 new_state -= 1;
               } else {
@@ -88,10 +89,10 @@ public:
         }
     }
 
-    Probability get_transition_to_goal_probability(const JointAction& joint_action) const {
-      if(joint_action == JointAction{1}) {
+    Probability get_transition_to_goal_probability(const ActionIdx& ego_action) const {
+      if(ego_action == 1) {
             return std::pow(1 - collision_risk1_, n_steps_);
-        } else if(joint_action == JointAction{2}) { 
+        } else if(ego_action == 2) { 
             return std::pow(1 - collision_risk2_, n_steps_);
         } else {
           throw std::logic_error("Invalid action passed.");
@@ -99,7 +100,11 @@ public:
     }
 
     ActionIdx get_num_actions(AgentIdx agent_idx) const {
-        return 3;
+        if(agent_idx == get_ego_agent_idx()) {
+          return 3;
+        } else {
+          return std::numeric_limits<ActionIdx>::max();
+        }
     }
 
     bool is_terminal() const {
@@ -107,7 +112,7 @@ public:
     }
 
     const std::vector<AgentIdx> get_other_agent_idx() const {
-        return std::vector<AgentIdx>{};
+        return std::vector<AgentIdx>{5};
     }
 
     const AgentIdx get_ego_agent_idx() const {

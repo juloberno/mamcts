@@ -88,6 +88,9 @@ public:
                             << "Cost stats: " << cost_stats.at(0).action_value_ << ", "
                                               << cost_stats.at(1).action_value_ <<
                                               ", " << cost_stats.at(2).action_value_ << "\n"
+                            << "Action counts: " << cost_stats.at(0).action_count_ << ", "
+                                              << cost_stats.at(1).action_count_ <<
+                                              ", " << cost_stats.at(2).action_count_ << "\n"
                             << "Ucb values: " << values[0] << ", " << values[1] << ", " << values[2] << "\n" 
                             << "--------------------------------------------------------------------------------------------";
     }
@@ -113,9 +116,7 @@ public:
     ActionIdx solve_LP_and_sample(const std::vector<ActionIdx>& feasible_actions) const {
       // Solved for K=1
       const auto& cost_stats = cost_statistic_.ucb_statistics_;
-      auto stat_compare = [&](const ActionIdx& a,
-                             const ActionIdx& b) {
-                                return cost_stats.at(a).action_value_ < cost_stats.at(b).action_value_; };
+
       ActionIdx maximizing_action = feasible_actions.at(0);
       ActionIdx minimizing_action = feasible_actions.at(0);
       for (const auto& feasible_action : feasible_actions ) {
