@@ -47,7 +47,7 @@ public:
     search(const S& current_state, HypothesisBeliefTracker& belief_tracker);
 
     void search(const S& current_state);
-    
+
     unsigned int numIterations();
     unsigned int searchTime();
     std::string nodeInfo();
@@ -55,6 +55,7 @@ public:
     void printTreeToDotFile(std::string filename="tree");
 
     void set_heuristic_function(const H& heuristic) {heuristic_ = heuristic;}
+    const mcts::StageNode<S, SE, SO, H>& get_root() const {return *root_;}
 
 private:
 

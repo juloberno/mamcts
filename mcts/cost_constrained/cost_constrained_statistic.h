@@ -228,6 +228,14 @@ public:
       return reward_statistic_parameters;
     }
 
+    const UctStatistic::UcbStatistics& get_cost_ucb_statistics() const {
+      return cost_statistic_.ucb_statistics_;
+    }
+
+    const UctStatistic::UcbStatistics& get_reward_ucb_statistics() const {
+      return reward_statistic_.ucb_statistics_;
+    }
+
 
 private:
 
@@ -251,7 +259,7 @@ void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsPa
   const double current_lambda = parameters.cost_constrained_statistic.LAMBDA;
   const double gradient_update_step = parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP - 
                                       parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP * 
-                                      float(parameters.MAX_NUMBER_OF_ITERATIONS)/float(current_iteration);
+                                      float(current_iteration)/float(parameters.MAX_NUMBER_OF_ITERATIONS);
   const double cost_constraint = parameters.cost_constrained_statistic.COST_CONSTRAINT;
   const double tau_gradient_clip = parameters.cost_constrained_statistic.TAU_GRADIENT_CLIP;
   const double new_lambda =  CostConstrainedStatistic::calculate_next_lambda(current_lambda,

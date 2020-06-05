@@ -171,7 +171,8 @@ private:
 
     double value_;
     double latest_return_;   // tracks the return during backpropagation
-    std::map<ActionIdx, UcbPair> ucb_statistics_; // first: action selection count, action-value
+    typedef std::map<ActionIdx, UcbPair> UcbStatistics;
+    UcbStatistics ucb_statistics_; // first: action selection count, action-value
     unsigned int total_node_visits_;
     std::vector<ActionIdx> unexpanded_actions_; // contains all action indexes which have not been expanded yet
 
