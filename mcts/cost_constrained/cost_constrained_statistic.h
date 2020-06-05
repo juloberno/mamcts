@@ -190,11 +190,6 @@ public:
       const auto cost_latest_return = statistic_impl.cost_statistic_.latest_return_;
       cost_statistic_.collected_reward_ = collected_cost_;
       cost_statistic_.update_statistics_from_backpropagated(cost_latest_return);
-
-      VLOG_IF(3, collected_cost_.first == 0 && collected_cost_.second > 0.0f) << "unnormal cost: " << collected_cost_.second;
-      if(collected_cost_.first == 0 && cost_latest_return > 0.1f) {
-        LOG(INFO) << "unnormal cost_latest_return: " << cost_latest_return;
-      }
     }
 
     void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost)

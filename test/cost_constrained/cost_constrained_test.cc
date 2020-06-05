@@ -27,20 +27,20 @@ TEST(cost_constrained_statistic, backprop_cost_reward_updates) {
 
 TEST(cost_constrained_mcts, one_step_higher_reward_higher_risk_constraint_eq) {
   FLAGS_alsologtostderr = true;
-  FLAGS_v = 3;
+  FLAGS_v = 5;
   google::InitGoogleLogging("test");
   int n_steps = 1;
   const Cost risk_action1 = 0.8f;
-  const Reward goal_reward1 = 1.0f;
+  const Reward goal_reward1 = 2.0f; // gives expectation 2*0.2 = 0.4 <- only slightly better
   const Cost risk_action2 = 0.3f;
-  const Reward goal_reward2 = 0.5f;
+  const Reward goal_reward2 = 0.5f; // gives expectation 0.5*0.7 = 0.35
 
   CostConstrainedStatisticTestState state(n_steps, risk_action1, risk_action2,
                                          goal_reward1, goal_reward2, false);
   auto mcts_parameters = mcts_default_parameters();
   // collision risk 1 is higher but within constraint
   mcts_parameters.cost_constrained_statistic.COST_CONSTRAINT = risk_action1;
-  mcts_parameters.cost_constrained_statistic.REWARD_UPPER_BOUND = 1.0f;
+  mcts_parameters.cost_constrained_statistic.REWARD_UPPER_BOUND = 10.0f;
   mcts_parameters.cost_constrained_statistic.REWARD_LOWER_BOUND = 0.0f;
   mcts_parameters.cost_constrained_statistic.COST_LOWER_BOUND = 0.0f;
   mcts_parameters.cost_constrained_statistic.COST_UPPER_BOUND = 1.0f;
@@ -77,6 +77,8 @@ TEST(cost_constrained_mcts, one_step_higher_reward_higher_risk_constraint_eq) {
   EXPECT_NEAR(reward_stats.at(2).action_value_, (1-risk_action2)*goal_reward2, 0.05);
   EXPECT_NEAR(reward_stats.at(1).action_value_, (1-risk_action1)*goal_reward1, 0.05);
   EXPECT_NEAR(reward_stats.at(0).action_value_, 0, 0.00);
+
+  EXPECT_EQ(best_action, 1);
 }
 
 
