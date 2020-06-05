@@ -50,7 +50,7 @@ TEST(cost_constrained_mcts, one_step_higher_reward_higher_risk_constraint_eq) {
   mcts_parameters.cost_constrained_statistic.ACTION_FILTER_FACTOR = 1.0f;
   mcts_parameters.DISCOUNT_FACTOR = 0.9;
   mcts_parameters.MAX_SEARCH_TIME = 1000000000;
-  mcts_parameters.MAX_NUMBER_OF_ITERATIONS = 10000;
+  mcts_parameters.MAX_NUMBER_OF_ITERATIONS = 1000;
 
     // Lambda desired
   const double lambda_desired_max = ( (1 - risk_action1) * goal_reward1 - ( 1 - risk_action2) * goal_reward2 ) /
