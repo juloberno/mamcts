@@ -23,12 +23,18 @@ class CostConstrainedStatisticTestState : public mcts::StateInterface<CostConstr
 {
 public:
     CostConstrainedStatisticTestState(int n_steps, Cost collision_risk1, Cost collision_risk2,
+                                     Reward reward_goal1, Reward reward_goal2, bool is_terminal) :
+                                     CostConstrainedStatisticTestState(0, n_steps, collision_risk1, collision_risk2,
+                                      reward_goal1, reward_goal2, is_terminal) {}
+    CostConstrainedStatisticTestState(int current_state, int n_steps, Cost collision_risk1, Cost collision_risk2,
                                      Reward reward_goal1, Reward reward_goal2, bool is_terminal) : 
                                      RandomGenerator(1000),
-                                      current_state_(0), n_steps_(n_steps),
+                                      current_state_(current_state), n_steps_(n_steps),
                                       collision_risk1_(collision_risk1), collision_risk2_(collision_risk2),
                                       reward_goal1_(reward_goal1), reward_goal2_(reward_goal2),
                                       is_terminal_(is_terminal) {}
+
+
     ~CostConstrainedStatisticTestState() {};
 
     std::shared_ptr<CostConstrainedStatisticTestState> clone() const {
@@ -45,30 +51,30 @@ public:
         } else {
             bool is_terminal = false;
             bool collision = false;
-            auto new_state_length = current_state_;
+            auto new_state = current_state_;
             std::uniform_real_distribution<> dist(0, 1);
             const auto sample = dist(random_generator_);
             const Probability to_goal_prob = get_transition_to_goal_probability(joint_action);
             if(joint_action == JointAction{1}) {
               if(sample <= to_goal_prob) {
-                new_state_length += 1;
+                new_state += 1;
               } else {
                 collision = true;
               }
             } else if(joint_action == JointAction{2}) {
               if(sample <= to_goal_prob) {
-                new_state_length -= 1;
+                new_state -= 1;
               } else {
                 collision = true;
               }
             } else {
               throw std::logic_error("Invalid action selected");
             }
-          if (current_state_ >= n_steps_) {
+          if (new_state >= n_steps_) {
             rewards = std::vector<Reward>{reward_goal1_};
             ego_cost = 0.0f;
             is_terminal = true;
-          } else if(current_state_ <= - n_steps_) {
+          } else if(new_state <= - n_steps_) {
             rewards = std::vector<Reward>{reward_goal2_};
             ego_cost = 0.0f;
             is_terminal = true;
@@ -77,7 +83,7 @@ public:
             ego_cost = 1.0f;
             is_terminal = true;
           }
-          return std::make_shared<CostConstrainedStatisticTestState>(n_steps_, collision_risk1_, collision_risk2_,
+          return std::make_shared<CostConstrainedStatisticTestState>(new_state, n_steps_, collision_risk1_, collision_risk2_,
                                                             reward_goal1_, reward_goal2_, is_terminal);
         }
     }
