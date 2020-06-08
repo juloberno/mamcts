@@ -27,7 +27,7 @@ public:
              cost_statistic_(num_actions, agent_idx, make_cost_statistic_parameters(mcts_parameters)),
              unexpanded_actions_(num_actions),
              lambda(mcts_parameters.cost_constrained_statistic.LAMBDA),
-             exploration_constant(mcts_parameters.cost_constrained_statistic.EXPLORATION_CONSTANT),
+             kappa(mcts_parameters.cost_constrained_statistic.KAPPA),
              action_filter_factor(mcts_parameters.cost_constrained_statistic.ACTION_FILTER_FACTOR),
              cost_constraint(mcts_parameters.cost_constrained_statistic.COST_CONSTRAINT)
              {
@@ -78,8 +78,9 @@ public:
           double cost_value_normalized = cost_statistic_.get_normalized_ucb_value(idx);
           double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(idx);
 
+
           values[idx] = reward_value_normalized - lambda * cost_value_normalized 
-                 + 2 * exploration_constant * sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(idx).action_count_)  );
+                 + kappa * sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(idx).action_count_)  );
       }
 
       VLOG_EVERY_N(5, 100) << "\nReward stats: " << reward_stats.at(0).action_value_ << ", "
@@ -91,6 +92,7 @@ public:
                             << "Action counts: " << cost_stats.at(0).action_count_ << ", "
                                               << cost_stats.at(1).action_count_ <<
                                               ", " << cost_stats.at(2).action_count_ << "\n"
+                            << "Lambda:" << lambda << "\n"
                             << "Ucb values: " << values[0] << ", " << values[1] << ", " << values[2] << "\n" 
                             << "--------------------------------------------------------------------------------------------";
     }
@@ -159,12 +161,13 @@ public:
                                         const double& gradient_update_step,
                                         const double& cost_constraint,
                                         const double& tau_gradient_clip,
-                                        const CostConstrainedStatistic& root_statistic) {
+                                        const CostConstrainedStatistic& root_statistic,
+                                        const double& discount_factor) {
         const ActionIdx policy_sampled_action = root_statistic.get_best_action();
         const double new_lambda = current_lambda + gradient_update_step * (
              root_statistic.get_normalized_cost_action_value(policy_sampled_action) - cost_constraint);
         const double clip_upper_limit = (root_statistic.reward_statistic_.upper_bound - root_statistic.reward_statistic_.lower_bound) /
-                                         (tau_gradient_clip * ( 1 - root_statistic.reward_statistic_.k_discount_factor));
+                                         (tau_gradient_clip * ( 1 - discount_factor));
         const double clipped_new_lambda = std::min(std::max(new_lambda, double(0.0f)), clip_upper_limit);
         return clipped_new_lambda;
     }
@@ -214,7 +217,6 @@ public:
 
     MctsParameters make_cost_statistic_parameters(const MctsParameters& mcts_parameters) const {
       MctsParameters cost_statistic_parameters(mcts_parameters);
-      cost_statistic_parameters.uct_statistic.EXPLORATION_CONSTANT = mcts_parameters.cost_constrained_statistic.EXPLORATION_CONSTANT;
       cost_statistic_parameters.uct_statistic.LOWER_BOUND = mcts_parameters.cost_constrained_statistic.COST_LOWER_BOUND;
       cost_statistic_parameters.uct_statistic.UPPER_BOUND = mcts_parameters.cost_constrained_statistic.COST_UPPER_BOUND;
       return cost_statistic_parameters;
@@ -222,7 +224,6 @@ public:
 
     MctsParameters make_reward_statistic_parameters(const MctsParameters& mcts_parameters) const {
       MctsParameters reward_statistic_parameters(mcts_parameters);
-      reward_statistic_parameters.uct_statistic.EXPLORATION_CONSTANT = mcts_parameters.cost_constrained_statistic.EXPLORATION_CONSTANT;
       reward_statistic_parameters.uct_statistic.LOWER_BOUND = mcts_parameters.cost_constrained_statistic.REWARD_LOWER_BOUND;
       reward_statistic_parameters.uct_statistic.UPPER_BOUND = mcts_parameters.cost_constrained_statistic.REWARD_UPPER_BOUND;
       return reward_statistic_parameters;
@@ -243,8 +244,8 @@ private:
     UctStatistic cost_statistic_;
     std::vector<ActionIdx> unexpanded_actions_;
 
-    const double lambda;
-    const double exploration_constant;
+    const double& lambda;
+    const double kappa;
     const double action_filter_factor;
     const double cost_constraint;
 };
@@ -257,18 +258,17 @@ void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsPa
     return;
   }
   const double current_lambda = parameters.cost_constrained_statistic.LAMBDA;
-  const double gradient_update_step = parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP - 
-                                      parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP * 
-                                      float(current_iteration)/float(parameters.MAX_NUMBER_OF_ITERATIONS);
+  const double gradient_update_step = parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP/(current_iteration + 1);
   const double cost_constraint = parameters.cost_constrained_statistic.COST_CONSTRAINT;
   const double tau_gradient_clip = parameters.cost_constrained_statistic.TAU_GRADIENT_CLIP;
   const double new_lambda =  CostConstrainedStatistic::calculate_next_lambda(current_lambda,
                                                                             gradient_update_step,
                                                                             cost_constraint,
                                                                             tau_gradient_clip,
-                                                                            root_statistic);
+                                                                            root_statistic,
+                                                                            parameters.DISCOUNT_FACTOR);
   parameters.cost_constrained_statistic.LAMBDA = new_lambda;
-  VLOG_EVERY_N(5, 10) << "Updated lambda from " << current_lambda << 
+  VLOG_EVERY_N(5, 100) << "Updated lambda from " << current_lambda << 
     " to " << new_lambda << " in iteration " << current_iteration;
 }
 

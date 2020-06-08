@@ -40,7 +40,7 @@ struct MctsParameters{
       double REWARD_UPPER_BOUND;
       double REWARD_LOWER_BOUND;
       double COST_CONSTRAINT;
-      double EXPLORATION_CONSTANT;
+      double KAPPA;
       double GRADIENT_UPDATE_STEP;
       double TAU_GRADIENT_CLIP;
       double ACTION_FILTER_FACTOR;
