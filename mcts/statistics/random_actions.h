@@ -51,6 +51,10 @@ public:
 
     std::string print_edge_information(const ActionIdx& action ) const {return "";}
 
+private:
+  std::unordered_map<ActionIdx, std::size_t> expanded_actions_counts;
+  unsigned int total_node_visits_;
+
 };
 
 } // namespace mcts

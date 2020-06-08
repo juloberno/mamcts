@@ -55,7 +55,6 @@ public:
             auto new_state = current_state_;
             std::uniform_real_distribution<> dist(0, 1);
             const auto sample = dist(random_generator_);
-            VLOG_EVERY_N(5, 100) << "Sampled decision value: "  << sample;
             const Probability to_goal_prob = get_transition_to_goal_probability(ego_agent_action);
             if(ego_agent_action == 1) {
               if(sample <= to_goal_prob) {
