@@ -68,6 +68,7 @@ private:
     unsigned int search_time_;
 
     const MctsParameters mcts_parameters_;
+    MctsParameters iteration_parameters_;
 
     H heuristic_;
 
@@ -109,12 +110,12 @@ void Mcts<S,SE,SO,H>::search(const S& current_state)
     const auto max_iterations = mcts_parameters_.MAX_NUMBER_OF_ITERATIONS;
     const auto max_search_time_ms = mcts_parameters_.MAX_SEARCH_TIME;
 
-    MctsParameters iteration_params(mcts_parameters_);
+    iteration_parameters_ = mcts_parameters_;
     root_ = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
-            const unsigned int&> (nullptr, current_state.clone(), JointAction(),0, iteration_params);
+            const unsigned int&> (nullptr, current_state.clone(), JointAction(),0, iteration_parameters_);
     num_iterations_ = 0;
     while (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ms && num_iterations_<max_iterations) {
-        NodeStatistic<SE>::update_statistic_parameters(iteration_params, root_->get_ego_int_node(), num_iterations_);
+        NodeStatistic<SE>::update_statistic_parameters(iteration_parameters_, root_->get_ego_int_node(), num_iterations_);
         iterate(root_);
         num_iterations_ += 1;
     }

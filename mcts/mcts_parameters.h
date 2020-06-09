@@ -46,6 +46,11 @@ struct MctsParameters{
       double ACTION_FILTER_FACTOR;
   };
 
+  struct RandomActionsStatisticParameters {
+      double PROGRESSIVE_WIDENING_K;
+      double PROGRESSIVE_WIDENING_ALPHA;
+  };
+
   struct HypothesisStatisticParameters {
       bool COST_BASED_ACTION_SELECTION;
       bool PROGRESSIVE_WIDENING_HYPOTHESIS_BASED;
@@ -67,6 +72,7 @@ struct MctsParameters{
   HypothesisStatisticParameters hypothesis_statistic;
   UctStatisticParameters uct_statistic;
   RandomHeuristicParameters random_heuristic;
+  RandomActionsStatisticParameters random_actions_statistic;
   HypothesisBeliefTrackerParameters hypothesis_belief_tracker;
   CostConstrainedStatisticParameters cost_constrained_statistic;
 };

@@ -56,6 +56,15 @@ inline std::ostream& operator<<(std::ostream& os, const JointAction& a)
         return os;
     }
 
+inline std::ostream& operator<<(std::ostream& os, const std::vector<Reward>& r)
+    {
+        os << "[";
+        for (auto it = r.begin(); it != r.end(); ++it)
+            os << Reward(*it) << " ";
+        os << "]";
+        return os;
+    }
+
 
 template<typename Implementation>
 class StateInterface {

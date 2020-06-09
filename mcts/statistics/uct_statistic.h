@@ -167,11 +167,19 @@ public:
             values[idx] = action_value_normalized + 2 * exploration_constant * sqrt( (2* log(total_node_visits_)) / ( ucb_statistics.at(idx).action_count_)  );
         }
     }
-private:
 
+    typedef std::map<ActionIdx, UcbPair> UcbStatistics;
+    static std::string ucb_stats_to_string(const UcbStatistics& ucb_stats) {
+      std::stringstream ss;
+      for(const auto& ucb_stat : ucb_stats) {
+          ss << "a=" <<  ucb_stat.first << ", q=" << ucb_stat.second.action_value_ << ", n=" << ucb_stat.second.action_count_ << "|";
+      }
+      return ss.str();
+    }
+private:
     double value_;
     double latest_return_;   // tracks the return during backpropagation
-    typedef std::map<ActionIdx, UcbPair> UcbStatistics;
+    
     UcbStatistics ucb_statistics_; // first: action selection count, action-value
     unsigned int total_node_visits_;
     std::vector<ActionIdx> unexpanded_actions_; // contains all action indexes which have not been expanded yet
@@ -185,5 +193,6 @@ private:
 };
 
 } // namespace mcts
+
 
 #endif

@@ -41,7 +41,8 @@ public:
     ActionIdx choose_next_action(const S& state) {
        if(unexpanded_actions_.empty())
         {
-          return get_best_action();
+          // Expansion policy does consider node counts
+          return greedy_policy(kappa, action_filter_factor);
 
         } else {
             // Select randomly an unexpanded action
@@ -53,21 +54,26 @@ public:
         }
     }
 
+
     ActionIdx get_best_action() const {
-      // Greedy Policy
-      std::vector<double> ucb_values;
-      calculate_ucb_values(ucb_values);
-      
-      const auto feasible_actions = filter_feasible_actions(ucb_values);
-      const ActionIdx sampled_action = solve_LP_and_sample(feasible_actions);
-      return sampled_action;
+      return greedy_policy(0.0f, action_filter_factor);
     }
 
     bool policy_is_ready() const {
       return unexpanded_actions_.empty();
     }
 
-    void calculate_ucb_values(std::vector<double>& values) const {
+    ActionIdx greedy_policy(const double kappa_local, const double action_filter_factor_local) const {
+      // Greedy Policy
+      std::vector<double> ucb_values;
+      calculate_ucb_values(ucb_values, kappa_local);
+      
+      const auto feasible_actions = filter_feasible_actions(ucb_values, action_filter_factor_local);
+      const ActionIdx sampled_action = solve_LP_and_sample(feasible_actions);
+      return sampled_action;
+    }
+
+    void calculate_ucb_values(std::vector<double>& values, const double& kappa_local) const {
       const auto& reward_stats = reward_statistic_.ucb_statistics_;
       const auto& cost_stats = cost_statistic_.ucb_statistics_;
       MCTS_EXPECT_TRUE(reward_stats.size() ==  cost_stats.size());
@@ -78,26 +84,13 @@ public:
           double cost_value_normalized = cost_statistic_.get_normalized_ucb_value(idx);
           double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(idx);
 
-
           values[idx] = reward_value_normalized - lambda * cost_value_normalized 
-                 + kappa * sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(idx).action_count_)  );
+                 + kappa_local * sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(idx).action_count_)  );
       }
-
-      VLOG_EVERY_N(5, 100) << "\nReward stats: " << reward_stats.at(0).action_value_ << ", "
-                                              << reward_stats.at(1).action_value_ <<
-                                              ", " << reward_stats.at(2).action_value_ << "\n"
-                            << "Cost stats: " << cost_stats.at(0).action_value_ << ", "
-                                              << cost_stats.at(1).action_value_ <<
-                                              ", " << cost_stats.at(2).action_value_ << "\n"
-                            << "Action counts: " << cost_stats.at(0).action_count_ << ", "
-                                              << cost_stats.at(1).action_count_ <<
-                                              ", " << cost_stats.at(2).action_count_ << "\n"
-                            << "Lambda:" << lambda << "\n"
-                            << "Ucb values: " << values[0] << ", " << values[1] << ", " << values[2] << "\n" 
-                            << "--------------------------------------------------------------------------------------------";
     }
 
-    std::vector<ActionIdx> filter_feasible_actions(const std::vector<double>& values) const {
+    std::vector<ActionIdx> filter_feasible_actions(const std::vector<double>& values,
+                                           const double& action_filter_factor_local) const {
       std::vector<ActionIdx> filtered_actions;
       const ActionIdx maximizing_action = std::distance(values.begin(), std::max_element(values.begin(), values.end()));
       const Reward max_val = values[maximizing_action];
@@ -108,7 +101,7 @@ public:
           const double node_count_relations = sqrt( log( reward_statistic_.ucb_statistics_.at(action_idx).action_count_) /
                                                   ( reward_statistic_.ucb_statistics_.at(action_idx).action_count_) ) + 
                                               node_counts_maximizing;
-          if(value_difference <= action_filter_factor * node_count_relations) {
+          if(value_difference <= action_filter_factor_local * node_count_relations) {
             filtered_actions.push_back(action_idx);
           }
       }
@@ -163,9 +156,12 @@ public:
                                         const double& tau_gradient_clip,
                                         const CostConstrainedStatistic& root_statistic,
                                         const double& discount_factor) {
-        const ActionIdx policy_sampled_action = root_statistic.get_best_action();
-        const double new_lambda = current_lambda + gradient_update_step * (
-             root_statistic.get_normalized_cost_action_value(policy_sampled_action) - cost_constraint);
+        const ActionIdx policy_sampled_action = root_statistic.greedy_policy(0.0f, 0.0f);
+        const double normalized_ucb_sample_action = root_statistic.get_normalized_cost_action_value(policy_sampled_action);
+        const double gradient = (normalized_ucb_sample_action - cost_constraint);
+        VLOG_EVERY_N(5, 10) << "Norm. UCBSampled: " << normalized_ucb_sample_action << ", grad = "
+                             << gradient << ", step = " << gradient_update_step ;
+        const double new_lambda = current_lambda + gradient_update_step * gradient;
         const double clip_upper_limit = (root_statistic.reward_statistic_.upper_bound - root_statistic.reward_statistic_.lower_bound) /
                                          (tau_gradient_clip * ( 1 - discount_factor));
         const double clipped_new_lambda = std::min(std::max(new_lambda, double(0.0f)), clip_upper_limit);
@@ -201,14 +197,21 @@ public:
        cost_statistic_.set_heuristic_estimate_from_backpropagated(accum_ego_cost);
     }
 
-    std::string print_node_information() const
-    {
+    std::string print_node_information() const {
         return "";
     }
 
-    std::string print_edge_information(const ActionIdx& action ) const
-    {
-        return "";
+    std::string print_edge_information(const ActionIdx& action) const {
+        const auto& reward_stats = reward_statistic_.ucb_statistics_;
+        const auto& cost_stats = cost_statistic_.ucb_statistics_;
+        std::vector<Reward> ucb_values;
+        calculate_ucb_values(ucb_values, 0.0f);
+        std::stringstream ss;
+        ss  << "Reward stats: " << UctStatistic::ucb_stats_to_string(reward_stats) << "\n"
+            << "Cost stats: " << UctStatistic::ucb_stats_to_string(cost_stats) << "\n"
+            << "Lambda:" << lambda << "\n"
+            << "Ucb values: " << ucb_values;
+        return ss.str();
     }
 
     Reward get_normalized_cost_action_value(const ActionIdx& action) const {
@@ -258,7 +261,7 @@ void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsPa
     return;
   }
   const double current_lambda = parameters.cost_constrained_statistic.LAMBDA;
-  const double gradient_update_step = parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP/(current_iteration + 1);
+  const double gradient_update_step = parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP/(0.1*current_iteration + 1);
   const double cost_constraint = parameters.cost_constrained_statistic.COST_CONSTRAINT;
   const double tau_gradient_clip = parameters.cost_constrained_statistic.TAU_GRADIENT_CLIP;
   const double new_lambda =  CostConstrainedStatistic::calculate_next_lambda(current_lambda,
@@ -268,7 +271,7 @@ void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsPa
                                                                             root_statistic,
                                                                             parameters.DISCOUNT_FACTOR);
   parameters.cost_constrained_statistic.LAMBDA = new_lambda;
-  VLOG_EVERY_N(5, 100) << "Updated lambda from " << current_lambda << 
+  VLOG_EVERY_N(5, 10) << "Updated lambda from " << current_lambda << 
     " to " << new_lambda << " in iteration " << current_iteration;
 }
 
