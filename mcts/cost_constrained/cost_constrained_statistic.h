@@ -271,7 +271,7 @@ void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsPa
                                                                             root_statistic,
                                                                             parameters.DISCOUNT_FACTOR);
   parameters.cost_constrained_statistic.LAMBDA = new_lambda;
-  VLOG_EVERY_N(5, 10) << "Updated lambda from " << current_lambda << 
+  VLOG_EVERY_N(5, 100) << "Updated lambda from " << current_lambda << 
     " to " << new_lambda << " in iteration " << current_iteration;
 }
 

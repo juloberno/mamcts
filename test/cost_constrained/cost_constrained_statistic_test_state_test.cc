@@ -17,7 +17,7 @@ using namespace std;
 using namespace mcts;
 
 
-
+/*
 TEST(cost_constrained_statistic, action_risk_0) {
   int n_steps = 1;
   const Cost risk_action1 = 0.8f;
@@ -91,6 +91,33 @@ TEST(cost_constrained_statistic, one_step_action_risk_2) {
   }
   const double collision_risk = double(num_collisions)/num_samples;
   EXPECT_NEAR(collision_risk, risk_action2, 0.01); // ActionIdx=0 -> No collision should occur;
+}
+*/
+
+TEST(cost_constrained_statistic, n_step_action_risk_1) {
+  int n_steps = 3;
+  const Cost risk_action1 = 0.2f;
+  const Reward goal_reward1 = 1.0f;
+  const Cost risk_action2 = 0.3f;
+  const Reward goal_reward2 = 0.1f;
+
+  int num_samples = 10000;
+  int num_collisions = 0;
+
+  for(int i = 0; i < num_samples; ++i) {
+    std::vector<Reward> rewards;
+    Cost ego_cost = 0.0f;
+    auto state = std::make_shared<CostConstrainedStatisticTestState>(n_steps, risk_action1, risk_action2,
+                                            goal_reward1, goal_reward2, false, i);
+    while(!state->is_terminal()) {
+      state = state->execute(JointAction{1}, rewards, ego_cost);
+    }
+    if(ego_cost > 0.0f) {
+      num_collisions++;
+    }
+  }
+  const double collision_risk = double(num_collisions)/num_samples;
+  EXPECT_NEAR(collision_risk, risk_action1, 0.01); // ActionIdx=0 -> No collision should occur;
 }
 
 int main(int argc, char **argv) {

@@ -23,13 +23,13 @@ class CostConstrainedStatisticTestState : public mcts::StateInterface<CostConstr
 {
 public:
     CostConstrainedStatisticTestState(int n_steps, Cost collision_risk1, Cost collision_risk2,
-                                     Reward reward_goal1, Reward reward_goal2, bool is_terminal) :
+                                     Reward reward_goal1, Reward reward_goal2, bool is_terminal, unsigned int seed = 1000) :
                                      CostConstrainedStatisticTestState(0, n_steps, collision_risk1, collision_risk2,
-                                      reward_goal1, reward_goal2, is_terminal) {}
+                                      reward_goal1, reward_goal2, is_terminal, seed) {}
     CostConstrainedStatisticTestState(int current_state, int n_steps, Cost collision_risk1, Cost collision_risk2,
-                                     Reward reward_goal1, Reward reward_goal2, bool is_terminal) : 
-                                     RandomGenerator(1000),
-                                      current_state_(current_state), n_steps_(n_steps),
+                                     Reward reward_goal1, Reward reward_goal2, bool is_terminal, unsigned int seed) : 
+                                     RandomGenerator(seed),
+                                      current_state_(current_state), n_steps_(n_steps), seed_(seed),
                                       collision_risk1_(collision_risk1), collision_risk2_(collision_risk2),
                                       reward_goal1_(reward_goal1), reward_goal2_(reward_goal2),
                                       is_terminal_(is_terminal) {}
@@ -83,9 +83,12 @@ public:
             rewards = std::vector<Reward>{0.0f};
             ego_cost = 1.0f;
             is_terminal = true;
+          } else {
+            rewards[0] = 0;
+            ego_cost = 0.0f;
           }
           return std::make_shared<CostConstrainedStatisticTestState>(new_state, n_steps_, collision_risk1_, collision_risk2_,
-                                                            reward_goal1_, reward_goal2_, is_terminal);
+                                                            reward_goal1_, reward_goal2_, is_terminal, seed_*10);
         }
     }
 
@@ -128,6 +131,7 @@ public:
 private:
     int current_state_;
     bool is_terminal_;
+    unsigned int seed_;
 
     // PARAMS
     const int n_steps_;

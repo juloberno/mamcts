@@ -31,7 +31,7 @@ struct CostConstrainedTest : public ::testing::Test {
 
   void SetUp( int n_steps, Reward goal_reward1, Reward goal_reward2,
              Cost risk_action1, Cost risk_action2, Cost cost_constraint,
-             double lambda_init, bool widening) {
+             double lambda_init, bool widening, unsigned int number_of_iters=3000) {
             n_steps_ = n_steps;
             goal_reward1_ = goal_reward1;
             goal_reward2_ = goal_reward2;
@@ -51,13 +51,13 @@ struct CostConstrainedTest : public ::testing::Test {
             mcts_parameters_.cost_constrained_statistic.KAPPA = 1.0f;
             mcts_parameters_.cost_constrained_statistic.GRADIENT_UPDATE_STEP = 1.0f;
             mcts_parameters_.cost_constrained_statistic.TAU_GRADIENT_CLIP = 1.0f;
-            mcts_parameters_.cost_constrained_statistic.ACTION_FILTER_FACTOR = 1.0f;
+            mcts_parameters_.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0.5f;
             mcts_parameters_.DISCOUNT_FACTOR = 0.9;
             mcts_parameters_.MAX_SEARCH_TIME = 1000000000;
-            mcts_parameters_.MAX_NUMBER_OF_ITERATIONS = 3000;
+            mcts_parameters_.MAX_NUMBER_OF_ITERATIONS = number_of_iters;
             if (widening) {
-              mcts_parameters_.random_actions_statistic.PROGRESSIVE_WIDENING_ALPHA = 0.15;
-              mcts_parameters_.random_actions_statistic.PROGRESSIVE_WIDENING_K = 4.0;
+              mcts_parameters_.random_actions_statistic.PROGRESSIVE_WIDENING_ALPHA = 0.1;
+              mcts_parameters_.random_actions_statistic.PROGRESSIVE_WIDENING_K = 2.0;
             } else {
               mcts_parameters_.random_actions_statistic.PROGRESSIVE_WIDENING_ALPHA = 1.0;
               mcts_parameters_.random_actions_statistic.PROGRESSIVE_WIDENING_K = 1.0;
@@ -153,7 +153,7 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_eq_risk_constraint_higher) {
 }
 
 TEST_F(CostConstrainedTest, n_step_higher_reward_higher_risk_constraint_eq) {
-  SetUp(2, 2.0f, 0.5f, 0.8f, 0.3f, 0.8f, 2.0f, true);
+  SetUp(3, 2.0f, 0.5f, 0.8f, 0.3f, 0.8f, 2.0f, true, 30000);
 
   mcts_->search(*state_);
   auto best_action = mcts_->returnBestAction();
@@ -162,13 +162,13 @@ TEST_F(CostConstrainedTest, n_step_higher_reward_higher_risk_constraint_eq) {
   const auto& cost_stats = root.get_ego_int_node().get_cost_ucb_statistics();
 
   // Cost statistics desired
-  EXPECT_NEAR(cost_stats.at(2).action_value_, risk_action2_, 0.05);
-  EXPECT_NEAR(cost_stats.at(1).action_value_, risk_action1_, 0.05);
+  EXPECT_NEAR(cost_stats.at(2).action_value_, risk_action2_, 0.08);
+  EXPECT_NEAR(cost_stats.at(1).action_value_, risk_action1_, 0.08);
   EXPECT_NEAR(cost_stats.at(0).action_value_, 0, 0.00);
 
   // Reward statistics desired
-  EXPECT_NEAR(reward_stats.at(2).action_value_, (1-risk_action2_)*goal_reward2_, 0.05);
-  EXPECT_NEAR(reward_stats.at(1).action_value_, (1-risk_action1_)*goal_reward1_, 0.05);
+  EXPECT_NEAR(reward_stats.at(2).action_value_, (1-risk_action2_)*goal_reward2_, 0.08);
+  EXPECT_NEAR(reward_stats.at(1).action_value_, (1-risk_action1_)*goal_reward1_, 0.08);
   EXPECT_NEAR(reward_stats.at(0).action_value_, 0, 0.00);
 
   LOG(INFO) << "\n"  << root.get_ego_int_node().print_edge_information(0);
