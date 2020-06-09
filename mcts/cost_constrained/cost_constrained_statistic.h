@@ -81,6 +81,9 @@ public:
     Cost calc_updated_constraint_based_on_policy(const PolicySampled& policy, const Cost& current_constraint) const {
       double other_actions_costs = 0.0f;
       for(const auto& action_pair : policy.second) {
+        if(action_pair.first == policy.first) {
+          continue;
+        }
         other_actions_costs += action_pair.second * cost_statistic_.ucb_statistics_.at(action_pair.first).action_value_;
       }
       return (current_constraint - policy.second.at(policy.first)*mean_step_costs_.at(policy.first) - other_actions_costs) /

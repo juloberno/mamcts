@@ -164,7 +164,7 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_eq_risk_constraint_higher) {
 }
 
 TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq) {
-  SetUp(3, 2.0f, 0.5f, 0.8f, 0.3f, 0.5f, 2.0f, true, 2000);
+  SetUp(3, 2.0f, 0.5f, 0.8f, 0.3f, 0.8f, 2.0f, true, 2000);
 
   int num_samples = 100;
   int num_collisions = 0;
