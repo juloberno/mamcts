@@ -16,8 +16,6 @@
 using namespace std;
 using namespace mcts;
 
-
-/*
 TEST(cost_constrained_statistic, action_risk_0) {
   int n_steps = 1;
   const Cost risk_action1 = 0.8f;
@@ -92,7 +90,6 @@ TEST(cost_constrained_statistic, one_step_action_risk_2) {
   const double collision_risk = double(num_collisions)/num_samples;
   EXPECT_NEAR(collision_risk, risk_action2, 0.01); // ActionIdx=0 -> No collision should occur;
 }
-*/
 
 TEST(cost_constrained_statistic, n_step_action_risk_1) {
   int n_steps = 3;
