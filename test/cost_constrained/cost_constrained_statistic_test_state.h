@@ -91,9 +91,9 @@ public:
 
     Probability get_transition_to_goal_probability(const ActionIdx& ego_action) const {
       if(ego_action == 1) {
-            return std::pow(1 - collision_risk1_, n_steps_);
+            return std::pow(1 - collision_risk1_, 1/float(n_steps_));
         } else if(ego_action == 2) { 
-            return std::pow(1 - collision_risk2_, n_steps_);
+            return std::pow(1 - collision_risk2_, 1/float(n_steps_));
         } else {
           throw std::logic_error("Invalid action passed.");
         }
