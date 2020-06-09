@@ -48,7 +48,7 @@ struct CostConstrainedTest : public ::testing::Test {
             mcts_parameters_.cost_constrained_statistic.REWARD_LOWER_BOUND = 0.0f;
             mcts_parameters_.cost_constrained_statistic.COST_LOWER_BOUND = 0.0f;
             mcts_parameters_.cost_constrained_statistic.COST_UPPER_BOUND = 1.0f;
-            mcts_parameters_.cost_constrained_statistic.KAPPA = 1.0f;
+            mcts_parameters_.cost_constrained_statistic.KAPPA = 10.0f;
             mcts_parameters_.cost_constrained_statistic.GRADIENT_UPDATE_STEP = 1.0f;
             mcts_parameters_.cost_constrained_statistic.TAU_GRADIENT_CLIP = 1.0f;
             mcts_parameters_.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0.5f;
@@ -56,7 +56,7 @@ struct CostConstrainedTest : public ::testing::Test {
             mcts_parameters_.MAX_SEARCH_TIME = 1000000000;
             mcts_parameters_.MAX_NUMBER_OF_ITERATIONS = number_of_iters;
             if (widening) {
-              mcts_parameters_.random_actions_statistic.PROGRESSIVE_WIDENING_ALPHA = 0.1;
+              mcts_parameters_.random_actions_statistic.PROGRESSIVE_WIDENING_ALPHA = 0.25;
               mcts_parameters_.random_actions_statistic.PROGRESSIVE_WIDENING_K = 2.0;
             } else {
               mcts_parameters_.random_actions_statistic.PROGRESSIVE_WIDENING_ALPHA = 1.0;
@@ -80,6 +80,17 @@ struct CostConstrainedTest : public ::testing::Test {
     Cost cost_constraint_;
     double lambda_init_;
 
+};
+
+
+struct CostConstrainedNStepTest : public CostConstrainedTest {
+  CostConstrainedNStepTest() {}
+  virtual ~CostConstrainedNStepTest() {}
+
+  auto make_initial_state(unsigned int seed) const {
+     return std::make_shared<CostConstrainedStatisticTestState>(n_steps_, risk_action1_, risk_action2_,
+                                            goal_reward1_, goal_reward2_, false, seed);
+  }
 };
 
 TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_eq) {
@@ -152,35 +163,49 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_eq_risk_constraint_higher) {
   LOG(INFO) << "\n"  << root.get_ego_int_node().print_edge_information(0);
 }
 
-TEST_F(CostConstrainedTest, n_step_higher_reward_higher_risk_constraint_eq) {
-  SetUp(3, 2.0f, 0.5f, 0.8f, 0.3f, 0.8f, 2.0f, true, 30000);
+TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq) {
+  SetUp(3, 2.0f, 0.5f, 0.8f, 0.3f, 0.5f, 2.0f, true, 2000);
 
-  mcts_->search(*state_);
-  auto best_action = mcts_->returnBestAction();
-  const auto root = mcts_->get_root();
-  const auto& reward_stats = root.get_ego_int_node().get_reward_ucb_statistics();
-  const auto& cost_stats = root.get_ego_int_node().get_cost_ucb_statistics();
+  int num_samples = 100;
+  int num_collisions = 0;
+  int num_goal_reached = 0;
 
-  // Cost statistics desired
-  EXPECT_NEAR(cost_stats.at(2).action_value_, risk_action2_, 0.08);
-  EXPECT_NEAR(cost_stats.at(1).action_value_, risk_action1_, 0.08);
-  EXPECT_NEAR(cost_stats.at(0).action_value_, 0, 0.00);
+  for(int i = 0; i < num_samples; ++i) {
+    std::vector<Reward> rewards;
+    Cost ego_cost = 0.0f;
 
-  // Reward statistics desired
-  EXPECT_NEAR(reward_stats.at(2).action_value_, (1-risk_action2_)*goal_reward2_, 0.08);
-  EXPECT_NEAR(reward_stats.at(1).action_value_, (1-risk_action1_)*goal_reward1_, 0.08);
-  EXPECT_NEAR(reward_stats.at(0).action_value_, 0, 0.00);
-
-  LOG(INFO) << "\n"  << root.get_ego_int_node().print_edge_information(0);
-
-  EXPECT_EQ(best_action, 1);
+    auto state = make_initial_state(i);
+    while(!state->is_terminal()) {
+      Mcts<CostConstrainedStatisticTestState, CostConstrainedStatistic,
+                        RandomActionsStatistic, RandomHeuristic> mcts(mcts_parameters_);
+      mcts.search(*state_);
+      auto sampled_policy = mcts.get_root().get_ego_int_node().greedy_policy(
+              0, mcts_parameters_.cost_constrained_statistic.ACTION_FILTER_FACTOR);
+      state = state->execute(JointAction{sampled_policy.first}, rewards, ego_cost);
+      const auto& current_constraint = mcts_parameters_.cost_constrained_statistic.COST_CONSTRAINT;
+      mcts_parameters_.cost_constrained_statistic.COST_CONSTRAINT =
+             mcts.get_root().get_ego_int_node().calc_updated_constraint_based_on_policy(sampled_policy, current_constraint);
+    }
+    if(ego_cost > 0.0f) {
+      num_collisions++;
+    }
+    if(rewards.at(0) > 0.0f) {
+      num_goal_reached++;
+    }
+  }
+  const double collision_risk = double(num_collisions)/num_samples;
+  const double goal_rate = double(num_goal_reached)/num_samples;
+  LOG(INFO) << "Collision risk:" << collision_risk;
+  EXPECT_TRUE(collision_risk <= 0.8); // ActionIdx=0 -> No collision should occur
+  EXPECT_EQ(goal_rate, 1 - collision_risk);
 }
+
 
 
 
 int main(int argc, char **argv) {
   FLAGS_alsologtostderr = true;
-  FLAGS_v = 5;
+  FLAGS_v = 3;
   google::InitGoogleLogging("test");
   ::testing::InitGoogleTest(&argc, argv);
 

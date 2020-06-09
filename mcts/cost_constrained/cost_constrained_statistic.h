@@ -26,6 +26,8 @@ public:
              reward_statistic_(num_actions, agent_idx,  make_reward_statistic_parameters(mcts_parameters)),
              cost_statistic_(num_actions, agent_idx, make_cost_statistic_parameters(mcts_parameters)),
              unexpanded_actions_(num_actions),
+             mean_step_costs_(),
+             current_stochastic_policy_(),
              lambda(mcts_parameters.cost_constrained_statistic.LAMBDA),
              kappa(mcts_parameters.cost_constrained_statistic.KAPPA),
              action_filter_factor(mcts_parameters.cost_constrained_statistic.ACTION_FILTER_FACTOR),
@@ -33,6 +35,9 @@ public:
              {
                  // initialize action indexes from 0 to (number of actions -1)
                  std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
+                 for(const auto& action : unexpanded_actions_) {
+                    mean_step_costs_[action] = 0.0f;
+                 }
              }
 
     ~CostConstrainedStatistic() {};
@@ -42,8 +47,7 @@ public:
        if(unexpanded_actions_.empty())
         {
           // Expansion policy does consider node counts
-          return greedy_policy(kappa, action_filter_factor);
-
+          return greedy_policy(kappa, action_filter_factor).first;
         } else {
             // Select randomly an unexpanded action
             std::uniform_int_distribution<ActionIdx> random_action_selection(0,unexpanded_actions_.size()-1);
@@ -54,23 +58,37 @@ public:
         }
     }
 
-
     ActionIdx get_best_action() const {
-      return greedy_policy(0.0f, action_filter_factor);
+      return greedy_policy(0.0f, action_filter_factor).first;
     }
 
     bool policy_is_ready() const {
       return unexpanded_actions_.empty();
     }
 
-    ActionIdx greedy_policy(const double kappa_local, const double action_filter_factor_local) const {
+    typedef std::unordered_map<ActionIdx, Probability> Policy;
+    typedef std::pair<ActionIdx, Policy> PolicySampled;
+    PolicySampled greedy_policy(const double kappa_local, const double action_filter_factor_local) const {
       // Greedy Policy
       std::vector<double> ucb_values;
       calculate_ucb_values(ucb_values, kappa_local);
       
       const auto feasible_actions = filter_feasible_actions(ucb_values, action_filter_factor_local);
-      const ActionIdx sampled_action = solve_LP_and_sample(feasible_actions);
-      return sampled_action;
+      auto policy = solve_LP_and_sample(feasible_actions);
+      return policy;
+    }
+
+    Cost calc_updated_constraint_based_on_policy(const PolicySampled& policy, const Cost& current_constraint) const {
+      double other_actions_costs = 0.0f;
+      for(const auto& action_pair : policy.second) {
+        other_actions_costs += action_pair.second * cost_statistic_.ucb_statistics_.at(action_pair.first).action_value_;
+      }
+      return (current_constraint - policy.second.at(policy.first)*mean_step_costs_.at(policy.first) - other_actions_costs) /
+              (cost_statistic_.k_discount_factor * policy.second.at(policy.first));
+    }
+
+    Policy get_policy_probabilities() const {
+      return current_stochastic_policy_;
     }
 
     void calculate_ucb_values(std::vector<double>& values, const double& kappa_local) const {
@@ -108,7 +126,7 @@ public:
       return filtered_actions;
     }
 
-    ActionIdx solve_LP_and_sample(const std::vector<ActionIdx>& feasible_actions) const {
+    PolicySampled solve_LP_and_sample(const std::vector<ActionIdx>& feasible_actions) const {
       // Solved for K=1
       const auto& cost_stats = cost_statistic_.ucb_statistics_;
 
@@ -125,8 +143,13 @@ public:
         }
       }
 
+      Policy stochastic_policy;
+      for ( const auto action : cost_stats) {
+         stochastic_policy[action.first] = 0.0f;
+      }
       if(minimizing_action == maximizing_action) {
-        return minimizing_action;
+        stochastic_policy[minimizing_action] = 1.0f;
+        return std::make_pair(minimizing_action, stochastic_policy);
       }
 
       // Three cases
@@ -134,18 +157,22 @@ public:
       const double min_val = cost_stats.at(minimizing_action).action_value_;
       if( min_val >= cost_constraint) {
           // amin gets probability one, amax gets probability zero
-          return minimizing_action;
+          stochastic_policy[minimizing_action] = 1.0f;
+          return std::make_pair(minimizing_action, stochastic_policy);
       } else if( max_val <= cost_constraint) {
          // amax gets probability one, amin gets probability zero
-         return maximizing_action;
+         stochastic_policy[maximizing_action] = 1.0f;
+         return std::make_pair(maximizing_action, stochastic_policy);
       } else {
          const double probability_maximizer = (cost_constraint - min_val) / (max_val - min_val);
          std::uniform_real_distribution<double> unif(0, 1);
+         stochastic_policy[maximizing_action] = probability_maximizer;
+         stochastic_policy[minimizing_action] = 1 - probability_maximizer;
          double sample = unif(random_generator_);
          if(sample <= probability_maximizer) {
-           return maximizing_action;
+           return std::make_pair(maximizing_action, stochastic_policy);
          } else {
-           return minimizing_action;
+           return std::make_pair(minimizing_action, stochastic_policy);
          }
       }
     }
@@ -156,7 +183,7 @@ public:
                                         const double& tau_gradient_clip,
                                         const CostConstrainedStatistic& root_statistic,
                                         const double& discount_factor) {
-        const ActionIdx policy_sampled_action = root_statistic.greedy_policy(0.0f, 0.0f);
+        const ActionIdx policy_sampled_action = root_statistic.greedy_policy(0.0f, 0.0f).first;
         const double normalized_ucb_sample_action = root_statistic.get_normalized_cost_action_value(policy_sampled_action);
         const double gradient = (normalized_ucb_sample_action - cost_constraint);
         VLOG_EVERY_N(5, 10) << "Norm. UCBSampled: " << normalized_ucb_sample_action << ", grad = "
@@ -189,6 +216,9 @@ public:
       const auto cost_latest_return = statistic_impl.cost_statistic_.latest_return_;
       cost_statistic_.collected_reward_ = collected_cost_;
       cost_statistic_.update_statistics_from_backpropagated(cost_latest_return);
+
+      mean_step_costs_[collected_cost_.first] += (collected_cost_.second - mean_step_costs_[collected_cost_.first]) /
+                                                   (cost_statistic_.ucb_statistics_[collected_cost_.first].action_count_);
     }
 
     void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost)
@@ -246,6 +276,8 @@ private:
     UctStatistic reward_statistic_;
     UctStatistic cost_statistic_;
     std::vector<ActionIdx> unexpanded_actions_;
+    std::unordered_map<ActionIdx, Cost> mean_step_costs_;
+    Policy current_stochastic_policy_;
 
     const double& lambda;
     const double kappa;
