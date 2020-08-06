@@ -52,6 +52,7 @@ public:
         } else {
             bool is_terminal = false;
             bool collision = false;
+            double collision_risk = 0.0;
             auto new_state = current_state_;
             std::uniform_real_distribution<> dist(0, 1);
             const auto sample = dist(random_generator_);
@@ -61,27 +62,29 @@ public:
                 new_state += 1;
               } else {
                 collision = true;
+                collision_risk = collision_risk1_;
               }
             } else if(ego_agent_action == 2) {
               if(sample <= to_goal_prob) {
                 new_state -= 1;
               } else {
                 collision = true;
+                collision_risk = collision_risk2_;
               }
             } else {
               throw std::logic_error("Invalid action selected");
             }
           if (new_state >= n_steps_) {
             rewards = std::vector<Reward>{reward_goal1_};
-            ego_cost = 0.0f;
+            ego_cost = 0.0;
             is_terminal = true;
           } else if(new_state <= - n_steps_) {
             rewards = std::vector<Reward>{reward_goal2_};
-            ego_cost = 0.0f;
+            ego_cost = 0.0;
             is_terminal = true;
           } else if (collision) {
             rewards = std::vector<Reward>{0.0f};
-            ego_cost = 1.0f;
+            ego_cost = 1.0/collision_risk;
             is_terminal = true;
           } else {
             rewards[0] = 0;
