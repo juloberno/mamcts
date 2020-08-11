@@ -44,7 +44,7 @@ class HypothesisBeliefTracker : public mcts::RandomGenerator {
 
     const std::unordered_map<AgentIdx, HypothesisId>& sample_current_hypothesis(); // shared across all states
 
-    const std::unordered_map<AgentIdx, std::vector<Belief>> get_beliefs() const {
+    const std::unordered_map<AgentIdx, std::vector<Belief>>& get_beliefs() const {
       return tracked_beliefs_;
     }
 
