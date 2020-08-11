@@ -36,7 +36,7 @@ class HypothesisBeliefTracker : public mcts::RandomGenerator {
                               mcts_parameters.hypothesis_belief_tracker.FIXED_HYPOTHESIS_SET)),
                             tracked_probabilities_(),
                             tracked_beliefs_(),
-                            current_sampled_hypothesis_() {};
+                            current_sampled_hypothesis_() {}
 
     template <typename S>
     void belief_update(const HypothesisStateInterface<S>& state,
@@ -51,6 +51,8 @@ class HypothesisBeliefTracker : public mcts::RandomGenerator {
     std::string sprintf() const;
 
     void update_fixed_hypothesis_set(const std::unordered_map<AgentIdx, HypothesisId>& hypothesis_set);
+
+    bool beliefs_initialized() const;
 
 private:
     unsigned int history_length_;
@@ -144,6 +146,19 @@ inline const std::unordered_map<AgentIdx, HypothesisId>& HypothesisBeliefTracker
     hypothesis_id = hypothesis_distribution(random_generator_);
   }
   return current_sampled_hypothesis_;
+}
+
+inline bool HypothesisBeliefTracker::beliefs_initialized() const {
+  if (tracked_probabilities_.empty()) {
+    return false;
+  }
+  for(const auto& probability_track_agent : tracked_probabilities_) {
+    // if probabilities exist for one hypothesis, then they exist for all
+    if (probability_track_agent.second.at(0).size()<history_length_) {
+       return false;
+    }
+  }
+  return true;
 }
 
 inline std::string HypothesisBeliefTracker::sprintf() const {
