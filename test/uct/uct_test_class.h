@@ -35,6 +35,22 @@ public:
 
             const AgentIdx num_agents = start_node->state_->get_num_agents();
 
+            // --- Check transition actions counts -------------
+            for (const auto transition_count : start_node->ego_transition_counts_) {
+                const auto& action = transition_count.first;
+                const auto& count = transition_count.second;
+
+                unsigned int expected_count = 0;
+                for (const auto& child : start_node->children_) {
+                    const auto& ja = child.first;
+                    if(std::find(ja.begin(), ja.end(), action) != ja.end()) {
+                        expected_count++;
+                    }
+                }
+                EXPECT_EQ(count, expected_count);
+            }
+            
+
 
             std::unordered_map<AgentIdx, UctStatistic> expected_statistics;
             auto ego_agent_id = start_node->state_->get_ego_agent_idx();

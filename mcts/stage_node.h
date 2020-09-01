@@ -45,7 +45,8 @@ struct container_hash {
         using StageNodeWPtr = std::weak_ptr<StageNode<S,SE,SO, H>>;
         typedef std::unordered_map<JointAction,StageNodeSPtr,container_hash<JointAction>> StageChildMap;
         typedef std::unordered_map<JointAction,std::vector<Reward>,container_hash<JointAction>> StageRewardMap; //< remembers joint rewards 
-        typedef std::unordered_map<JointAction,Cost ,container_hash<JointAction>> StageCostMap; //< remembers ego costs 
+        typedef std::unordered_map<JointAction, Cost, container_hash<JointAction>> StageCostMap; //< remembers ego costs 
+        typedef std::unordered_map<ActionIdx, unsigned int> TransitionCounts; //< remembers transition counts for one agent
         //of state execute to avoid rerunning execute during node selection
 
         // Environment State
@@ -54,8 +55,11 @@ struct container_hash {
         // Parents and children
         StageNodeWPtr parent_;
         StageChildMap children_;
+
+        // Remember values
         StageRewardMap joint_rewards_;
-        StageCostMap   ego_costs_;
+        StageCostMap  ego_costs_;
+        TransitionCounts ego_transition_counts_; // < only remember ego transitions as transition counts not used in non-ego statistics a.t.m
 
         // Intermediate decision nodes
         IntermediateNode<S, SE> ego_int_node_;
@@ -117,6 +121,7 @@ struct container_hash {
     children_(),
     joint_rewards_(),
     ego_costs_(),
+    ego_transition_counts_(),
     ego_int_node_(*state_,state_->get_ego_agent_idx(),state_->get_num_actions(state_->get_ego_agent_idx()), mcts_parameters),
     other_int_nodes_([this, mcts_parameters]()-> InterNodeVector {
         // Initialize the intermediate nodes of other agents
@@ -152,11 +157,12 @@ struct container_hash {
     template<class S, class SE, class SO, class H>
     std::pair<bool, bool> StageNode<S,SE, SO, H>::select_or_expand(StageNodeSPtr& next_node) {
         // helper function to fill rewards and costs
-        auto fill_rewards = [this](const std::vector<Reward>& reward_list, const Cost& ego_cost, const JointAction& ja) {
-            ego_int_node_.collect(reward_list[S::ego_agent_idx], ego_cost, ja[S::ego_agent_idx]);
+        auto fill_rewards = [this](const std::vector<Reward>& reward_list, const Cost& ego_cost,
+                                 const JointAction& ja, const unsigned int collected_action_transition_count) {
+            ego_int_node_.collect(reward_list[S::ego_agent_idx], ego_cost, ja[S::ego_agent_idx], collected_action_transition_count);
             for (AgentIdx ai = 1; ai < other_int_nodes_.size()+1; ++ai)
             {
-                other_int_nodes_[ai-1].collect(reward_list[ai], ego_cost, ja[ai] );
+                other_int_nodes_[ai-1].collect(reward_list[ai], ego_cost, ja[ai], collected_action_transition_count);
             }
         };
 
@@ -180,7 +186,8 @@ struct container_hash {
         {
             // SELECT EXISTING NODE
             next_node = it->second;
-            fill_rewards(joint_rewards_[joint_action], ego_costs_[joint_action], joint_action);
+            fill_rewards(joint_rewards_[joint_action], ego_costs_[joint_action], joint_action,
+                         ego_transition_counts_[joint_action[S::ego_agent_idx]]);
             return std::make_pair(true, true);
         }
         else
@@ -199,10 +206,12 @@ struct container_hash {
             //     std::cout << "expanded node state: " << state_->execute(joint_action, rewards)->sprintf();
             #endif
             // collect intermediate rewards and selected action indexes
-            fill_rewards(rewards, ego_cost, joint_action);
+            ego_transition_counts_[joint_action[S::ego_agent_idx]]++;
+            fill_rewards(rewards, ego_cost, joint_action, 
+                        ego_transition_counts_[joint_action[S::ego_agent_idx]]);
             joint_rewards_[joint_action] = rewards;
             ego_costs_[joint_action] = ego_cost;
-
+            
             return std::make_pair(false, true);
         }
 

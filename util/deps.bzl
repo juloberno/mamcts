@@ -77,11 +77,9 @@ cc_library(
     hdrs = glob(['Eigen/**']),
     visibility = ['//visibility:public'],
 )""",
-    sha256 = "dd254beb0bafc695d0f62ae1a222ff85b52dbaa3a16f76e781dce22d0d20a4a6",
-    strip_prefix = "eigen-eigen-5a0156e40feb",
-    urls = [
-        "http://bitbucket.org/eigen/eigen/get/3.3.4.tar.bz2",
-    ],
+    sha256 = "4b1120abc5d4a63620a886dcc5d7a7a27bf5b048c8c74ac57521dd27845b1d9f",
+    strip_prefix = "eigen-git-mirror-98e54de5e25aefc6b984c168fb3009868a93e217",
+    urls = ["https://github.com/eigenteam/eigen-git-mirror/archive/98e54de5e25aefc6b984c168fb3009868a93e217.zip"],
     )
 
 def _maybe(repo_rule, name, **kwargs):
