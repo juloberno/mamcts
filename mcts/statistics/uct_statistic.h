@@ -176,7 +176,7 @@ public:
       }
       return ss.str();
     }
-private:
+protected:
     double value_;
     double latest_return_;   // tracks the return during backpropagation
     
