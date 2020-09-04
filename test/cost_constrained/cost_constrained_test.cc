@@ -47,11 +47,11 @@ struct CostConstrainedTest : public ::testing::Test {
             mcts_parameters_.cost_constrained_statistic.REWARD_UPPER_BOUND = std::max(goal_reward1_, goal_reward2_);
             mcts_parameters_.cost_constrained_statistic.REWARD_LOWER_BOUND = 0.0f;
             mcts_parameters_.cost_constrained_statistic.COST_LOWER_BOUND = 0.0f;
-            mcts_parameters_.cost_constrained_statistic.COST_UPPER_BOUND = 1.0f/std::min(risk_action1, risk_action2);
+            mcts_parameters_.cost_constrained_statistic.COST_UPPER_BOUND = 1.0f;
             mcts_parameters_.cost_constrained_statistic.KAPPA = 10.0f;
             mcts_parameters_.cost_constrained_statistic.GRADIENT_UPDATE_STEP = 1.0f;
             mcts_parameters_.cost_constrained_statistic.TAU_GRADIENT_CLIP = 1.0f;
-            mcts_parameters_.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0.5f;
+            mcts_parameters_.cost_constrained_statistic.ACTION_FILTER_FACTOR = 1.0f;
             mcts_parameters_.DISCOUNT_FACTOR = 0.9;
             mcts_parameters_.MAX_SEARCH_TIME = 1000000000;
             mcts_parameters_.MAX_NUMBER_OF_ITERATIONS = number_of_iters;
@@ -93,8 +93,10 @@ struct CostConstrainedNStepTest : public CostConstrainedTest {
   }
 };
 
+
+/*
 TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_eq) {
-  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, 0.8f, 2.2f, false);
+  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, 0.8f, 2.2f, false, 2000);
 
   mcts_->search(*state_);
   auto best_action = mcts_->returnBestAction();
@@ -103,8 +105,8 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_eq) {
   const auto& cost_stats = root.get_ego_int_node().get_cost_ucb_statistics();
 
   // Cost statistics desired
-  EXPECT_NEAR(cost_stats.at(2).action_value_, 1.0, 0.08);
-  EXPECT_NEAR(cost_stats.at(1).action_value_, 1.0, 0.08);
+  EXPECT_NEAR(cost_stats.at(2).action_value_, 0.3, 0.05);
+  EXPECT_NEAR(cost_stats.at(1).action_value_, 0.8, 0.05);
   EXPECT_NEAR(cost_stats.at(0).action_value_, 0, 0.00);
 
   // Reward statistics desired
@@ -117,8 +119,9 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_eq) {
   LOG(INFO) << "\n"  << root.get_ego_int_node().print_edge_information(0);
 }
 
+
 TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_lower) {
-  SetUp(1, 2.0f, 1.0f, 0.8f, 0.3f, 0.75f, 2.2f, false);
+  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, 0.75f, 2.2f, false);
   mcts_->search(*state_);
   auto best_action = mcts_->returnBestAction();
   const auto root = mcts_->get_root();
@@ -126,8 +129,8 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_lower)
   const auto& cost_stats = root.get_ego_int_node().get_cost_ucb_statistics();
 
   // Cost statistics desired
-  EXPECT_NEAR(cost_stats.at(2).action_value_, 1.0, 0.05);
-  EXPECT_NEAR(cost_stats.at(1).action_value_, 1.0, 0.05);
+  EXPECT_NEAR(cost_stats.at(2).action_value_, 0.3, 0.05);
+  EXPECT_NEAR(cost_stats.at(1).action_value_, 0.8, 0.05);
   EXPECT_NEAR(cost_stats.at(0).action_value_, 0, 0.00);
 
   // Reward statistics desired
@@ -140,6 +143,8 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_lower)
   LOG(INFO) << "\n"  << root.get_ego_int_node().print_edge_information(0);
 }
 
+
+
 TEST_F(CostConstrainedTest, one_step_higher_reward_eq_risk_constraint_higher) {
   SetUp(1, 2.0f, 0.5f, 0.3f, 0.3f, 0.4f, 0.5f, false);
   mcts_->search(*state_);
@@ -149,8 +154,8 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_eq_risk_constraint_higher) {
   const auto& cost_stats = root.get_ego_int_node().get_cost_ucb_statistics();
 
   // Cost statistics desired
-  EXPECT_NEAR(cost_stats.at(2).action_value_, 1.0, 0.08);
-  EXPECT_NEAR(cost_stats.at(1).action_value_, 1.0, 0.08);
+  EXPECT_NEAR(cost_stats.at(2).action_value_, 0.3, 0.05);
+  EXPECT_NEAR(cost_stats.at(1).action_value_, 0.3, 0.05);
   EXPECT_NEAR(cost_stats.at(0).action_value_, 0, 0.00);
 
   // Reward statistics desired
@@ -163,10 +168,13 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_eq_risk_constraint_higher) {
   LOG(INFO) << "\n"  << root.get_ego_int_node().print_edge_information(0);
 }
 
-TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq) {
-  SetUp(3, 2.0f, 0.5f, 0.8f, 0.4f, 0.42f, 2.0f, true, 8000);
+*/
 
-  int num_samples = 20;
+
+TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq) {
+  SetUp(3, 1.0f, 1.0f, 0.4f, 0.3f, 0.35f, 2.0f, true, 8000);
+
+  int num_samples = 100;
   int num_collisions = 0;
   int num_goal_reached = 0;
 
@@ -203,10 +211,8 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
   const double collision_risk = double(num_collisions)/num_samples;
   const double goal_rate = double(num_goal_reached)/num_samples;
   LOG(INFO) << "Collision risk:" << collision_risk;
-  EXPECT_TRUE(collision_risk <= 0.42);
+  EXPECT_NEAR(collision_risk, 0.35, 0.05);
 }
-
-
 
 
 int main(int argc, char **argv) {

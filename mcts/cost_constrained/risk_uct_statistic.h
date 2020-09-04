@@ -32,15 +32,39 @@ public:
     }
     
     void update_statistics_from_backpropagated(const Reward& backpropagated) {
-        //Action Value update step
+        //Action risk backpropagation requires different handling than standard UCT backpropagation
         UcbPair& ucb_pair = ucb_statistics_[collected_reward_.first]; // we remembered for which action we got the reward, must be the same as during backprop, if we linked parents and childs correctly
-        //action value: Q'(s,a) = Q(s,a) + (latest_return - Q(s,a))/N =  1/(N+1 ( latest_return + N*Q(s,a))
-        latest_return_ = collected_reward_.second + k_discount_factor * backpropagated;
+        // action risk: roh'(s,a) = 1/transition_count_a' * ( roh(s')  + transition_count_a*roh(s,a))
+        // risk of next state roh(s') := collected_risk + backpropagated (either heuristic found a risk OR during expansion to terminal state)
+        // transition count a in current iteration: transition_count_a'
+        // transition count a in previos iteration: transition_count_a
+        const auto& transition_count_a_previous = collected_action_transition_counts_.first;
+        const auto& transition_count_a_current = collected_action_transition_counts_.second;
         ucb_pair.action_count_ += 1;
-        ucb_pair.action_value_ = ucb_pair.action_value_ + (latest_return_ - ucb_pair.action_value_) / ucb_pair.action_count_;
-        VLOG_EVERY_N(6, 10) << "Agent "<< agent_idx_ <<", Action reward, action " << collected_cost_.first << ", Q(s,a) = " << ucb_pair.action_value_;
+        auto additional_risk = backpropagated;
+        if (transition_count_a_previous != transition_count_a_current) {
+            // a new sample was drawn for this action at this state -> consider resulting action cost
+            additional_risk += collected_reward_.second;
+        }
+        const auto previous_action_value = ucb_pair.action_value_;
+        ucb_pair.action_value_ = 1.0 / double(transition_count_a_current) * (additional_risk + transition_count_a_previous * ucb_pair.action_value_);
+
+        if ( ucb_pair.action_value_ > 1.0) {
+            bool test = true;
+        }
+
+        // remove previous risk of state s used in state before s and replace by new risk 
+        double previous_backpropagated_risk;
+        if(transition_count_a_previous == 0) {
+          previous_backpropagated_risk = value_;  // This is the first transition before only heuristic was backpropagated 
+        } else {
+          previous_backpropagated_risk = previous_action_value;
+        }
+        const auto new_backpropagated_risk = ucb_pair.action_value_;
+        latest_return_ = -1.0 * previous_backpropagated_risk + new_backpropagated_risk;
+        LOG(INFO) << "pa=" << previous_action_value << ", av=" << ucb_pair.action_value_ << ", ptc=" << transition_count_a_previous << ", ctc=" << transition_count_a_current <<
+                ", v=" << value_ << ", ar=" << additional_risk;
         total_node_visits_ += 1;
-        value_ = value_ + (latest_return_ - value_) / total_node_visits_;
     }
 
     void set_heuristic_estimate_from_backpropagated(const Reward& backpropagated) {

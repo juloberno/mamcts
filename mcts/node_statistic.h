@@ -23,6 +23,7 @@ public:
     NodeStatistic(ActionIdx num_actions,
                  AgentIdx agent_idx, 
                  const MctsParameters& mcts_parameters) : 
+                 collected_action_transition_counts_({0, 0}),
                  num_actions_(num_actions),
                  agent_idx_(agent_idx),
                  mcts_parameters_(mcts_parameters) {}
@@ -35,7 +36,8 @@ public:
     void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost);
 
     void collect(const Reward& reward,  const Cost& cost, 
-                const ActionIdx& action_idx, const unsigned int action_transition_count);
+                const ActionIdx& action_idx,
+                const std::pair<unsigned int, unsigned int>& action_transition_counts);
 
     std::string print_node_information() const;
     std::string print_edge_information(const ActionIdx& action) const;
@@ -50,7 +52,7 @@ public:
 protected:
     std::pair<ActionIdx, Reward> collected_reward_;
     std::pair<ActionIdx, Cost> collected_cost_;
-    unsigned int collected_action_transition_count_;
+    std::pair<unsigned int, unsigned int> collected_action_transition_counts_; // previous iteration, current iteration
     ActionIdx num_actions_;
     AgentIdx agent_idx_;
     const MctsParameters& mcts_parameters_;
@@ -100,10 +102,11 @@ void NodeStatistic<Implementation>::update_from_heuristic(const NodeStatistic<Im
 
 template <class Implementation>
 void NodeStatistic<Implementation>::collect(const mcts::Reward &reward, const mcts::Cost& cost,
-                                             const ActionIdx& action_idx, const unsigned int action_transition_count) {
+                                             const ActionIdx& action_idx,
+                                             const std::pair<unsigned int, unsigned int>& action_transition_counts) {
     collected_reward_= std::pair<ActionIdx, Reward>(action_idx, reward);
     collected_cost_= std::pair<ActionIdx, Reward>(action_idx, cost);
-    collected_action_transition_count_ = action_transition_count;
+    collected_action_transition_counts_ = action_transition_counts;
 }
 
 template <class Implementation>

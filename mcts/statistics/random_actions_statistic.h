@@ -72,6 +72,8 @@ public:
     void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost)
     {}
 
+    std::string sprintf() const {return "";}
+
     std::string print_node_information() const {return "";}
 
     std::string print_edge_information(const ActionIdx& action ) const {return "";}

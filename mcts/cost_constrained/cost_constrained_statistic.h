@@ -219,6 +219,7 @@ public:
 
       const auto cost_latest_return = statistic_impl.cost_statistic_.latest_return_;
       cost_statistic_.collected_reward_ = collected_cost_;
+      cost_statistic_.collected_action_transition_counts_ = collected_action_transition_counts_;
       cost_statistic_.update_statistics_from_backpropagated(cost_latest_return);
 
       mean_step_costs_[collected_cost_.first] += (collected_cost_.second - mean_step_costs_[collected_cost_.first]) /
@@ -272,6 +273,12 @@ public:
 
     const UctStatistic::UcbStatistics& get_reward_ucb_statistics() const {
       return reward_statistic_.ucb_statistics_;
+    }
+
+    std::string sprintf() const {
+      std::stringstream ss;
+      ss << "Cost statistic: " << cost_statistic_.sprintf();
+      return ss.str();
     }
 
 

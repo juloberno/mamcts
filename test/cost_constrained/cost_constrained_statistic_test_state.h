@@ -84,11 +84,11 @@ public:
             is_terminal = true;
           } else if (collision) {
             rewards = std::vector<Reward>{0.0f};
-            ego_cost = 1.0/collision_risk;
+            ego_cost = 1.0;
             is_terminal = true;
           } else {
             rewards[0] = 0;
-            ego_cost = 0.0f;
+            ego_cost = 0.0;
           }
           return std::make_shared<CostConstrainedStatisticTestState>(new_state, n_steps_, collision_risk1_, collision_risk2_,
                                                             reward_goal1_, reward_goal2_, is_terminal, seed_*10);

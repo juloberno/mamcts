@@ -158,11 +158,12 @@ struct container_hash {
     std::pair<bool, bool> StageNode<S,SE, SO, H>::select_or_expand(StageNodeSPtr& next_node) {
         // helper function to fill rewards and costs
         auto fill_rewards = [this](const std::vector<Reward>& reward_list, const Cost& ego_cost,
-                                 const JointAction& ja, const unsigned int collected_action_transition_count) {
-            ego_int_node_.collect(reward_list[S::ego_agent_idx], ego_cost, ja[S::ego_agent_idx], collected_action_transition_count);
+                                 const JointAction& ja,
+                                 const std::pair<unsigned int, unsigned int>& collected_action_transition_counts) {
+            ego_int_node_.collect(reward_list[S::ego_agent_idx], ego_cost, ja[S::ego_agent_idx], collected_action_transition_counts);
             for (AgentIdx ai = 1; ai < other_int_nodes_.size()+1; ++ai)
             {
-                other_int_nodes_[ai-1].collect(reward_list[ai], ego_cost, ja[ai], collected_action_transition_count);
+                other_int_nodes_[ai-1].collect(reward_list[ai], ego_cost, ja[ai], std::pair<unsigned int, unsigned int>{});
             }
         };
 
@@ -187,7 +188,8 @@ struct container_hash {
             // SELECT EXISTING NODE
             next_node = it->second;
             fill_rewards(joint_rewards_[joint_action], ego_costs_[joint_action], joint_action,
-                         ego_transition_counts_[joint_action[S::ego_agent_idx]]);
+                         {ego_transition_counts_[joint_action[S::ego_agent_idx]],
+                        ego_transition_counts_[joint_action[S::ego_agent_idx]]});
             return std::make_pair(true, true);
         }
         else
@@ -206,15 +208,15 @@ struct container_hash {
             //     std::cout << "expanded node state: " << state_->execute(joint_action, rewards)->sprintf();
             #endif
             // collect intermediate rewards and selected action indexes
-            ego_transition_counts_[joint_action[S::ego_agent_idx]]++;
+            const auto previous_transition_counts = ego_transition_counts_[joint_action[S::ego_agent_idx]];
             fill_rewards(rewards, ego_cost, joint_action, 
-                        ego_transition_counts_[joint_action[S::ego_agent_idx]]);
+                        {previous_transition_counts,
+                        ++ego_transition_counts_[joint_action[S::ego_agent_idx]]});
             joint_rewards_[joint_action] = rewards;
             ego_costs_[joint_action] = ego_cost;
             
-            return std::make_pair(false, true);
+            return std::make_pair(false, true); //< second boolean: only exapand heuristic if not terminal
         }
-
     }
 
     template<class S, class SE, class SO, class H>

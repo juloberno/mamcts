@@ -168,6 +168,10 @@ public:
         }
     }
 
+    std::string sprintf() const {
+        return UctStatistic::ucb_stats_to_string(ucb_statistics_);
+    }
+
     typedef std::map<ActionIdx, UcbPair> UcbStatistics;
     static std::string ucb_stats_to_string(const UcbStatistics& ucb_stats) {
       std::stringstream ss;

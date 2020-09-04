@@ -159,6 +159,8 @@ void Mcts<S,SE,SO,H>::iterate(const StageNodeSPtr& root_node)
         }
     }
 
+  //  std::cout << root_node->sprintf() << std::endl;
+
 }
 
 
