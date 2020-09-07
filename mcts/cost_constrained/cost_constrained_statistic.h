@@ -285,7 +285,7 @@ public:
 private:
 
     UctStatistic reward_statistic_;
-    RiskUctStatistic cost_statistic_;
+    UctStatistic cost_statistic_;
     std::vector<ActionIdx> unexpanded_actions_;
     std::unordered_map<ActionIdx, Cost> mean_step_costs_;
     Policy current_stochastic_policy_;

@@ -94,7 +94,6 @@ struct CostConstrainedNStepTest : public CostConstrainedTest {
 };
 
 
-/*
 TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_eq) {
   SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, 0.8f, 2.2f, false, 2000);
 
@@ -168,8 +167,6 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_eq_risk_constraint_higher) {
   LOG(INFO) << "\n"  << root.get_ego_int_node().print_edge_information(0);
 }
 
-*/
-
 
 TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq) {
   SetUp(3, 1.0f, 1.0f, 0.4f, 0.3f, 0.35f, 2.0f, true, 8000);
@@ -183,7 +180,7 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
     Cost ego_cost = 0.0f;
 
     auto mcts_parameters_local = mcts_parameters_;
-    mcts_parameters_local.cost_constrained_statistic.KAPPA = 1.0;
+    mcts_parameters_local.cost_constrained_statistic.KAPPA = 10.0;
     mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0;
 
     auto state = make_initial_state(i);
