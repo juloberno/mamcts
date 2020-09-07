@@ -30,7 +30,7 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   HypothesisStatistic stat_parent(5, 1, mcts_default_parameters()); // agents 1 statistic 
   auto action_idx = stat_parent.choose_next_action(state);
   EXPECT_EQ(action_idx, 5);
-  stat_parent.collect( 1, 2.3f, action_idx, 0);
+  stat_parent.collect( 1, 2.3f, action_idx, {0,0});
 
   HypothesisStatistic heuristic(5,1, mcts_default_parameters());
   heuristic.set_heuristic_estimate(10.0f , 20.0f);
@@ -55,7 +55,7 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   stat_child2.update_from_heuristic(heuristic2);
   auto action_idx2 = stat_parent.choose_next_action(state);
   EXPECT_EQ(action_idx2, 5);
-  stat_parent.collect( 1, 4.3f, action_idx2, 0);
+  stat_parent.collect( 1, 4.3f, action_idx2, {0,0});
   stat_parent.update_statistic(stat_child2);
 
   const auto ucb_stats2 =stat_parent.get_ucb_statistics();
@@ -76,7 +76,7 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   stat_child3.update_from_heuristic(heuristic3);
   auto action_idx3 = stat_parent.choose_next_action(state);
   EXPECT_EQ(action_idx3, 3);
-  stat_parent.collect( -1, 1000.3f, action_idx3, 0);
+  stat_parent.collect( -1, 1000.3f, action_idx3, {0,0});
   stat_parent.update_statistic(stat_child3);
 
   const auto ucb_stats3 =stat_parent.get_ucb_statistics();
@@ -99,7 +99,7 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   stat_child4.update_from_heuristic(heuristic4);
   auto action_idx4 = stat_parent.choose_next_action(state);
   EXPECT_EQ(action_idx4, 4);
-  stat_parent.collect( -1, 10.3f, action_idx4, 0);
+  stat_parent.collect( -1, 10.3f, action_idx4, {0,0});
   stat_parent.update_statistic(stat_child4);
 
   const auto ucb_stats4 =stat_parent.get_ucb_statistics();
@@ -121,7 +121,7 @@ TEST(hypothesis_statistic, backprop_heuristic_hyp1) {
   HypothesisStatisticTestState state(current_agents_hypothesis);
   HypothesisStatistic stat_parent(5,2, mcts_default_parameters()); // agents 2 statistic 
   auto action_idx = stat_parent.choose_next_action(state);
-  stat_parent.collect( 1, 5.3f, action_idx, 0);
+  stat_parent.collect( 1, 5.3f, action_idx, {0,0});
 
   HypothesisStatistic heuristic(5,2, mcts_default_parameters());
   heuristic.set_heuristic_estimate(10.0f , 22.0f);
@@ -153,7 +153,7 @@ TEST(hypothesis_statistic, worst_case_action_selection) {
   HypothesisStatisticTestState state(current_agents_hypothesis);
   HypothesisStatistic stat_parent(2,2, mcts_params); // agents 2 statistic 
   auto action_idx = stat_parent.choose_next_action(state);
-  stat_parent.collect( 1, 5.3f, action_idx, 0);
+  stat_parent.collect( 1, 5.3f, action_idx, {0,0});
 
   HypothesisStatistic heuristic(2,2, mcts_params);
   heuristic.set_heuristic_estimate(10.0f , 22.0f);
@@ -165,7 +165,7 @@ TEST(hypothesis_statistic, worst_case_action_selection) {
   state.change_actions();
 
   auto action_idx2 = stat_parent.choose_next_action(state);
-  stat_parent.collect( 1, 12.3f, action_idx, 0);
+  stat_parent.collect( 1, 12.3f, action_idx, {0,0});
   stat_parent.update_statistic(stat_child);
 
   // Worst case action
