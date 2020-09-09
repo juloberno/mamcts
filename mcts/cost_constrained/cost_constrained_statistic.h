@@ -236,6 +236,15 @@ public:
         return "";
     }
 
+    static std::string print_policy(const Policy& policy) {
+      std::stringstream ss;
+      ss << "Policy: ";
+      for (const auto& action_pair : policy) {
+        ss << "P(a=" << action_pair.first << ") = " << action_pair.second;
+      }
+      return ss.str();
+    }
+
     std::string print_edge_information(const ActionIdx& action) const {
         const auto& reward_stats = reward_statistic_.ucb_statistics_;
         const auto& cost_stats = cost_statistic_.ucb_statistics_;
@@ -245,7 +254,7 @@ public:
         ss  << "Reward stats: " << UctStatistic::ucb_stats_to_string(reward_stats) << "\n"
             << "Cost stats: " << UctStatistic::ucb_stats_to_string(cost_stats) << "\n"
             << "Lambda:" << lambda << "\n"
-            << "Ucb values: " << ucb_values;
+            << "Ucb values: " << ucb_values << "\n";
         return ss.str();
     }
 
