@@ -245,6 +245,15 @@ public:
       return ss.str();
     }
 
+    Cost expected_policy_cost(const Policy& policy) const {
+      Cost expected_cost = 0.0;
+      const auto& cost_stats = cost_statistic_.ucb_statistics_;
+      for(const auto& cost_stat : cost_stats) {
+        expected_cost += policy.at(cost_stat.first) * cost_stat.second.action_value_;
+      } 
+      return expected_cost;
+    }
+
     std::string print_edge_information(const ActionIdx& action) const {
         const auto& reward_stats = reward_statistic_.ucb_statistics_;
         const auto& cost_stats = cost_statistic_.ucb_statistics_;
