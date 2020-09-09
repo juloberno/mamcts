@@ -240,7 +240,7 @@ public:
       std::stringstream ss;
       ss << "Policy: ";
       for (const auto& action_pair : policy) {
-        ss << "P(a=" << action_pair.first << ") = " << action_pair.second;
+        ss << "P(a=" << action_pair.first << ") = " << action_pair.second << ", ";
       }
       return ss.str();
     }
@@ -254,7 +254,8 @@ public:
         ss  << "Reward stats: " << UctStatistic::ucb_stats_to_string(reward_stats) << "\n"
             << "Cost stats: " << UctStatistic::ucb_stats_to_string(cost_stats) << "\n"
             << "Lambda:" << lambda << "\n"
-            << "Ucb values: " << ucb_values << "\n";
+            << "Ucb values: " << ucb_values << "\n"
+            << "Mean step cost: C(a=" << action << ") = " << mean_step_costs_.at(action) << "\n";
         return ss.str();
     }
 
