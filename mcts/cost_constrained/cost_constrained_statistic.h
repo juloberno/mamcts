@@ -257,6 +257,8 @@ public:
       MctsParameters cost_statistic_parameters(mcts_parameters);
       cost_statistic_parameters.uct_statistic.LOWER_BOUND = mcts_parameters.cost_constrained_statistic.COST_LOWER_BOUND;
       cost_statistic_parameters.uct_statistic.UPPER_BOUND = mcts_parameters.cost_constrained_statistic.COST_UPPER_BOUND;
+
+      cost_statistic_parameters.DISCOUNT_FACTOR = 1.0; //< For risk estimation, we do not apply a discount
       return cost_statistic_parameters;
     }
 
