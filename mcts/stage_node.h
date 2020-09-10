@@ -247,8 +247,14 @@ struct container_hash {
     void StageNode<S,SE, SO, H>::update_statistics(const StageNodeSPtr &changed_child_node) {
         ego_int_node_.update_statistic(changed_child_node->ego_int_node_);
         for (AgentIdx ai = 0; ai < other_int_nodes_.size() ; ++ai)
-        {
-            other_int_nodes_[ai].update_statistic(changed_child_node->other_int_nodes_[ai]);
+        {   
+            const auto idx_it = std::find_if(changed_child_node->other_int_nodes_.begin(),
+                    changed_child_node->other_int_nodes_.end(), [&](const auto& int_node) -> bool { 
+                            return int_node.get_agent_idx() == other_int_nodes_.at(ai).get_agent_idx(); }); 
+            if(idx_it != changed_child_node->other_int_nodes_.end()) {
+                other_int_nodes_[ai].update_statistic(changed_child_node->other_int_nodes_.
+                        at(std::distance(changed_child_node->other_int_nodes_.begin(), idx_it)));
+            }
         }
     }
 
