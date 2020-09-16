@@ -81,7 +81,7 @@ public:
                 /*  Cost-based action selection out of hypothesis action set
                 with highest ego cost to predict worst case behavior for this hypothesis (uses uct formula to also explore other actions) */
                 return get_worst_case_action(ucb_statistics_.at(hypothesis_id_current_iteration_),
-                         total_node_visits_hypothesis_.at(hypothesis_id_current_iteration_)).first;
+                         total_node_visits_hypothesis_.at(hypothesis_id_current_iteration_));
             } else {
                 /* Random action-selection */    
                 const auto& action_map = ucb_statistics_[hypothesis_id_current_iteration_];
@@ -122,8 +122,14 @@ public:
     ActionIdx get_best_action() const { throw std::logic_error("Not a meaningful call for this statistic");};
 
     Policy get_policy() const {
-      return get_worst_case_action(ucb_statistics_.at(hypothesis_id_current_iteration_),
-                         total_node_visits_hypothesis_.at(hypothesis_id_current_iteration_)).second;
+        Policy policy;
+        for(const auto hyp_ub_stat : ucb_statistics_) {
+            for (const auto& ucb_pair : hyp_ub_stat.second) {
+                double action_cost_normalized = (ucb_pair.second.action_ego_cost_-lower_cost_bound)/(upper_cost_bound-lower_cost_bound); 
+                policy[ucb_pair.first] = action_cost_normalized;
+            }
+        }
+        return policy;
     }
 
     void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost) {
@@ -146,11 +152,10 @@ public:
         double action_ego_cost_;
     } UcbPair;
 
-    std::pair<ActionIdx, Policy> get_worst_case_action(const std::unordered_map<ActionIdx, UcbPair>& ucb_statistics, unsigned int node_visits) const
+    ActionIdx get_worst_case_action(const std::unordered_map<ActionIdx, UcbPair>& ucb_statistics, unsigned int node_visits) const
     {
         double largest_cost = std::numeric_limits<double>::min();
         ActionIdx worst_action = ucb_statistics.begin()->first;
-        Policy policy;
 
         for (const auto& ucb_pair : ucb_statistics) 
         {
@@ -160,13 +165,12 @@ public:
                   lower_cost_bound << ", ucb=" << upper_cost_bound;
             }
             const double ucb_cost = action_cost_normalized + 2 * exploration_constant * sqrt( (2* std::log(node_visits)) / (ucb_pair.second.action_count_)  );
-            policy[ucb_pair.first] = ucb_cost;
             if (ucb_cost > largest_cost) {
                 largest_cost = ucb_cost;
                 worst_action = ucb_pair.first;
             }
         }
-        return std::pair<ActionIdx, Policy>(worst_action, policy);
+        return worst_action;
     }
 
     std::unordered_map<HypothesisId, std::unordered_map<ActionIdx, UcbPair>> get_ucb_statistics() const {
