@@ -12,6 +12,7 @@
 #include <iostream>
 #include <iomanip>
 #include <random>
+#include <cmath>
 
 namespace mcts {
 
@@ -104,8 +105,10 @@ public:
           double cost_value_normalized = cost_statistic_.get_normalized_ucb_value(idx);
           double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(idx);
 
+          const auto exploration_term = kappa_local * 
+              sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(idx).action_count_));
           values[idx] = reward_value_normalized - lambda * cost_value_normalized 
-                 + kappa_local * sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(idx).action_count_)  );
+                 + (std::isnan(exploration_term) ? std::numeric_limits<double>::max() : exploration_term);
       }
     }
 
@@ -114,11 +117,13 @@ public:
       std::vector<ActionIdx> filtered_actions;
       const ActionIdx maximizing_action = std::distance(values.begin(), std::max_element(values.begin(), values.end()));
       const Reward max_val = values[maximizing_action];
-      const double node_counts_maximizing = sqrt( log( reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_) /
+      const double node_counts_maximizing = (reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_ == 0) ? std::numeric_limits<double>::max() :
+                                 sqrt( log( reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_) /
                                                   ( reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_) );
       for (size_t action_idx = 0; action_idx < values.size(); ++action_idx) {
           const double value_difference = std::abs(values[action_idx] - max_val);
-          const double node_count_relations = sqrt( log( reward_statistic_.ucb_statistics_.at(action_idx).action_count_) /
+          const double node_count_relations = ( reward_statistic_.ucb_statistics_.at(action_idx).action_count_ == 0) ? std::numeric_limits<double>::max() :
+                                 sqrt( log( reward_statistic_.ucb_statistics_.at(action_idx).action_count_) /
                                                   ( reward_statistic_.ucb_statistics_.at(action_idx).action_count_) ) + 
                                               node_counts_maximizing;
           if(value_difference <= action_filter_factor_local * node_count_relations) {
