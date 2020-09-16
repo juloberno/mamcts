@@ -78,7 +78,12 @@ public:
     }
 
     Policy get_policy() const {
-      return Policy();
+        Policy policy;
+        for (auto it = ucb_statistics_.begin(); it != ucb_statistics_.end(); ++it)
+        {
+            policy[it->first] = it->second.action_value_;
+        }
+        return policy;
     }
 
     void update_from_heuristic(const NodeStatistic<UctStatistic>& heuristic_statistic) {

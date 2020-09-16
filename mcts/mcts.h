@@ -80,7 +80,7 @@ private:
     std::string sprintf(const StageNodeSPtr& root_node) const;
 
     template<class EdgeInfo> 
-    std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>> visit_stage_node_edges(const StageNodeSPtr& root_node,
+    void visit_stage_node_edges(const StageNodeSPtr& root_node,
         const std::function<EdgeInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
         std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>>& edge_infos);
 
@@ -218,7 +218,7 @@ std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo
 
 template<class S, class SE, class SO, class H>
 template<class EdgeInfo> 
-std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>> Mcts<S,SE,SO,H>::visit_stage_node_edges(const StageNodeSPtr& root_node,
+void Mcts<S,SE,SO,H>::visit_stage_node_edges(const StageNodeSPtr& root_node,
         const std::function<EdgeInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
             std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>>& edge_infos) {
     const auto& ego_policy = root_node->get_ego_int_node().get_policy();
@@ -236,7 +236,7 @@ std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo
 
         for (auto action_idx = 1; action_idx < root_node->get_other_int_nodes().size() + 1; ++action_idx) {
             const auto& other_agent_id = 
-                        root_node->get_other_int_nodes().at(action_idx).get_agent_idx();
+                        root_node->get_other_int_nodes().at(action_idx - 1).get_agent_idx();
             const auto& other_action_id = child_node_pair.first.at(action_idx);
             const auto& other_action_weight = other_policies.at(other_agent_id).at(other_action_id);
             const auto& other_edge_info = edge_info_extractor(*root_node->get_state(), *child_node_pair.second->get_state(), other_agent_id);
