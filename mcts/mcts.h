@@ -61,7 +61,8 @@ public:
 
     template<class StateTransitionInfo> 
     std::vector<MctsEdgeInfo<StateTransitionInfo>> visit_mcts_tree_edges(
-        const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor);
+        const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
+                    unsigned int max_depth = 100);
 
 private:
 
@@ -83,7 +84,7 @@ private:
     template<class StateTransitionInfo> 
     void visit_stage_node_edges(const StageNodeSPtr& root_node,
         const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
-        std::vector<MctsEdgeInfo<StateTransitionInfo>>& edge_infos);
+        std::vector<MctsEdgeInfo<StateTransitionInfo>>& edge_infos, unsigned int max_depth);
 
     MCTS_TEST
 };
@@ -211,9 +212,9 @@ void Mcts<S,SE,SO,H>::printTreeToDotFile(std::string filename){
 template<class S, class SE, class SO, class H>
 template<class StateTransitionInfo> 
 std::vector<MctsEdgeInfo<StateTransitionInfo>> Mcts<S,SE,SO,H>::visit_mcts_tree_edges(
-        const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor) {
+        const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor, unsigned int max_depth) {
     std::vector<MctsEdgeInfo<StateTransitionInfo>> edge_infos;
-    visit_stage_node_edges(root_, edge_info_extractor, edge_infos);
+    visit_stage_node_edges(root_, edge_info_extractor, edge_infos, max_depth);
     return edge_infos;
 }
 
@@ -221,8 +222,12 @@ template<class S, class SE, class SO, class H>
 template<class StateTransitionInfo> 
 void Mcts<S,SE,SO,H>::visit_stage_node_edges(const StageNodeSPtr& root_node,
         const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
-            std::vector<MctsEdgeInfo<StateTransitionInfo>>& edge_infos) {
+            std::vector<MctsEdgeInfo<StateTransitionInfo>>& edge_infos, unsigned int max_depth) {
     if(root_node->get_children().empty()) {
+        return;
+    }
+    const auto& depth = root_node->get_depth();
+    if(depth > max_depth) {
         return;
     }
     const auto& ego_policy = root_node->get_ego_int_node().get_policy();
@@ -230,7 +235,6 @@ void Mcts<S,SE,SO,H>::visit_stage_node_edges(const StageNodeSPtr& root_node,
     for (const auto& other_int_node : root_node->get_other_int_nodes()) {
         other_policies[other_int_node.get_agent_idx()] = other_int_node.get_policy();
     }
-    const auto& depth = root_node->get_depth();
     for (auto& child_node_pair : root_node->get_children()) {
         const auto& ego_agent_id = root_node->get_state()->get_ego_agent_idx();
         const auto& ego_action_id = child_node_pair.first.at(S::ego_agent_idx);
@@ -246,7 +250,7 @@ void Mcts<S,SE,SO,H>::visit_stage_node_edges(const StageNodeSPtr& root_node,
             const auto& other_edge_info = edge_info_extractor(*root_node->get_state(), *child_node_pair.second->get_state(), other_agent_id);
             edge_infos.push_back(std::make_tuple(other_agent_id, depth, other_action_id, other_action_weight, other_edge_info));
         }
-        visit_stage_node_edges(child_node_pair.second, edge_info_extractor, edge_infos);
+        visit_stage_node_edges(child_node_pair.second, edge_info_extractor, edge_infos, max_depth);
     }
 
 }
