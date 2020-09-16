@@ -15,9 +15,12 @@
 #include "common.h"
 #include "mcts_parameters.h"
 #include <string>
- 
+
 
 namespace mcts {
+
+template<class StateTransitionInfo> 
+using MctsEdgeInfo = std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, StateTransitionInfo>;
 
 /*
  * @tparam S State Interface
@@ -25,8 +28,6 @@ namespace mcts {
  * @tparam SO Selection & Expansion Strategy Others
  * @tparam SR Strategy Rollout
  */
-
-
 template<class S, class SE, class SO, class H>
 class Mcts {
 
@@ -58,9 +59,9 @@ public:
     void set_heuristic_function(const H& heuristic) {heuristic_ = heuristic;}
     const mcts::StageNode<S, SE, SO, H>& get_root() const {return *root_;}
 
-    template<class EdgeInfo> 
-    std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>> visit_mcts_tree_edges(
-        const std::function<EdgeInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor);
+    template<class StateTransitionInfo> 
+    std::vector<MctsEdgeInfo<StateTransitionInfo>> visit_mcts_tree_edges(
+        const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor);
 
 private:
 
@@ -79,10 +80,10 @@ private:
 
     std::string sprintf(const StageNodeSPtr& root_node) const;
 
-    template<class EdgeInfo> 
+    template<class StateTransitionInfo> 
     void visit_stage_node_edges(const StageNodeSPtr& root_node,
-        const std::function<EdgeInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
-        std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>>& edge_infos);
+        const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
+        std::vector<MctsEdgeInfo<StateTransitionInfo>>& edge_infos);
 
     MCTS_TEST
 };
@@ -208,19 +209,19 @@ void Mcts<S,SE,SO,H>::printTreeToDotFile(std::string filename){
 }
 
 template<class S, class SE, class SO, class H>
-template<class EdgeInfo> 
-std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>> Mcts<S,SE,SO,H>::visit_mcts_tree_edges(
-        const std::function<EdgeInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor) {
-    std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>> edge_infos;
+template<class StateTransitionInfo> 
+std::vector<MctsEdgeInfo<StateTransitionInfo>> Mcts<S,SE,SO,H>::visit_mcts_tree_edges(
+        const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor) {
+    std::vector<MctsEdgeInfo<StateTransitionInfo>> edge_infos;
     visit_stage_node_edges(root_, edge_info_extractor, edge_infos);
     return edge_infos;
 }
 
 template<class S, class SE, class SO, class H>
-template<class EdgeInfo> 
+template<class StateTransitionInfo> 
 void Mcts<S,SE,SO,H>::visit_stage_node_edges(const StageNodeSPtr& root_node,
-        const std::function<EdgeInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
-            std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>>& edge_infos) {
+        const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
+            std::vector<MctsEdgeInfo<StateTransitionInfo>>& edge_infos) {
     const auto& ego_policy = root_node->get_ego_int_node().get_policy();
     std::unordered_map<AgentIdx, Policy> other_policies;
     for (const auto& other_int_node : root_node->get_other_int_nodes()) {
