@@ -222,6 +222,9 @@ template<class StateTransitionInfo>
 void Mcts<S,SE,SO,H>::visit_stage_node_edges(const StageNodeSPtr& root_node,
         const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
             std::vector<MctsEdgeInfo<StateTransitionInfo>>& edge_infos) {
+    if(root_node->get_children().empty()) {
+        return;
+    }
     const auto& ego_policy = root_node->get_ego_int_node().get_policy();
     std::unordered_map<AgentIdx, Policy> other_policies;
     for (const auto& other_int_node : root_node->get_other_int_nodes()) {
