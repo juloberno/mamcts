@@ -28,7 +28,6 @@ public:
              cost_statistic_(num_actions, agent_idx, make_cost_statistic_parameters(mcts_parameters)),
              unexpanded_actions_(num_actions),
              mean_step_costs_(),
-             current_stochastic_policy_(),
              lambda(mcts_parameters.cost_constrained_statistic.LAMBDA),
              kappa(mcts_parameters.cost_constrained_statistic.KAPPA),
              action_filter_factor(mcts_parameters.cost_constrained_statistic.ACTION_FILTER_FACTOR),
@@ -59,6 +58,10 @@ public:
         }
     }
 
+    Policy get_policy() const {
+      return greedy_policy(0.0f, action_filter_factor).second;
+    }
+
     ActionIdx get_best_action() const {
       return greedy_policy(0.0f, action_filter_factor).first;
     }
@@ -67,7 +70,6 @@ public:
       return unexpanded_actions_.empty();
     }
 
-    typedef std::unordered_map<ActionIdx, Probability> Policy;
     typedef std::pair<ActionIdx, Policy> PolicySampled;
     PolicySampled greedy_policy(const double kappa_local, const double action_filter_factor_local) const {
       // Greedy Policy
@@ -89,10 +91,6 @@ public:
       }
       return (current_constraint - policy.second.at(policy.first)*mean_step_costs_.at(policy.first) - other_actions_costs) /
               (cost_statistic_.k_discount_factor * policy.second.at(policy.first));
-    }
-
-    Policy get_policy_probabilities() const {
-      return current_stochastic_policy_;
     }
 
     void calculate_ucb_values(std::vector<double>& values, const double& kappa_local) const {
@@ -309,7 +307,6 @@ private:
     UctStatistic cost_statistic_;
     std::vector<ActionIdx> unexpanded_actions_;
     std::unordered_map<ActionIdx, Cost> mean_step_costs_;
-    Policy current_stochastic_policy_;
 
     const double& lambda;
     const double kappa;

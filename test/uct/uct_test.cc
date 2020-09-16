@@ -70,6 +70,22 @@ TEST(test_mcts, generate_dot_file )
     mcts.printTreeToDotFile("test_tree");
 }
 
+TEST(test_mcts, vist_edges )
+{
+    Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts(default_uct_params());
+    SimpleState state(4);
+    
+    mcts.search(state);
+    const std::function<int(const SimpleState&, 
+                        const SimpleState&,
+                        const AgentIdx&)> edge_info_extractor = [](const SimpleState& start_state, 
+                                        const SimpleState& end_state,
+                                        const AgentIdx& agent_idx) {
+      return start_state.get_state_length() - end_state.get_state_length();
+    };
+    const auto edge_info = mcts.visit_mcts_tree_edges(edge_info_extractor);
+}
+
 
 
 int main(int argc, char **argv) {

@@ -77,6 +77,10 @@ public:
         return best;
     }
 
+    Policy get_policy() const {
+      return Policy();
+    }
+
     void update_from_heuristic(const NodeStatistic<UctStatistic>& heuristic_statistic) {
         const UctStatistic& heuristic_statistic_impl = heuristic_statistic.impl();
         update_from_heuristic_from_backpropagated(heuristic_statistic_impl.value_);

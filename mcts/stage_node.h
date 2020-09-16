@@ -42,8 +42,10 @@ struct container_hash {
     class StageNode : public std::enable_shared_from_this<StageNode<S,SE, SO, H>> {
     private:
         using StageNodeSPtr = std::shared_ptr<StageNode<S,SE,SO, H>>;
+        using StageNodeSPtrC = std::shared_ptr<const StageNode<S,SE,SO, H>>;
         using StageNodeWPtr = std::weak_ptr<StageNode<S,SE,SO, H>>;
         typedef std::unordered_map<JointAction,StageNodeSPtr,container_hash<JointAction>> StageChildMap;
+        typedef std::unordered_map<JointAction,StageNodeSPtrC,container_hash<JointAction>> StageChildMapC;
         typedef std::unordered_map<JointAction,std::vector<Reward>,container_hash<JointAction>> StageRewardMap; //< remembers joint rewards 
         typedef std::unordered_map<JointAction, Cost, container_hash<JointAction>> StageCostMap; //< remembers ego costs 
         typedef std::unordered_map<ActionIdx, unsigned int> TransitionCounts; //< remembers transition counts for one agent
@@ -88,16 +90,16 @@ struct container_hash {
         StageNodeSPtr get_shared();
         const S* get_state() const {return state_.get();}
         StageNodeWPtr get_parent() {return parent_;}
+        StageChildMap get_children() { return children_; }
+        
         bool is_root() const {return !parent_.lock();}
         ActionIdx get_best_action() const;
-        const  IntermediateNode<S, SE>& get_ego_int_node() const { return ego_int_node_; };
+        const IntermediateNode<S, SE>& get_ego_int_node() const { return ego_int_node_; };
+        const InterNodeVector& get_other_int_nodes() const { return other_int_nodes_; };
 
         std::string sprintf() const;
         void printTree(std::string filename, const unsigned int& max_depth = 5);
         void printLayer(std::string filename, const unsigned int& max_depth);
-        double getEgoAgentValue();
-        int getEgoNodeVisits();
-        double getActionValue(int action);
         unsigned int get_depth() const;
 
         static void reset_counter();

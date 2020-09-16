@@ -32,6 +32,7 @@ class Mcts {
 
 public:
     using StageNodeSPtr = std::shared_ptr<StageNode<S,SE,SO, H>>;
+    using StageNodeSPtrC = std::shared_ptr<const StageNode<S,SE,SO, H>>;
     using StageNodeWPtr = std::weak_ptr<StageNode<S,SE,SO, H>>;
 
     Mcts(const MctsParameters& mcts_parameters) : root_(),
@@ -57,6 +58,10 @@ public:
     void set_heuristic_function(const H& heuristic) {heuristic_ = heuristic;}
     const mcts::StageNode<S, SE, SO, H>& get_root() const {return *root_;}
 
+    template<class EdgeInfo> 
+    std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>> visit_mcts_tree_edges(
+        const std::function<EdgeInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor);
+
 private:
 
     void iterate(const StageNodeSPtr& root_node);
@@ -73,6 +78,11 @@ private:
     H heuristic_;
 
     std::string sprintf(const StageNodeSPtr& root_node) const;
+
+    template<class EdgeInfo> 
+    std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>> visit_stage_node_edges(const StageNodeSPtr& root_node,
+        const std::function<EdgeInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
+        std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>>& edge_infos);
 
     MCTS_TEST
 };
@@ -195,6 +205,46 @@ ActionIdx Mcts<S,SE,SO,H>::returnBestAction(){
 template<class S, class SE, class SO, class H>
 void Mcts<S,SE,SO,H>::printTreeToDotFile(std::string filename){ 
     root_->printTree(filename);
+}
+
+template<class S, class SE, class SO, class H>
+template<class EdgeInfo> 
+std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>> Mcts<S,SE,SO,H>::visit_mcts_tree_edges(
+        const std::function<EdgeInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor) {
+    std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>> edge_infos;
+    visit_stage_node_edges(root_, edge_info_extractor, edge_infos);
+    return edge_infos;
+}
+
+template<class S, class SE, class SO, class H>
+template<class EdgeInfo> 
+std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>> Mcts<S,SE,SO,H>::visit_stage_node_edges(const StageNodeSPtr& root_node,
+        const std::function<EdgeInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
+            std::vector<std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, EdgeInfo>>& edge_infos) {
+    const auto& ego_policy = root_node->get_ego_int_node().get_policy();
+    std::unordered_map<AgentIdx, Policy> other_policies;
+    for (const auto& other_int_node : root_node->get_other_int_nodes()) {
+        other_policies[other_int_node.get_agent_idx()] = other_int_node.get_policy();
+    }
+    const auto& depth = root_node->get_depth();
+    for (auto& child_node_pair : root_node->get_children()) {
+        const auto& ego_agent_id = root_node->get_state()->get_ego_agent_idx();
+        const auto& ego_action_id = child_node_pair.first.at(S::ego_agent_idx);
+        const auto& ego_action_weight = ego_policy.at(ego_action_id);
+        const auto& ego_edge_info = edge_info_extractor(*root_node->get_state(), *child_node_pair.second->get_state(), ego_agent_id);
+        edge_infos.push_back(std::make_tuple(ego_agent_id, depth, ego_action_id, ego_action_weight, ego_edge_info));
+
+        for (auto action_idx = 1; action_idx < root_node->get_other_int_nodes().size() + 1; ++action_idx) {
+            const auto& other_agent_id = 
+                        root_node->get_other_int_nodes().at(action_idx).get_agent_idx();
+            const auto& other_action_id = child_node_pair.first.at(action_idx);
+            const auto& other_action_weight = other_policies.at(other_agent_id).at(other_action_id);
+            const auto& other_edge_info = edge_info_extractor(*root_node->get_state(), *child_node_pair.second->get_state(), other_agent_id);
+            edge_infos.push_back(std::make_tuple(other_agent_id, depth, other_action_id, other_action_weight, other_edge_info));
+        }
+        visit_stage_node_edges(child_node_pair.second, edge_info_extractor, edge_infos);
+    }
+
 }
 
 

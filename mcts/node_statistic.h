@@ -14,6 +14,9 @@
 
 namespace mcts {
 
+typedef double ActionWeight;
+typedef std::unordered_map<ActionIdx, ActionWeight> Policy;
+
 template <class Implementation>
 class NodeStatistic
 {
@@ -32,6 +35,7 @@ public:
     void update_statistic(const NodeStatistic<Implementation>& changed_child_statistic); // update statistic during backpropagation from child node
     void update_from_heuristic(const NodeStatistic<Implementation>& heuristic_statistic); // update statistic during backpropagation from heuristic estimate
     ActionIdx get_best_action() const;
+    Policy get_policy() const;
 
     void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost);
 
@@ -107,6 +111,11 @@ void NodeStatistic<Implementation>::collect(const mcts::Reward &reward, const mc
     collected_reward_= std::pair<ActionIdx, Reward>(action_idx, reward);
     collected_cost_= std::pair<ActionIdx, Reward>(action_idx, cost);
     collected_action_transition_counts_ = action_transition_counts;
+}
+
+template <class Implementation>
+Policy NodeStatistic<Implementation>::get_policy() const {
+    return impl().get_policy();
 }
 
 template <class Implementation>

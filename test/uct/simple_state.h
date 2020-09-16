@@ -69,6 +69,9 @@ public:
         return 4;
     }
 
+    int get_state_length() const {
+        return state_length_;
+    }
 
     std::string sprintf() const
     {
