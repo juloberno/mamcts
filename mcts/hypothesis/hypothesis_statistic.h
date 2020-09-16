@@ -122,7 +122,8 @@ public:
     ActionIdx get_best_action() const { throw std::logic_error("Not a meaningful call for this statistic");};
 
     Policy get_policy() const {
-      return Policy();
+      return get_worst_case_action(ucb_statistics_.at(hypothesis_id_current_iteration_),
+                         total_node_visits_hypothesis_.at(hypothesis_id_current_iteration_)).second;
     }
 
     void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost) {
