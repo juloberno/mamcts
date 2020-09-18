@@ -31,6 +31,8 @@ struct MctsParameters{
       double LOWER_BOUND;
       double UPPER_BOUND;
       double EXPLORATION_CONSTANT;
+      double PROGRESSIVE_WIDENING_K;
+      double PROGRESSIVE_WIDENING_ALPHA;
   };
 
   struct CostConstrainedStatisticParameters {

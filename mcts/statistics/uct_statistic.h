@@ -8,6 +8,7 @@
 #define UCT_STATISTIC_H
 
 #include "mcts/mcts.h"
+#include <unordered_map>
 #include <iostream>
 #include <iomanip>
 
@@ -20,22 +21,28 @@ public:
     MCTS_TEST
     FRIEND_COST_CONSTRAINED_STATISTIC
 
+    typedef struct UcbPair
+    {
+        UcbPair() : action_count_(0), action_value_(0.0f) {};
+        unsigned action_count_;
+        double action_value_;
+    } UcbPair;
+    typedef std::unordered_map<ActionIdx, UcbPair> UcbStatistics;
+
     UctStatistic(ActionIdx num_actions, AgentIdx agent_idx, const MctsParameters & mcts_parameters) :
              NodeStatistic<UctStatistic>(num_actions, agent_idx, mcts_parameters),
              RandomGenerator(mcts_parameters.RANDOM_SEED),
              value_(0.0f),
              latest_return_(0.0),
-             ucb_statistics_([&]() -> std::map<ActionIdx, UcbPair>{
-             std::map<ActionIdx, UcbPair> map;
-             for (ActionIdx ai = 0; ai < num_actions; ++ai) { map[ai] = UcbPair();}
-             return map;
-             }()),
+             ucb_statistics_(),
              total_node_visits_(0),
              unexpanded_actions_(num_actions),
              upper_bound(mcts_parameters.uct_statistic.UPPER_BOUND),
              lower_bound(mcts_parameters.uct_statistic.LOWER_BOUND),
              k_discount_factor(mcts_parameters.DISCOUNT_FACTOR), 
-             exploration_constant(mcts_parameters.uct_statistic.EXPLORATION_CONSTANT) {
+             exploration_constant(mcts_parameters.uct_statistic.EXPLORATION_CONSTANT),
+             progressive_widening_k(mcts_parameters.uct_statistic.PROGRESSIVE_WIDENING_K),
+             progressive_widening_alpha(mcts_parameters.uct_statistic.PROGRESSIVE_WIDENING_ALPHA) {
                  // initialize action indexes from 0 to (number of actions -1)
                  std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
              }
@@ -44,24 +51,20 @@ public:
 
     template <class S>
     ActionIdx choose_next_action(const S& state) {
-        if(unexpanded_actions_.empty())
-        {
-            // Select an action based on the UCB formula
-            std::vector<double> values;
-            calculate_ucb_values(ucb_statistics_, values);
-            // find largest index
-            ActionIdx selected_action = std::distance(values.begin(), std::max_element(values.begin(), values.end()));
-            return selected_action;
-
-        } else
-        {
+        if(require_progressive_widening_total()) {
             // Select randomly an unexpanded action
             std::uniform_int_distribution<ActionIdx> random_action_selection(0,unexpanded_actions_.size()-1);
             ActionIdx array_idx = random_action_selection(random_generator_);
             ActionIdx selected_action = unexpanded_actions_[array_idx];
             unexpanded_actions_.erase(unexpanded_actions_.begin()+array_idx);
+            ucb_statistics_[selected_action] = UcbPair();
             return selected_action;
-        }
+        } else {
+            // Select an action based on the UCB formula
+            std::unordered_map<ActionIdx, double> values;
+            ActionIdx selected_action = calculate_ucb_and_max_action(ucb_statistics_, values);
+            return selected_action;
+       }
     }
 
     ActionIdx get_best_action() const {
@@ -141,14 +144,6 @@ public:
         return ss.str();
     }
 
-
-    typedef struct UcbPair
-    {
-        UcbPair() : action_count_(0), action_value_(0.0f) {};
-        unsigned action_count_;
-        double action_value_;
-    } UcbPair;
-
     Reward get_normalized_ucb_value(const ActionIdx& action) const {
       double action_value_normalized =  (ucb_statistics_.at(action).action_value_-lower_bound)/(upper_bound-lower_bound); 
       MCTS_EXPECT_TRUE(action_value_normalized>=0);
@@ -164,24 +159,28 @@ public:
       return upper_bound;
     }
 
-    void calculate_ucb_values(const std::map<ActionIdx, UcbPair>& ucb_statistics, std::vector<double>& values ) const
-    {
-        values.resize(ucb_statistics.size());
+    ActionIdx calculate_ucb_and_max_action(const UcbStatistics& ucb_statistics, std::unordered_map<ActionIdx, double>& values) const {
+        values.reserve(ucb_statistics.size());
+        ActionIdx maximizing_action = 0;
+        double max_value = std::numeric_limits<double>::min();
 
-        for (size_t idx = 0; idx < ucb_statistics.size(); ++idx)
-        {
-            double action_value_normalized = (ucb_statistics.at(idx).action_value_-lower_bound)/(upper_bound-lower_bound); 
+        for (const auto ucb_pair : ucb_statistics) {   
+            double action_value_normalized = (ucb_pair.second.action_value_-lower_bound)/(upper_bound-lower_bound); 
             MCTS_EXPECT_TRUE(action_value_normalized>=0);
             MCTS_EXPECT_TRUE(action_value_normalized<=1);
-            values[idx] = action_value_normalized + 2 * exploration_constant * sqrt( (2* log(total_node_visits_)) / ( ucb_statistics.at(idx).action_count_)  );
+            values[ucb_pair.first] = action_value_normalized + 2 * exploration_constant * sqrt( (2* log(total_node_visits_)) / ( ucb_pair.second.action_count_)  );
+            if (values[ucb_pair.first] > max_value) {
+                max_value = values[ucb_pair.first];
+                maximizing_action = ucb_pair.first;
+            }
         }
+        return maximizing_action;
     }
 
     std::string sprintf() const {
         return UctStatistic::ucb_stats_to_string(ucb_statistics_);
     }
 
-    typedef std::map<ActionIdx, UcbPair> UcbStatistics;
     static std::string ucb_stats_to_string(const UcbStatistics& ucb_stats) {
       std::stringstream ss;
       for(const auto& ucb_stat : ucb_stats) {
@@ -189,6 +188,21 @@ public:
       }
       return ss.str();
     }
+
+     inline bool require_progressive_widening_total() const {
+        const auto widening_term = progressive_widening_k * std::pow(total_node_visits_,
+                progressive_widening_alpha);
+                // At least one action should be expanded for each hypothesis,
+                // otherwise use progressive widening based on total visit and action count
+        return num_expanded_actions() <= widening_term && num_expanded_actions() < num_actions_;
+    }
+
+    // How many children exist based on specific hypothesis
+    inline unsigned int num_expanded_actions() const {
+        return ucb_statistics_.size();
+    }
+
+
 protected:
     double value_;
     double latest_return_;   // tracks the return during backpropagation
@@ -202,6 +216,9 @@ protected:
     const double lower_bound;
     const double k_discount_factor;
     const double exploration_constant;
+
+    const double progressive_widening_k;
+    const double progressive_widening_alpha;
 
 };
 
