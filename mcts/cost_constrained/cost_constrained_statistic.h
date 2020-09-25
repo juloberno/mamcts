@@ -74,7 +74,7 @@ public:
     typedef std::pair<ActionIdx, Policy> PolicySampled;
     PolicySampled greedy_policy(const double kappa_local, const double action_filter_factor_local) const {
       // Greedy Policy
-      std::vector<double> ucb_values;
+      std::unordered_map<ActionIdx, double> ucb_values;
       calculate_ucb_values(ucb_values, kappa_local);
       
       const auto feasible_actions = filter_feasible_actions(ucb_values, action_filter_factor_local);
@@ -94,40 +94,41 @@ public:
               (cost_statistic_.k_discount_factor * policy.second.at(policy.first));
     }
 
-    void calculate_ucb_values(std::vector<double>& values, const double& kappa_local) const {
+    void calculate_ucb_values(std::unordered_map<ActionIdx, double>& values, const double& kappa_local) const {
       const auto& reward_stats = reward_statistic_.ucb_statistics_;
       const auto& cost_stats = cost_statistic_.ucb_statistics_;
       MCTS_EXPECT_TRUE(reward_stats.size() ==  cost_stats.size());
 
-      values.resize(reward_statistic_.ucb_statistics_.size(), 0.0f);
-      for (size_t idx = 0; idx < reward_stats.size(); ++idx)
-      {
-          double cost_value_normalized = cost_statistic_.get_normalized_ucb_value(idx);
-          double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(idx);
+      values.reserve(reward_statistic_.ucb_statistics_.size());
+      for (const auto& reward_stat : reward_stats) {
+          double cost_value_normalized = cost_statistic_.get_normalized_ucb_value(reward_stat.first);
+          double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(reward_stat.first);
 
           const auto exploration_term = kappa_local * 
-              sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(idx).action_count_));
-          values[idx] = reward_value_normalized - lambda * cost_value_normalized 
+              sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(reward_stat.first).action_count_));
+          values[reward_stat.first] = reward_value_normalized - lambda * cost_value_normalized 
                  + (std::isnan(exploration_term) ? std::numeric_limits<double>::max() : exploration_term);
       }
     }
 
-    std::vector<ActionIdx> filter_feasible_actions(const std::vector<double>& values,
+    std::vector<ActionIdx> filter_feasible_actions(const std::unordered_map<ActionIdx, double>& values,
                                            const double& action_filter_factor_local) const {
       std::vector<ActionIdx> filtered_actions;
-      const ActionIdx maximizing_action = std::distance(values.begin(), std::max_element(values.begin(), values.end()));
-      const Reward max_val = values[maximizing_action];
+      const auto maximizing_action_it = std::max_element(values.begin(), values.end(), [](const auto& p1, const auto& p2){
+                 return p1.second < p2.second; });
+      const ActionIdx maximizing_action = maximizing_action_it->first;
+      const Reward max_val = maximizing_action_it->second;
       const double node_counts_maximizing = (reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_ == 0) ? std::numeric_limits<double>::max() :
                                  sqrt( log( reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_) /
                                                   ( reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_) );
-      for (size_t action_idx = 0; action_idx < values.size(); ++action_idx) {
-          const double value_difference = std::abs(values[action_idx] - max_val);
-          const double node_count_relations = ( reward_statistic_.ucb_statistics_.at(action_idx).action_count_ == 0) ? std::numeric_limits<double>::max() :
-                                 sqrt( log( reward_statistic_.ucb_statistics_.at(action_idx).action_count_) /
-                                                  ( reward_statistic_.ucb_statistics_.at(action_idx).action_count_) ) + 
+      for (const auto action_value : values) {
+          const double value_difference = std::abs(action_value.second - max_val);
+          const double node_count_relations = ( reward_statistic_.ucb_statistics_.at(action_value.first).action_count_ == 0) ? std::numeric_limits<double>::max() :
+                                 sqrt( log( reward_statistic_.ucb_statistics_.at(action_value.first).action_count_) /
+                                                  ( reward_statistic_.ucb_statistics_.at(action_value.first).action_count_) ) + 
                                               node_counts_maximizing;
           if(value_difference <= action_filter_factor_local * node_count_relations) {
-            filtered_actions.push_back(action_idx);
+            filtered_actions.push_back(action_value.first);
           }
       }
       return filtered_actions;
@@ -260,7 +261,7 @@ public:
     std::string print_edge_information(const ActionIdx& action) const {
         const auto& reward_stats = reward_statistic_.ucb_statistics_;
         const auto& cost_stats = cost_statistic_.ucb_statistics_;
-        std::vector<Reward> ucb_values;
+        std::unordered_map<ActionIdx, double> ucb_values;
         calculate_ucb_values(ucb_values, 0.0f);
         std::stringstream ss;
         ss  << "Reward stats: " << UctStatistic::ucb_stats_to_string(reward_stats) << "\n"

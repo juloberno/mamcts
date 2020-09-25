@@ -9,6 +9,7 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_map>
 #include <algorithm>
 #include <functional>
 #include <iostream>
@@ -61,6 +62,15 @@ inline std::ostream& operator<<(std::ostream& os, const std::vector<Reward>& r)
         os << "[";
         for (auto it = r.begin(); it != r.end(); ++it)
             os << Reward(*it) << " ";
+        os << "]";
+        return os;
+    }
+
+inline std::ostream& operator<<(std::ostream& os, const std::unordered_map<ActionIdx, double>& v)
+    {
+        os << "[";
+        for (const auto& val : v)
+            os << val.first << ": " << val.second << ", ";
         os << "]";
         return os;
     }

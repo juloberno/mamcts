@@ -154,7 +154,7 @@ private:
         UctStatistic&  stat = expected_statistics.at(agent_idx);
         auto action_ucb_parent = stat.ucb_statistics_.find(joint_action[action_idx]);
         if(action_ucb_parent ==  stat.ucb_statistics_.end()) {
-            throw;
+            expected_statistics;
         }
         stat.ucb_statistics_[joint_action[action_idx]].action_count_ +=  child_stat.total_node_visits_;
 
@@ -166,7 +166,7 @@ private:
              std::unordered_map<AgentIdx, UctStatistic> expected_statistics, int action_occurence, const ActionIdx& action_idx) {
         auto action_ucb_parent = parent_stat.ucb_statistics_.find(joint_action[action_idx]);
         if(action_ucb_parent ==  parent_stat.ucb_statistics_.end()) {
-            throw;
+            expected_statistics;
         }
         // Q(s,a) = ( (reward1+discount*value_child1)*n_visits_child1 + (reward2+discount*value_child1*n_visits_child2 +...)/total_action_count
         // total_action_count == n_visits_child1 + n_visits_child2 + ...
@@ -190,7 +190,6 @@ private:
         auto existing_node_visit = inter_node.total_node_visits_;
         EXPECT_EQ(existing_node_visit, recursive_node_visit) << "Unexpected recursive node visits for node " << id << " at depth " << depth << " for agent " << (int)agent_idx;
 
-        ASSERT_EQ(inter_node.state_.get_num_actions(agent_idx),AgentIdx(inter_node.ucb_statistics_.size())) << "Internode state and statistic are of unequal length";
         for (auto action_it = inter_node.ucb_statistics_.begin(); action_it != inter_node.ucb_statistics_.end(); ++action_it)
         {   
             ActionIdx action_idx = action_it->first;

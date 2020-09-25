@@ -94,13 +94,15 @@ inline MctsParameters mcts_default_parameters() {
   parameters.uct_statistic.LOWER_BOUND = -1000;
   parameters.uct_statistic.UPPER_BOUND = 100;
   parameters.uct_statistic.EXPLORATION_CONSTANT = 0.7;
+  parameters.uct_statistic.PROGRESSIVE_WIDENING_K = 4.0; //< defaults to no prog. widening
+  parameters.uct_statistic.PROGRESSIVE_WIDENING_ALPHA = 0.25; //< defaults to no prog. widening
 
   parameters.hypothesis_statistic.COST_BASED_ACTION_SELECTION = false;
   parameters.hypothesis_statistic.LOWER_COST_BOUND = 0;
   parameters.hypothesis_statistic.UPPER_COST_BOUND = 100;
   parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_HYPOTHESIS_BASED = true;
   parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_ALPHA = 0.5;
-  parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_K = 1;
+  parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_K = 1.0;
   parameters.hypothesis_statistic.EXPLORATION_CONSTANT = 0.7;
 
   parameters.hypothesis_belief_tracker.RANDOM_SEED_HYPOTHESIS_SAMPLING = 1000;
