@@ -86,7 +86,7 @@ inline MctsParameters mcts_default_parameters() {
   parameters.RANDOM_SEED = 1000;
   parameters.MAX_NUMBER_OF_ITERATIONS = 10000;
   parameters.MAX_SEARCH_TIME = 1000;
-  parameters.MAX_SEARCH_DEPTH = 10000;
+  parameters.MAX_SEARCH_DEPTH = 1000;
   
   parameters.random_heuristic.MAX_SEARCH_TIME = 10;
   parameters.random_heuristic.MAX_NUMBER_OF_ITERATIONS = 1000;

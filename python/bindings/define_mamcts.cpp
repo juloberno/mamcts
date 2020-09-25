@@ -103,6 +103,8 @@ void define_mamcts(py::module m)
       .def_readwrite("LOWER_BOUND", &MctsParameters::UctStatisticParameters::LOWER_BOUND)
       .def_readwrite("UPPER_BOUND", &MctsParameters::UctStatisticParameters::UPPER_BOUND)
       .def_readwrite("EXPLORATION_CONSTANT", &MctsParameters::UctStatisticParameters::EXPLORATION_CONSTANT)
+      .def_readwrite("PROGRESSIVE_WIDENING_ALPHA", &MctsParameters::UctStatisticParameters::PROGRESSIVE_WIDENING_ALPHA)
+      .def_readwrite("PROGRESSIVE_WIDENING_K", &MctsParameters::UctStatisticParameters::PROGRESSIVE_WIDENING_K)
       .def(py::pickle(
         [](const MctsParameters::UctStatisticParameters &p) { // __getstate__
             /* Return a tuple that fully encodes the state of the object */
@@ -110,10 +112,12 @@ void define_mamcts(py::module m)
             d["LOWER_BOUND"] = p.LOWER_BOUND;
             d["UPPER_BOUND"] = p.UPPER_BOUND;
             d["EXPLORATION_CONSTANT"] = p.EXPLORATION_CONSTANT;
+            d["PROGRESSIVE_WIDENING_ALPHA"] = p.PROGRESSIVE_WIDENING_ALPHA;
+            d["PROGRESSIVE_WIDENING_K"] = p.PROGRESSIVE_WIDENING_K;
             return d;
         },
         [](py::dict d) { // __setstate__
-            if (d.size() != 3)
+            if (d.size() != 5)
                 throw std::runtime_error("Invalid UctStatisticParameters state!");
 
             /* Create a new C++ instance */
@@ -121,6 +125,8 @@ void define_mamcts(py::module m)
             p.LOWER_BOUND = d["LOWER_BOUND"].cast<double>();
             p.UPPER_BOUND = d["UPPER_BOUND"].cast<double>();
             p.EXPLORATION_CONSTANT = d["EXPLORATION_CONSTANT"].cast<double>();
+            p.PROGRESSIVE_WIDENING_ALPHA = d["PROGRESSIVE_WIDENING_ALPHA"].cast<double>();
+            p.PROGRESSIVE_WIDENING_K = d["PROGRESSIVE_WIDENING_K"].cast<double>();
             return p;
         }
     ));

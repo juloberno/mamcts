@@ -26,6 +26,8 @@ def is_equal_mcts_params(mctsp1, mctsp2):
         mctsp1.uct_statistic.LOWER_BOUND == mctsp2.uct_statistic.LOWER_BOUND and \
         mctsp1.uct_statistic.UPPER_BOUND == mctsp2.uct_statistic.UPPER_BOUND and \
         mctsp1.uct_statistic.EXPLORATION_CONSTANT == mctsp2.uct_statistic.EXPLORATION_CONSTANT and \
+        mctsp1.uct_statistic.PROGRESSIVE_WIDENING_K == mctsp2.uct_statistic.PROGRESSIVE_WIDENING_K and \
+        mctsp1.uct_statistic.PROGRESSIVE_WIDENING_ALPHA == mctsp2.uct_statistic.PROGRESSIVE_WIDENING_ALPHA and \
         mctsp1.hypothesis_statistic.COST_BASED_ACTION_SELECTION == mctsp2.hypothesis_statistic.COST_BASED_ACTION_SELECTION and \
         mctsp1.hypothesis_statistic.PROGRESSIVE_WIDENING_HYPOTHESIS_BASED == mctsp2.hypothesis_statistic.PROGRESSIVE_WIDENING_HYPOTHESIS_BASED and \
         mctsp1.hypothesis_statistic.LOWER_COST_BOUND == mctsp2.hypothesis_statistic.LOWER_COST_BOUND and \

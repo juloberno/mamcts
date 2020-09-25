@@ -69,7 +69,7 @@ public:
 
     ActionIdx get_best_action() const {
         double temp = ucb_statistics_.begin()->second.action_value_;
-        ActionIdx best = 0;
+        ActionIdx best = ucb_statistics_.begin()->first;
         for (auto it = ucb_statistics_.begin(); it != ucb_statistics_.end(); ++it)
         {
             if(it->second.action_value_>temp){
