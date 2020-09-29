@@ -165,7 +165,7 @@ public:
 
     std::pair<ActionIdx, Cost> get_worst_case_action(const std::unordered_map<ActionIdx, UcbPair>& ucb_statistics, unsigned int node_visits) const
     {
-        double largest_cost = std::numeric_limits<double>::min();
+        double largest_cost = std::numeric_limits<double>::lowest();
         ActionIdx worst_action = ucb_statistics.begin()->first;
 
         for (const auto& ucb_pair : ucb_statistics) 
@@ -204,8 +204,8 @@ public:
     }
 
     ActionIdx get_total_worst_case_action() const {
-        double largest_cost = std::numeric_limits<double>::min();
-        ActionIdx worst_action = ucb_statistics_.begin()->first;
+        double largest_cost = std::numeric_limits<double>::lowest();
+        ActionIdx worst_action;
         for (const auto& hypothesis_uct : ucb_statistics_) {
             if (hypothesis_uct.second.empty()) {
                 continue;
@@ -241,7 +241,7 @@ private: // methods
                 progressive_widening_alpha);
                 // At least one action should be expanded for each hypothesis,
                 // otherwise use progressive widening based on total visit and action count
-        return num_expanded_actions_ <= widening_term && num_expanded_actions_ < num_actions_;
+        return (num_expanded_actions_ == 0) || (num_expanded_actions_ <= widening_term && num_expanded_actions_ < num_actions_);
     }
 
     // How many children exist based on specific hypothesis
