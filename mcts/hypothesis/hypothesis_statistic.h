@@ -62,13 +62,13 @@ public:
         const HypothesisStateInterface<S>& impl = state.impl();
         hypothesis_id_current_iteration_ = impl.get_current_hypothesis(agent_idx_);
 
+        /* Init hypothesis node count and Q-Values if not visited under this hypothesis yet */
+        init_hypothesis_variables(hypothesis_id_current_iteration_);
+
         if((progressive_widening_hypothesis_based_ &&
            require_progressive_widening_hypothesis_based(hypothesis_id_current_iteration_)) ||
            (!progressive_widening_hypothesis_based_ &&
            require_progressive_widening_total(hypothesis_id_current_iteration_))) {
-
-            /* Init hypothesis node count and Q-Values if not visited under this hypothesis yet */
-            init_hypothesis_variables(hypothesis_id_current_iteration_);
 
             /* Sample action from hypothesis */
             ActionIdx sampled_action = impl.plan_action_current_hypothesis(agent_idx_);
