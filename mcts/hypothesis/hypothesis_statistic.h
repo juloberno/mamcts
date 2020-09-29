@@ -9,6 +9,7 @@
 
 #include <cmath>
 #include <map>
+#include <optional>
 
 #include "mcts/mcts.h"
 #include "mcts/hypothesis/common.h"
@@ -77,18 +78,27 @@ public:
             return sampled_action;
         } else {
             /* Select one action of previous actions */
+            /*  Cost-based action selection out of hypothesis action set
+            with highest ego cost to predict worst case behavior for this hypothesis (uses uct formula to also explore other actions) */
             if(cost_based_action_selection_) {
-                /*  Cost-based action selection out of hypothesis action set
-                with highest ego cost to predict worst case behavior for this hypothesis (uses uct formula to also explore other actions) */
-                return get_worst_case_action(ucb_statistics_.at(hypothesis_id_current_iteration_),
-                         total_node_visits_hypothesis_.at(hypothesis_id_current_iteration_));
+                /* Each hypothesis has worst case actions, hypothesis-specific worst case actions */
+                if (progressive_widening_hypothesis_based_) {
+                    return get_worst_case_action(ucb_statistics_.at(hypothesis_id_current_iteration_),
+                            total_node_visits_hypothesis_.at(hypothesis_id_current_iteration_)).first;
+                /* Worst case among all actions */
+                } else {
+                    return get_total_worst_case_action();
+                }
+            /* Random action-selection */    
             } else {
-                /* Random action-selection */    
-                const auto& action_map = ucb_statistics_[hypothesis_id_current_iteration_];
-                std::uniform_int_distribution<ActionIdx> random_action_selection(0,action_map.size()-1);
-                const auto& random_it = std::next(std::begin(action_map), random_action_selection(random_generator_));
-                return random_it->first;
-           }
+                /* Random sampling among hypothesis actions */
+                if (progressive_widening_hypothesis_based_) {
+                    return *sample_from_hypothesis_expanded_actions(hypothesis_id_current_iteration_);
+                /* Random sampling among all actions */
+                } else {
+                    return sample_from_all_expanded_actions();
+                }
+            }
         }
     }
 
@@ -152,7 +162,7 @@ public:
         double action_ego_cost_;
     } UcbPair;
 
-    ActionIdx get_worst_case_action(const std::unordered_map<ActionIdx, UcbPair>& ucb_statistics, unsigned int node_visits) const
+    std::pair<ActionIdx, Cost> get_worst_case_action(const std::unordered_map<ActionIdx, UcbPair>& ucb_statistics, unsigned int node_visits) const
     {
         double largest_cost = std::numeric_limits<double>::min();
         ActionIdx worst_action = ucb_statistics.begin()->first;
@@ -168,6 +178,38 @@ public:
             if (ucb_cost > largest_cost) {
                 largest_cost = ucb_cost;
                 worst_action = ucb_pair.first;
+            }
+        }
+        return std::make_pair(worst_action, largest_cost);
+    }
+
+    std::optional<ActionIdx> sample_from_hypothesis_expanded_actions(const HypothesisId& hypothesis) const {
+        const auto& action_map = ucb_statistics_.at(hypothesis);
+        if (action_map.empty()) {
+            return std::nullopt;
+        }
+        std::uniform_int_distribution<ActionIdx> random_action_selection(0,action_map.size()-1);
+        const auto& random_it = std::next(std::begin(action_map), random_action_selection(random_generator_));
+        return std::optional<ActionIdx>{random_it->first};
+    }
+
+    ActionIdx sample_from_all_expanded_actions() const {
+        for (const auto& hypothesis_uct : ucb_statistics_) {
+            if(const auto hyp_sample = sample_from_hypothesis_expanded_actions(hypothesis_uct.first)) {
+                return *hyp_sample;
+            }
+        }
+        throw std::logic_error("No actions available to sample from.");
+    }
+
+    ActionIdx get_total_worst_case_action() const {
+        double largest_cost = std::numeric_limits<double>::min();
+        ActionIdx worst_action = ucb_statistics_.begin()->first;
+        for (const auto& hypothesis_uct : ucb_statistics_) {
+            const auto hypothesis_worst = get_worst_case_action(hypothesis_uct.second, total_node_visits_hypothesis_.at(hypothesis_uct.first));
+            if (hypothesis_worst.second > largest_cost) {
+                largest_cost = hypothesis_worst.second;
+                worst_action = hypothesis_worst.first;
             }
         }
         return worst_action;
@@ -195,7 +237,7 @@ private: // methods
                 progressive_widening_alpha);
                 // At least one action should be expanded for each hypothesis,
                 // otherwise use progressive widening based on total visit and action count
-        return num_expanded_actions(hypothesis_id) == 0 || (num_expanded_actions_ <= widening_term && num_expanded_actions_ < num_actions_);
+        return num_expanded_actions_ <= widening_term && num_expanded_actions_ < num_actions_;
     }
 
     // How many children exist based on specific hypothesis

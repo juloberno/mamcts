@@ -3,6 +3,11 @@
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
 # ========================================================
+try:
+    import debug_settings
+except:
+    pass
+
 
 import unittest
 from mamcts import CrossingStateFloat, CrossingStateEpisodeRunnerFloat
@@ -49,7 +54,7 @@ class PickleTests(unittest.TestCase):
         state = CrossingStateFloat({}, crossing_state_params)
         print(state)
         state.draw(viewer)
-        viewer.show(block=True)
+        viewer.show(block=False)
         print(CrossingStateDefaultParametersFloat)
 
     def test_episode_runner_step(self):

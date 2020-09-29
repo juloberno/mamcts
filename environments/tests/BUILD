@@ -4,7 +4,8 @@ py_test(
   data = ['//python/bindings:mamcts.so'],
   imports = ['../../python/bindings'],
   deps=[
-    "//environments:pyviewer"
+    "//environments:pyviewer",
+    "//util:debug_settings"
   ]
 )
 
@@ -14,7 +15,8 @@ py_test(
   data = ['//python/bindings:mamcts.so'],
   imports = ['../../python/bindings'],
   deps=[
-    "//environments:pyviewer"
+    "//environments:pyviewer",
+    "//util:debug_settings"
   ]
 )
 
