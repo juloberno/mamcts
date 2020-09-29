@@ -61,18 +61,19 @@ public:
     ActionIdx choose_next_action(const StateInterface<S>& state) {
         const HypothesisStateInterface<S>& impl = state.impl();
         hypothesis_id_current_iteration_ = impl.get_current_hypothesis(agent_idx_);
-        /* Init hypothesis node count and Q-Values if not visited under this hypothesis yet */
-        init_hypothesis_variables(hypothesis_id_current_iteration_);
 
         if((progressive_widening_hypothesis_based_ &&
            require_progressive_widening_hypothesis_based(hypothesis_id_current_iteration_)) ||
            (!progressive_widening_hypothesis_based_ &&
            require_progressive_widening_total(hypothesis_id_current_iteration_))) {
-            /* Sample new action:
-            1) Sample action from hypothesis
-            2) Initialized UCBPair for this acion for this hypothesis (counts are updated during backprop.)
-            3) Return this action */
+
+            /* Init hypothesis node count and Q-Values if not visited under this hypothesis yet */
+            init_hypothesis_variables(hypothesis_id_current_iteration_);
+
+            /* Sample action from hypothesis */
             ActionIdx sampled_action = impl.plan_action_current_hypothesis(agent_idx_);
+
+            /* Initialized UCBPair for this acion for this hypothesis (counts are updated during backprop.) */
             auto& ucb_pair = ucb_statistics_[hypothesis_id_current_iteration_][sampled_action];
             num_expanded_actions_ += 1;
             return sampled_action;
@@ -206,6 +207,9 @@ public:
         double largest_cost = std::numeric_limits<double>::min();
         ActionIdx worst_action = ucb_statistics_.begin()->first;
         for (const auto& hypothesis_uct : ucb_statistics_) {
+            if (hypothesis_uct.second.empty()) {
+                continue;
+            }
             const auto hypothesis_worst = get_worst_case_action(hypothesis_uct.second, total_node_visits_hypothesis_.at(hypothesis_uct.first));
             if (hypothesis_worst.second > largest_cost) {
                 largest_cost = hypothesis_worst.second;
