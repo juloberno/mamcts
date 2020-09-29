@@ -68,14 +68,13 @@ public:
         if((progressive_widening_hypothesis_based_ &&
            require_progressive_widening_hypothesis_based(hypothesis_id_current_iteration_)) ||
            (!progressive_widening_hypothesis_based_ &&
-           require_progressive_widening_total(hypothesis_id_current_iteration_))) {
+           require_progressive_widening_total())) {
 
             /* Sample action from hypothesis */
             ActionIdx sampled_action = impl.plan_action_current_hypothesis(agent_idx_);
 
             /* Initialized UCBPair for this acion for this hypothesis (counts are updated during backprop.) */
             auto& ucb_pair = ucb_statistics_[hypothesis_id_current_iteration_][sampled_action];
-            num_expanded_actions_ += 1;
             return sampled_action;
         } else {
             /* Select one action of previous actions */
@@ -128,6 +127,7 @@ public:
         node_visits_hypothesis += 1;
         ego_cost_value_ = ego_cost_value_ + (latest_ego_cost_ - ego_cost_value_) / node_visits_hypothesis;
         total_node_visits_ += 1;
+        num_expanded_actions_ += 1;
     }
 
     ActionIdx get_best_action() const { throw std::logic_error("Not a meaningful call for this statistic");};
@@ -204,18 +204,29 @@ public:
     }
 
     ActionIdx get_total_worst_case_action() const {
-        double largest_cost = std::numeric_limits<double>::lowest();
+        double largest_cost;
         ActionIdx worst_action;
-        for (const auto& hypothesis_uct : ucb_statistics_) {
-            if (hypothesis_uct.second.empty()) {
+        bool worst_case_initialized = false;
+        MCTS_EXPECT_TRUE(!ucb_statistics_.empty());
+        for (auto hyp_uct_it = ucb_statistics_.begin(); hyp_uct_it != ucb_statistics_.end(); ++hyp_uct_it) {
+            if(hyp_uct_it->second.empty()) {
                 continue;
             }
-            const auto hypothesis_worst = get_worst_case_action(hypothesis_uct.second, total_node_visits_hypothesis_.at(hypothesis_uct.first));
-            if (hypothesis_worst.second > largest_cost) {
+            const auto hypothesis_worst = 
+                    get_worst_case_action(hyp_uct_it->second, total_node_visits_hypothesis_.at(hyp_uct_it->first));
+            if (!worst_case_initialized) {
+                largest_cost = hypothesis_worst.second;
+                worst_action = hypothesis_worst.first;
+                worst_case_initialized = true;
+            } else if (hypothesis_worst.second > largest_cost) {
                 largest_cost = hypothesis_worst.second;
                 worst_action = hypothesis_worst.first;
             }
         }
+        if(!worst_case_initialized) {
+            LOG(FATAL) << "worst case action unavailable, expanded actions " << num_expanded_actions_ 
+                    << "size uct stat =" << ucb_statistics_.size();
+        } 
         return worst_action;
     }
 
@@ -236,12 +247,12 @@ private: // methods
         return num_expanded <= widening_term && num_expanded < num_actions_;
     }
 
-    inline bool require_progressive_widening_total(const HypothesisId& hypothesis_id) const {
+    inline bool require_progressive_widening_total() const {
         const auto widening_term = progressive_widening_k * std::pow(total_node_visits_,
                 progressive_widening_alpha);
                 // At least one action should be expanded for each hypothesis,
                 // otherwise use progressive widening based on total visit and action count
-        return (num_expanded_actions_ == 0) || (num_expanded_actions_ <= widening_term && num_expanded_actions_ < num_actions_);
+        return num_expanded_actions_ <= widening_term && num_expanded_actions_ < num_actions_;
     }
 
     // How many children exist based on specific hypothesis
