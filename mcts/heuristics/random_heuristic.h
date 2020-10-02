@@ -93,7 +93,8 @@ public:
         SE ego_heuristic(0, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
         const auto ego_agent_idx = node->get_state()->get_ego_agent_idx();
         const ActionIdx num_ego_actions = node->get_state()->get_num_actions(ego_agent_idx);
-        ego_heuristic.set_heuristic_estimate(ego_accum_reward, accum_cost); // correct by probability of random selected ego actions
+        ego_heuristic.set_heuristic_estimate(ego_accum_reward, 
+            EgoCosts({double(accum_cost[0] > 0.0)*std::pow(1.0/num_ego_actions, num_iterations), 0.0f})); // correct by probability of random selected ego actions
         std::unordered_map<AgentIdx, SO> other_heuristic_estimates;
         AgentIdx reward_idx=1;
         for (auto agent_idx : node->get_state()->get_other_agent_idx())
