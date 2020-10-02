@@ -30,11 +30,11 @@ TEST(cost_constrained_statistic, action_risk_0) {
     auto state = std::make_shared<CostConstrainedStatisticTestState>(n_steps, risk_action1, risk_action2,
                                             goal_reward1, goal_reward2, false);
     std::vector<Reward> rewards;
-    Cost ego_cost = 0.0f;
+    EgoCosts ego_cost = {0.0, 0.0f};
     for( int y = 10; y < 100; ++y) {
       state = state->execute(JointAction{0}, rewards, ego_cost);
     }
-    if(ego_cost > 0.0f) {
+    if(ego_cost[0] > 0.0f) {
       num_collisions++;
     }
   }
@@ -56,9 +56,9 @@ TEST(cost_constrained_statistic, one_step_action_risk_1) {
                                             goal_reward1, goal_reward2, false);
   for(int i = 0; i < num_samples; ++i) {
     std::vector<Reward> rewards;
-    Cost ego_cost = 0.0f;
+    EgoCosts ego_cost = {0.0, 0.0f};
     while(!state->execute(JointAction{1}, rewards, ego_cost)->is_terminal()) {}
-    if(ego_cost > 0.0f) {
+    if(ego_cost[0] > 0.0f) {
       num_collisions++;
     }
   }
@@ -81,9 +81,9 @@ TEST(cost_constrained_statistic, one_step_action_risk_2) {
                                             goal_reward1, goal_reward2, false);
   for(int i = 0; i < num_samples; ++i) {
     std::vector<Reward> rewards;
-    Cost ego_cost = 0.0f;
+    EgoCosts ego_cost = {0.0, 0.0f};
     while(!state->execute(JointAction{2}, rewards, ego_cost)->is_terminal()) {}
-    if(ego_cost > 0.0f) {
+    if(ego_cost[0] > 0.0f) {
       num_collisions++;
     }
   }
@@ -103,13 +103,13 @@ TEST(cost_constrained_statistic, n_step_action_risk_1) {
 
   for(int i = 0; i < num_samples; ++i) {
     std::vector<Reward> rewards;
-    Cost ego_cost = 0.0f;
+    EgoCosts ego_cost = {0.0, 0.0f};
     auto state = std::make_shared<CostConstrainedStatisticTestState>(n_steps, risk_action1, risk_action2,
                                             goal_reward1, goal_reward2, false, i);
     while(!state->is_terminal()) {
       state = state->execute(JointAction{1}, rewards, ego_cost);
     }
-    if(ego_cost > 0.0f) {
+    if(ego_cost[0] > 0.0f) {
       num_collisions++;
     }
   }

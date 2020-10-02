@@ -222,18 +222,19 @@ public:
       reward_statistic_.update_statistics_from_backpropagated(reward_latest_return);
 
       const auto cost_latest_return = statistic_impl.cost_statistic_.latest_return_;
-      cost_statistic_.collected_reward_ = collected_cost_;
+      cost_statistic_.collected_reward_ = std::pair<ActionIdx, Cost>(collected_cost_.first,
+                                                                     collected_cost_.second[0]);
       cost_statistic_.collected_action_transition_counts_ = collected_action_transition_counts_;
       cost_statistic_.update_statistics_from_backpropagated(cost_latest_return);
 
-      mean_step_costs_[collected_cost_.first] += (collected_cost_.second - mean_step_costs_[collected_cost_.first]) /
+      mean_step_costs_[collected_cost_.first] += (collected_cost_.second[0] - mean_step_costs_[collected_cost_.first]) /
                                                    (cost_statistic_.ucb_statistics_[collected_cost_.first].action_count_);
     }
 
-    void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost)
+    void set_heuristic_estimate(const Reward& accum_rewards, const EgoCosts& accum_ego_cost)
     {
        reward_statistic_.set_heuristic_estimate_from_backpropagated(accum_rewards);
-       cost_statistic_.set_heuristic_estimate_from_backpropagated(accum_ego_cost);
+       cost_statistic_.set_heuristic_estimate_from_backpropagated(accum_ego_cost[0]);
     }
 
     std::string print_node_information() const {

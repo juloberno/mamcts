@@ -118,7 +118,7 @@ public:
         value_ = value_ + (latest_return_ - value_) / total_node_visits_;
     }
 
-    void set_heuristic_estimate(const Reward& accum_rewards, const Cost& accum_ego_cost)
+    void set_heuristic_estimate(const Reward& accum_rewards, const EgoCosts& accum_ego_cost)
     {
       this->set_heuristic_estimate_from_backpropagated(accum_rewards);
     }

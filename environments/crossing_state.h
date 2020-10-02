@@ -91,7 +91,7 @@ public:
 
     HypothesisId get_num_hypothesis(const AgentIdx& agent_idx) const {return hypothesis_.size();}
 
-    std::shared_ptr<CrossingState<Domain>> execute(const JointAction& joint_action, std::vector<Reward>& rewards, Cost& ego_cost) const {
+    std::shared_ptr<CrossingState<Domain>> execute(const JointAction& joint_action, std::vector<Reward>& rewards, EgoCosts& ego_cost) const {
         // normally we map each single action value in joint action with a map to the floating point action. Here, not required
         
         const auto old_x_ego = ego_state_.x_pos;
@@ -126,9 +126,9 @@ public:
                    + collision * parameters_.REWARD_COLLISION + parameters_.REWARD_COLLISION * ego_out_of_map
                    + parameters_.REWARD_STEP;
         if(parameters_.COST_ONLY_COLLISION) {
-          ego_cost = collision * 1.0f;
+          ego_cost = {collision * 1.0f, 0.0f};
         } else {
-          ego_cost = -1.0f*rewards[0];
+          ego_cost = {-1.0f*rewards[0], 0.0f};
         }
 
         return std::make_shared<CrossingState<Domain>>(this->current_agents_hypothesis_,

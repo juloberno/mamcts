@@ -76,7 +76,7 @@ public:
 
                 auto& child = it->second;
                 std::vector<Reward> rewards;
-                Cost ego_cost; // todo check
+                EgoCosts ego_cost; // todo check
                 auto& joint_action = child->joint_action_;
                 auto new_state =  start_node->state_->execute(joint_action, rewards, ego_cost);
 

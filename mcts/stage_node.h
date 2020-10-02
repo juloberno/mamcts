@@ -47,7 +47,7 @@ struct container_hash {
         typedef std::unordered_map<JointAction,StageNodeSPtr,container_hash<JointAction>> StageChildMap;
         typedef std::unordered_map<JointAction,StageNodeSPtrC,container_hash<JointAction>> StageChildMapC;
         typedef std::unordered_map<JointAction,std::vector<Reward>,container_hash<JointAction>> StageRewardMap; //< remembers joint rewards 
-        typedef std::unordered_map<JointAction, Cost, container_hash<JointAction>> StageCostMap; //< remembers ego costs 
+        typedef std::unordered_map<JointAction, EgoCosts, container_hash<JointAction>> StageEgoCostsMap; //< remembers ego costs 
         typedef std::unordered_map<ActionIdx, unsigned int> TransitionCounts; //< remembers transition counts for one agent
         //of state execute to avoid rerunning execute during node selection
 
@@ -60,7 +60,7 @@ struct container_hash {
 
         // Remember values
         StageRewardMap joint_rewards_;
-        StageCostMap  ego_costs_;
+        StageEgoCostsMap  ego_costs_;
         TransitionCounts ego_transition_counts_; // < only remember ego transitions as transition counts not used in non-ego statistics a.t.m
 
         // Intermediate decision nodes
@@ -159,7 +159,7 @@ struct container_hash {
     template<class S, class SE, class SO, class H>
     std::pair<bool, bool> StageNode<S,SE, SO, H>::select_or_expand(StageNodeSPtr& next_node) {
         // helper function to fill rewards and costs
-        auto fill_rewards = [this](const std::vector<Reward>& reward_list, const Cost& ego_cost,
+        auto fill_rewards = [this](const std::vector<Reward>& reward_list, const EgoCosts& ego_cost,
                                  const JointAction& ja,
                                  const std::pair<unsigned int, unsigned int>& collected_action_transition_counts) {
             ego_int_node_.collect(reward_list[S::ego_agent_idx], ego_cost, ja[S::ego_agent_idx], collected_action_transition_counts);
@@ -197,7 +197,7 @@ struct container_hash {
         else
         {   // EXPAND NEW NODE BASED ON NEW JOINT ACTION
             std::vector<Reward> rewards;
-            Cost ego_cost;
+            EgoCosts ego_cost;
             next_node = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>,
                     const JointAction&, const unsigned int&> 
                     (get_shared(),

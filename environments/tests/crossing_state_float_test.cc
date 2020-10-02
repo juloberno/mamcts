@@ -163,7 +163,7 @@ TEST(hypothesis_crossing_state_float, collision )
     belief_tracker.belief_update(*state, *state);
 
     std::vector<Reward> rewards;
-    Cost cost;
+    EgoCosts cost;
     bool collision = false;
 
     // All agents move forward 
@@ -199,7 +199,7 @@ TEST(hypothesis_crossing_state_float, collision_2 )
                                                         std::vector<AgentPolicyCrossingState<Domain>>());
 
     std::vector<Reward> rewards;
-    Cost cost;
+    EgoCosts cost;
     bool collision = false;
 
     // All agents move forward 
@@ -227,7 +227,7 @@ TEST(hypothesis_crossing_state_float, hypothesis_friendly)
     belief_tracker.belief_update(*state, *state);
 
     std::vector<Reward> rewards;
-    Cost cost;
+    EgoCosts cost;
     bool collision = false;
 
     // Ego agent moves forward other agents stick to deterministic hypothesis keeping distance of 5
@@ -274,7 +274,7 @@ TEST(hypothesis_crossing_state_float, hypothesis_belief_correct)
     AgentPolicyCrossingState<Domain> true_agents_policy({0.3, 0.7}, params);
 
     std::vector<Reward> rewards;
-    Cost cost;
+    EgoCosts cost;
     bool collision = false;
 
     for(int i = 0; i < 200; ++i) {
@@ -321,7 +321,7 @@ TEST(crossing_state, mcts_goal_reached_true_hypothesis)
     AgentPolicyCrossingState<Domain> true_agents_policy({2,3.5}, params);
 
     std::vector<Reward> rewards;
-    Cost cost;
+    EgoCosts cost;
     bool collision = false;
 
     for(int i = 0; i< 20; ++i) {
@@ -367,7 +367,7 @@ TEST(crossing_state, mcts_goal_reached_wrong_hypothesis)
     AgentPolicyCrossingState<Domain> true_agents_policy({-2,-1.8}, params);
 
     std::vector<Reward> rewards;
-    Cost cost;
+    EgoCosts cost;
     bool collision = false;
 
     for(int i = 0; i< 30; ++i) {

@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <functional>
 #include <iostream>
+#include <valarray>
 #include "common.h"
 
 
@@ -25,6 +26,7 @@ typedef std::vector<ActionIdx> JointAction;
 
 typedef double Reward;
 typedef double Cost;
+typedef std::vector<Cost> EgoCosts;
 
     template <typename T>
 inline std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
@@ -82,7 +84,7 @@ public:
 
     std::shared_ptr<Implementation> execute(const JointAction &joint_action,
                                             std::vector<Reward>& rewards,
-                                            Cost& ego_cost) const;
+                                            EgoCosts& ego_cost) const;
 
     std::shared_ptr<Implementation> clone() const;
 
@@ -113,7 +115,7 @@ public:
 template<typename Implementation>
 inline std::shared_ptr<Implementation> StateInterface<Implementation>::execute(const JointAction &joint_action,
                                                                                std::vector<Reward>& rewards,
-                                                                               Cost& ego_cost) const {
+                                                                               EgoCosts& ego_cost) const {
    return impl().execute(joint_action, rewards);
 }
 

@@ -177,7 +177,7 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
 
   for(int i = 0; i < num_samples; ++i) {
     std::vector<Reward> rewards;
-    Cost ego_cost = 0.0f;
+    EgoCosts ego_cost = {0.0f, 0.0f};
 
     auto mcts_parameters_local = mcts_parameters_;
     mcts_parameters_local.cost_constrained_statistic.KAPPA = 10.0;
@@ -198,7 +198,7 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
       mcts_parameters_local.cost_constrained_statistic.COST_CONSTRAINT =
       mcts.get_root().get_ego_int_node().calc_updated_constraint_based_on_policy(sampled_policy, current_constraint);
     }
-    if(ego_cost > 0.0f) {
+    if(ego_cost[0] > 0.0f) {
       num_collisions++;
     }
     if(rewards.at(0) > 0.0f) {

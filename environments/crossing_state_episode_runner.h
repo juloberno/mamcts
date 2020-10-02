@@ -46,16 +46,16 @@ class CrossingStateEpisodeRunner {
                   belief_tracker_.belief_update(*last_state_, *current_state_);
                   }
 
-    std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,
+    std::tuple<std::pair<std::string, float>,std::pair<std::string, EgoCosts>,
                             std::pair<std::string, bool>, std::pair<std::string, bool>,
                             std::pair<std::string, bool>> step() {
       if(current_state_->is_terminal()) {
-        return std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,
+        return std::tuple<std::pair<std::string, float>,std::pair<std::string, EgoCosts>,
                             std::pair<std::string, bool>, std::pair<std::string, bool>,
                             std::pair<std::string, bool>> ();
       }
       std::vector<Reward> rewards;
-      Cost cost;
+      EgoCosts cost;
 
       JointAction jointaction(current_state_->get_num_agents());
       Mcts<CrossingState<Domain>, UctStatistic, HypothesisStatistic, RandomHeuristic> mcts(mcts_parameters_);
@@ -87,16 +87,16 @@ class CrossingStateEpisodeRunner {
         std::cout << belief_tracker_.sprintf() << std::endl;
       }
 
-      return std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,
+      return std::tuple<std::pair<std::string, float>,std::pair<std::string, EgoCosts>,
                             std::pair<std::string, bool>, std::pair<std::string, bool>,
                             std::pair<std::string, bool>> (std::pair<std::string, float>(std::string("Reward"), rewards[CrossingState<Domain>::ego_agent_idx]), 
-                                                             std::pair<std::string, float>(std::string("Cost"), cost),
+                                                             std::pair<std::string, EgoCosts>(std::string("EgoCosts"), cost),
                                                              std::pair<std::string, bool>(std::string("Terminal"), std::move(current_state_->is_terminal())),
                                                              std::pair<std::string, bool>(std::string("Collision"), std::move(collision)),
                                                              std::pair<std::string, bool>(std::string("GoalReached"), std::move(goal_reached)));
     }
 
-    std::tuple<std::pair<std::string, float>,std::pair<std::string, float>,
+    std::tuple<std::pair<std::string, float>,std::pair<std::string, EgoCosts>,
                             std::pair<std::string, bool>, std::pair<std::string, bool>,
                             std::pair<std::string, bool>,
                             std::pair<std::string, unsigned int>,
