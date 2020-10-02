@@ -71,7 +71,7 @@ public:
               action_idx++;
             }
 
-            EgoCosts ego_cost{0.0f, 0.0f};
+            EgoCosts ego_cost{0.0f};
             std::vector<Reward> step_rewards(state->get_num_agents());
             auto new_state = state->execute(jointaction, step_rewards, ego_cost);
 
