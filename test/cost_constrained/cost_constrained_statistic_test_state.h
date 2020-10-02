@@ -17,7 +17,6 @@ typedef double Probability;
 
 using namespace mcts;
 
-// A simple environment with a 1D state, only if both agents select different actions, they get nearer to the terminal state
 class CostConstrainedStatisticTestState : public mcts::StateInterface<CostConstrainedStatisticTestState>, 
   public RandomGenerator
 {
