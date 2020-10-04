@@ -37,7 +37,8 @@ public:
              cost_constraint(mcts_parameters.cost_constrained_statistic.COST_CONSTRAINT),
              use_cost_thresholding_(mcts_parameters.cost_constrained_statistic.USE_COST_THRESHOLDING),
              use_chance_constrained_updates_(mcts_parameters.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES),
-             cost_tresholds_(mcts_parameters.cost_constrained_statistic.COST_THRESHOLDS)
+             cost_tresholds_(mcts_parameters.cost_constrained_statistic.COST_THRESHOLDS),
+             use_lambda_policy_(mcts_parameters.cost_constrained_statistic.USE_LAMBDA_POLICY)
              {
                  // initialize action indexes from 0 to (number of actions -1)
                  std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
@@ -75,10 +76,15 @@ public:
 
     typedef std::pair<ActionIdx, Policy> PolicySampled;
     PolicySampled greedy_policy(const double kappa_local, const double action_filter_factor_local) const {
-      const auto allowed_action = cost_thresholding_action_selection();
+      const auto allowed_actions = cost_thresholding_action_selection();
+
+      if(!use_lambda_policy_) {
+        const auto action = calculate_ucb_maximizing_action(allowed_actions, kappa_local);
+        return PolicySampled(action, Policy({{action, 1.0}}));
+      }
   
       std::unordered_map<ActionIdx, double> ucb_values;
-      calculate_ucb_values_with_lambda(ucb_values, kappa_local, allowed_action);
+      calculate_ucb_values_with_lambda(ucb_values, kappa_local, allowed_actions);
       
       const auto feasible_actions = filter_feasible_actions(ucb_values, action_filter_factor_local);
       auto policy = solve_LP_and_sample(feasible_actions);
@@ -95,6 +101,23 @@ public:
       }
       return (current_constraint - policy.second.at(policy.first)*mean_step_costs_.at(policy.first).at(CONSTRAINT_COST_IDX) - other_actions_costs) /
               (cost_statistics_.at(CONSTRAINT_COST_IDX).k_discount_factor * policy.second.at(policy.first));
+    }
+
+    ActionIdx calculate_ucb_maximizing_action(const std::vector<ActionIdx>& allowed_actions, const double& kappa_local) const {
+      ActionIdx maximizing_action = allowed_actions.at(0);
+      Reward maximizing_value = std::numeric_limits<Reward>::lowest();
+      for (const auto& action_idx  : allowed_actions) {
+          double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(action_idx);
+
+          const auto exploration_term = kappa_local * 
+              sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(action_idx).action_count_));
+          const auto value = reward_value_normalized - (std::isnan(exploration_term) ? std::numeric_limits<double>::max() : exploration_term);
+          if(value > maximizing_value) {
+            maximizing_action = action_idx;
+            maximizing_value = value;
+          }
+      }
+      return maximizing_action;
     }
 
     void calculate_ucb_values_with_lambda(std::unordered_map<ActionIdx, double>& values, const double& kappa_local,
@@ -393,6 +416,7 @@ private:
     const std::vector<bool> use_cost_thresholding_;
     const std::vector<bool> use_chance_constrained_updates_;
     const std::vector<Cost> cost_tresholds_;
+    const bool use_lambda_policy_;
 };
 
 template <>
