@@ -354,8 +354,8 @@ public:
         std::stringstream ss;
         ss  << "Reward stats: " << UctStatistic::ucb_stats_to_string(reward_stats) << "\n"
             << "Cost stats: [";
-            for(const auto& cost_stat : cost_statistics_) {
-              ss << UctStatistic::ucb_stats_to_string(cost_stat.ucb_statistics_) << ", ";
+            for(std::size_t cost_stat_idx = 0; cost_stat_idx < cost_statistics_.size(); ++cost_stat_idx) {
+              ss << cost_stat_idx <<  ") " << UctStatistic::ucb_stats_to_string(cost_statistics_.at(cost_stat_idx).ucb_statistics_);
             } 
             ss << "]\n" << "Lambda:" << lambda << "\n"
             << "Ucb values: " << ucb_values << "\n"

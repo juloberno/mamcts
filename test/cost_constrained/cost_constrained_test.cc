@@ -212,6 +212,49 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
   EXPECT_NEAR(collision_risk, 0.35, 0.05);
 }
 
+TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
+  SetUp(3, 1.0f, 1.0f, 0.4f, 0.3f, 0.35f, 2.0f, true, 8000);
+
+  int num_samples = 100;
+  int num_collisions = 0;
+  int num_goal_reached = 0;
+
+  for(int i = 0; i < num_samples; ++i) {
+    std::vector<Reward> rewards;
+    EgoCosts ego_cost = {0.0f, 0.0f};
+
+    auto mcts_parameters_local = mcts_parameters_;
+    mcts_parameters_local.cost_constrained_statistic.KAPPA = 10.0;
+    mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0;
+    mcts_parameters_local.cost_constrained_statistic.USE_LAMBDA_POLICY = false;
+    mcts_parameters_local.cost_constrained_statistic.USE_COST_THRESHOLDING = {true, false};
+    mcts_parameters_local.cost_constrained_statistic.COST_THRESHOLDS = {0.35, 0.0};
+
+    auto state = make_initial_state(i);
+    VLOG(4) << "------------------------ Next sample -------------------------";
+    while(!state->is_terminal()) {
+      Mcts<CostConstrainedStatisticTestState, CostConstrainedStatistic,
+                        RandomActionsStatistic, RandomHeuristic> mcts(mcts_parameters_local);
+      mcts.search(*state_);
+      auto sampled_policy = mcts.get_root().get_ego_int_node().greedy_policy(
+              0, mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR);
+      VLOG(4) << "Action: " << sampled_policy.first << "\n" <<
+                mcts.get_root().get_ego_int_node().print_edge_information(0);
+      state = state->execute(JointAction{sampled_policy.first}, rewards, ego_cost);
+    }
+    if(ego_cost[0] > 0.0f) {
+      num_collisions++;
+    }
+    if(rewards.at(0) > 0.0f) {
+      num_goal_reached++;
+    }
+  }
+  const double collision_risk = double(num_collisions)/num_samples;
+  const double goal_rate = double(num_goal_reached)/num_samples;
+  LOG(INFO) << "Collision risk:" << collision_risk;
+  EXPECT_NEAR(collision_risk, 0.35, 0.05);
+}
+
 
 int main(int argc, char **argv) {
   FLAGS_alsologtostderr = true;
