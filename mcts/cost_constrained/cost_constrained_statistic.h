@@ -34,7 +34,10 @@ public:
              lambda(mcts_parameters.cost_constrained_statistic.LAMBDA),
              kappa(mcts_parameters.cost_constrained_statistic.KAPPA),
              action_filter_factor(mcts_parameters.cost_constrained_statistic.ACTION_FILTER_FACTOR),
-             cost_constraint(mcts_parameters.cost_constrained_statistic.COST_CONSTRAINT)
+             cost_constraint(mcts_parameters.cost_constrained_statistic.COST_CONSTRAINT),
+             use_cost_thresholding_(mcts_parameters.cost_constrained_statistic.USE_COST_THRESHOLDING),
+             use_chance_constrained_updates_(mcts_parameters.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES),
+             cost_tresholds_(mcts_parameters.cost_constrained_statistic.COST_THRESHOLDS)
              {
                  // initialize action indexes from 0 to (number of actions -1)
                  std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
@@ -72,9 +75,10 @@ public:
 
     typedef std::pair<ActionIdx, Policy> PolicySampled;
     PolicySampled greedy_policy(const double kappa_local, const double action_filter_factor_local) const {
-      // Greedy Policy
+      const auto allowed_action = cost_thresholding_action_selection();
+  
       std::unordered_map<ActionIdx, double> ucb_values;
-      calculate_ucb_values(ucb_values, kappa_local);
+      calculate_ucb_values_with_lambda(ucb_values, kappa_local, allowed_action);
       
       const auto feasible_actions = filter_feasible_actions(ucb_values, action_filter_factor_local);
       auto policy = solve_LP_and_sample(feasible_actions);
@@ -93,19 +97,25 @@ public:
               (cost_statistics_.at(CONSTRAINT_COST_IDX).k_discount_factor * policy.second.at(policy.first));
     }
 
-    void calculate_ucb_values(std::unordered_map<ActionIdx, double>& values, const double& kappa_local) const {
+    void calculate_ucb_values_with_lambda(std::unordered_map<ActionIdx, double>& values, const double& kappa_local,
+                            std::vector<ActionIdx> allowed_actions = std::vector<ActionIdx>()) const {
       const auto& reward_stats = reward_statistic_.ucb_statistics_;
       const auto& cost_stats = cost_statistics_.at(CONSTRAINT_COST_IDX).ucb_statistics_;
       MCTS_EXPECT_TRUE(reward_stats.size() ==  cost_stats.size());
 
       values.reserve(reward_statistic_.ucb_statistics_.size());
-      for (const auto& reward_stat : reward_stats) {
-          double cost_value_normalized = cost_statistics_.at(CONSTRAINT_COST_IDX).get_normalized_ucb_value(reward_stat.first);
-          double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(reward_stat.first);
+      if(allowed_actions.empty()) {
+        allowed_actions.resize(reward_statistic_.ucb_statistics_.size());
+        std::transform(reward_statistic_.ucb_statistics_.begin(), reward_statistic_.ucb_statistics_.end(), 
+                   allowed_actions.begin(),[](auto p) {return p.first; });
+      }
+      for (const auto& action_idx  : allowed_actions) {
+          double cost_value_normalized = cost_statistics_.at(CONSTRAINT_COST_IDX).get_normalized_ucb_value(action_idx);
+          double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(action_idx);
 
           const auto exploration_term = kappa_local * 
-              sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(reward_stat.first).action_count_));
-          values[reward_stat.first] = reward_value_normalized - lambda * cost_value_normalized 
+              sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(action_idx).action_count_));
+          values[action_idx] = reward_value_normalized - lambda * cost_value_normalized 
                  + (std::isnan(exploration_term) ? std::numeric_limits<double>::max() : exploration_term);
       }
     }
@@ -202,6 +212,37 @@ public:
         return clipped_new_lambda;
     }
 
+    std::vector<ActionIdx> cost_thresholding_action_selection() const {
+      std::vector<ActionIdx> allowed_actions;
+      allowed_actions.resize(cost_statistics_.at(0).ucb_statistics_.size());
+      std::transform(cost_statistics_.at(0).ucb_statistics_.begin(), cost_statistics_.at(0).ucb_statistics_.end(), 
+                  allowed_actions.begin(),[](auto p) {return p.first; });
+      if(use_cost_thresholding_.empty()) {
+        return allowed_actions;
+      }
+      for(std::size_t cost_stat_idx = 0; cost_stat_idx < cost_statistics_.size(); ++cost_stat_idx) {
+        if(!use_cost_thresholding_.at(cost_stat_idx)) {
+          continue;
+        }
+        // Also track current lowest action to return it if allowed actions are empty
+        Cost current_lowest_value = cost_statistics_.at(cost_stat_idx).ucb_statistics_.begin()->second.action_value_;
+        ActionIdx current_lowest_action = cost_statistics_.at(cost_stat_idx).ucb_statistics_.begin()->first;
+        for(const auto cost_ucb : cost_statistics_.at(cost_stat_idx).ucb_statistics_) {
+          const auto comparison_uct_value = cost_statistics_.at(cost_stat_idx).get_normalized_ucb_value(cost_ucb.first);
+          if(comparison_uct_value < current_lowest_value) {
+            current_lowest_action = cost_ucb.first;
+          }
+          if(comparison_uct_value > cost_tresholds_.at(cost_stat_idx)) {
+            allowed_actions.erase(std::remove(allowed_actions.begin(), allowed_actions.end(), cost_ucb.first), allowed_actions.end());
+            if(allowed_actions.empty()) {
+              return std::vector<ActionIdx>(1, current_lowest_action);
+            }
+          }
+        }
+      }
+      return allowed_actions;
+    }
+
     void init_cost_statistics(std::size_t size) {
       if(cost_statistics_.empty()) {
         for(std::size_t idx = 0; idx < size; ++idx) {
@@ -286,7 +327,7 @@ public:
     std::string print_edge_information(const ActionIdx& action) const {
         const auto& reward_stats = reward_statistic_.ucb_statistics_;
         std::unordered_map<ActionIdx, double> ucb_values;
-        calculate_ucb_values(ucb_values, 0.0f);
+        calculate_ucb_values_with_lambda(ucb_values, 0.0f);
         std::stringstream ss;
         ss  << "Reward stats: " << UctStatistic::ucb_stats_to_string(reward_stats) << "\n"
             << "Cost stats: [";
@@ -348,6 +389,10 @@ private:
     const double kappa;
     const double action_filter_factor;
     const double cost_constraint;
+
+    const std::vector<bool> use_cost_thresholding_;
+    const std::vector<bool> use_chance_constrained_updates_;
+    const std::vector<Cost> cost_tresholds_;
 };
 
 template <>

@@ -46,6 +46,9 @@ struct MctsParameters{
       double GRADIENT_UPDATE_STEP;
       double TAU_GRADIENT_CLIP;
       double ACTION_FILTER_FACTOR;
+      std::vector<bool> USE_COST_THRESHOLDING;
+      std::vector<bool> USE_CHANCE_CONSTRAINED_UPDATES;
+      std::vector<double> COST_THRESHOLDS;
   };
 
   struct RandomActionsStatisticParameters {
