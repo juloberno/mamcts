@@ -101,7 +101,7 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_eq) {
   auto best_action = mcts_->returnBestAction();
   const auto root = mcts_->get_root();
   const auto& reward_stats = root.get_ego_int_node().get_reward_ucb_statistics();
-  const auto& cost_stats = root.get_ego_int_node().get_cost_ucb_statistics();
+  const auto& cost_stats = root.get_ego_int_node().get_cost_ucb_statistics(CONSTRAINT_COST_IDX);
 
   // Cost statistics desired
   EXPECT_NEAR(cost_stats.at(2).action_value_, 0.3, 0.05);
@@ -125,7 +125,7 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_lower)
   auto best_action = mcts_->returnBestAction();
   const auto root = mcts_->get_root();
   const auto& reward_stats = root.get_ego_int_node().get_reward_ucb_statistics();
-  const auto& cost_stats = root.get_ego_int_node().get_cost_ucb_statistics();
+  const auto& cost_stats = root.get_ego_int_node().get_cost_ucb_statistics(CONSTRAINT_COST_IDX);
 
   // Cost statistics desired
   EXPECT_NEAR(cost_stats.at(2).action_value_, 0.3, 0.05);
@@ -150,7 +150,7 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_eq_risk_constraint_higher) {
   auto best_action = mcts_->returnBestAction();
   const auto root = mcts_->get_root();
   const auto& reward_stats = root.get_ego_int_node().get_reward_ucb_statistics();
-  const auto& cost_stats = root.get_ego_int_node().get_cost_ucb_statistics();
+  const auto& cost_stats = root.get_ego_int_node().get_cost_ucb_statistics(CONSTRAINT_COST_IDX);
 
   // Cost statistics desired
   EXPECT_NEAR(cost_stats.at(2).action_value_, 0.3, 0.05);

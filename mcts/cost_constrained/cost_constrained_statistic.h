@@ -16,6 +16,8 @@
 
 namespace mcts {
 
+#define CONSTRAINT_COST_IDX 0 // 1D linear program only over this cost idx calculated
+
 // A upper confidence bound implementation
 class CostConstrainedStatistic : public mcts::NodeStatistic<CostConstrainedStatistic>, mcts::RandomGenerator
 {
@@ -26,7 +28,7 @@ public:
              NodeStatistic<CostConstrainedStatistic>(num_actions, agent_idx, mcts_parameters),
              RandomGenerator(mcts_parameters.RANDOM_SEED),
              reward_statistic_(num_actions, agent_idx,  make_reward_statistic_parameters(mcts_parameters)),
-             cost_statistic_(num_actions, agent_idx, make_cost_statistic_parameters(mcts_parameters)),
+             cost_statistics_(),
              unexpanded_actions_(num_actions),
              mean_step_costs_(),
              lambda(mcts_parameters.cost_constrained_statistic.LAMBDA),
@@ -36,9 +38,6 @@ public:
              {
                  // initialize action indexes from 0 to (number of actions -1)
                  std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
-                 for(const auto& action : unexpanded_actions_) {
-                    mean_step_costs_[action] = 0.0f;
-                 }
              }
 
     ~CostConstrainedStatistic() {};
@@ -88,20 +87,20 @@ public:
         if(action_pair.first == policy.first) {
           continue;
         }
-        other_actions_costs += action_pair.second * cost_statistic_.ucb_statistics_.at(action_pair.first).action_value_;
+        other_actions_costs += action_pair.second * cost_statistics_.at(CONSTRAINT_COST_IDX).ucb_statistics_.at(action_pair.first).action_value_;
       }
-      return (current_constraint - policy.second.at(policy.first)*mean_step_costs_.at(policy.first) - other_actions_costs) /
-              (cost_statistic_.k_discount_factor * policy.second.at(policy.first));
+      return (current_constraint - policy.second.at(policy.first)*mean_step_costs_.at(policy.first).at(CONSTRAINT_COST_IDX) - other_actions_costs) /
+              (cost_statistics_.at(CONSTRAINT_COST_IDX).k_discount_factor * policy.second.at(policy.first));
     }
 
     void calculate_ucb_values(std::unordered_map<ActionIdx, double>& values, const double& kappa_local) const {
       const auto& reward_stats = reward_statistic_.ucb_statistics_;
-      const auto& cost_stats = cost_statistic_.ucb_statistics_;
+      const auto& cost_stats = cost_statistics_.at(CONSTRAINT_COST_IDX).ucb_statistics_;
       MCTS_EXPECT_TRUE(reward_stats.size() ==  cost_stats.size());
 
       values.reserve(reward_statistic_.ucb_statistics_.size());
       for (const auto& reward_stat : reward_stats) {
-          double cost_value_normalized = cost_statistic_.get_normalized_ucb_value(reward_stat.first);
+          double cost_value_normalized = cost_statistics_.at(CONSTRAINT_COST_IDX).get_normalized_ucb_value(reward_stat.first);
           double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(reward_stat.first);
 
           const auto exploration_term = kappa_local * 
@@ -136,7 +135,7 @@ public:
 
     PolicySampled solve_LP_and_sample(const std::vector<ActionIdx>& feasible_actions) const {
       // Solved for K=1
-      const auto& cost_stats = cost_statistic_.ucb_statistics_;
+      const auto& cost_stats = cost_statistics_.at(CONSTRAINT_COST_IDX).ucb_statistics_;
 
       ActionIdx maximizing_action = feasible_actions.at(0);
       ActionIdx minimizing_action = feasible_actions.at(0);
@@ -203,6 +202,19 @@ public:
         return clipped_new_lambda;
     }
 
+    void init_cost_statistics(std::size_t size) {
+      if(cost_statistics_.empty()) {
+        for(std::size_t idx = 0; idx < size; ++idx) {
+          cost_statistics_.push_back(UctStatistic(num_actions_, agent_idx_, make_cost_statistics_parameters(mcts_parameters_)));
+        }
+        ActionIdx action_idx = 0;
+        while(action_idx < num_actions_) {
+          mean_step_costs_[action_idx].resize(size, 0.0);
+          action_idx++;
+        }
+      }
+    }
+
     void update_from_heuristic(const NodeStatistic<CostConstrainedStatistic>& heuristic_statistic)
     {
       const CostConstrainedStatistic& statistic_impl = heuristic_statistic.impl();
@@ -210,8 +222,12 @@ public:
       const auto heuristic_reward_value = statistic_impl.reward_statistic_.value_;
       reward_statistic_.update_from_heuristic_from_backpropagated(heuristic_reward_value);
 
-      const auto heuristic_cost_value = statistic_impl.cost_statistic_.value_;
-      cost_statistic_.update_from_heuristic_from_backpropagated(heuristic_cost_value);
+      const auto& cost_stats_heuristic = statistic_impl.cost_statistics_;
+      init_cost_statistics(cost_stats_heuristic.size());
+      for (auto cost_stat_idx = 0; cost_stat_idx < cost_stats_heuristic.size(); ++cost_stat_idx) {
+        const auto heuristic_cost_value = cost_stats_heuristic.at(cost_stat_idx).value_;
+        cost_statistics_[0].update_from_heuristic_from_backpropagated(heuristic_cost_value);
+      }
     }
 
     void update_statistic(const NodeStatistic<CostConstrainedStatistic>& changed_child_statistic) {
@@ -221,20 +237,28 @@ public:
       reward_statistic_.collected_reward_ = collected_reward_;
       reward_statistic_.update_statistics_from_backpropagated(reward_latest_return);
 
-      const auto cost_latest_return = statistic_impl.cost_statistic_.latest_return_;
-      cost_statistic_.collected_reward_ = std::pair<ActionIdx, Cost>(collected_cost_.first,
-                                                                     collected_cost_.second[0]);
-      cost_statistic_.collected_action_transition_counts_ = collected_action_transition_counts_;
-      cost_statistic_.update_statistics_from_backpropagated(cost_latest_return);
+      const auto& cost_stats_child = statistic_impl.cost_statistics_;
+      init_cost_statistics(cost_stats_child.size());
+      for (auto cost_stat_idx = 0; cost_stat_idx < cost_stats_child.size(); ++cost_stat_idx) {
+        const auto cost_latest_return = statistic_impl.cost_statistics_.at(cost_stat_idx).latest_return_;
+        cost_statistics_[cost_stat_idx].collected_reward_ = std::pair<ActionIdx, Cost>(collected_cost_.first,
+                                                                      collected_cost_.second[cost_stat_idx]);
+        cost_statistics_[cost_stat_idx].collected_action_transition_counts_ = collected_action_transition_counts_;
+        cost_statistics_[cost_stat_idx].update_statistics_from_backpropagated(cost_latest_return);
 
-      mean_step_costs_[collected_cost_.first] += (collected_cost_.second[0] - mean_step_costs_[collected_cost_.first]) /
-                                                   (cost_statistic_.ucb_statistics_[collected_cost_.first].action_count_);
+        mean_step_costs_[collected_cost_.first][cost_stat_idx] += (collected_cost_.second[cost_stat_idx] - mean_step_costs_[collected_cost_.first][cost_stat_idx]) /
+                                                    (cost_statistics_.at(cost_stat_idx).ucb_statistics_[collected_cost_.first].action_count_);
+      }
     }
 
     void set_heuristic_estimate(const Reward& accum_rewards, const EgoCosts& accum_ego_cost)
     {
-       reward_statistic_.set_heuristic_estimate_from_backpropagated(accum_rewards);
-       cost_statistic_.set_heuristic_estimate_from_backpropagated(accum_ego_cost[0]);
+      reward_statistic_.set_heuristic_estimate_from_backpropagated(accum_rewards);
+    
+      init_cost_statistics(accum_ego_cost.size());
+      for (auto cost_stat_idx = 0; cost_stat_idx < accum_ego_cost.size(); ++cost_stat_idx) {
+        cost_statistics_.at(cost_stat_idx).set_heuristic_estimate_from_backpropagated(accum_ego_cost.at(cost_stat_idx));
+      }
     }
 
     std::string print_node_information() const {
@@ -252,7 +276,7 @@ public:
 
     Cost expected_policy_cost(const Policy& policy) const {
       Cost expected_cost = 0.0;
-      const auto& cost_stats = cost_statistic_.ucb_statistics_;
+      const auto& cost_stats = cost_statistics_.at(CONSTRAINT_COST_IDX).ucb_statistics_;
       for(const auto& cost_stat : cost_stats) {
         expected_cost += policy.at(cost_stat.first) * cost_stat.second.action_value_;
       } 
@@ -261,29 +285,31 @@ public:
 
     std::string print_edge_information(const ActionIdx& action) const {
         const auto& reward_stats = reward_statistic_.ucb_statistics_;
-        const auto& cost_stats = cost_statistic_.ucb_statistics_;
         std::unordered_map<ActionIdx, double> ucb_values;
         calculate_ucb_values(ucb_values, 0.0f);
         std::stringstream ss;
         ss  << "Reward stats: " << UctStatistic::ucb_stats_to_string(reward_stats) << "\n"
-            << "Cost stats: " << UctStatistic::ucb_stats_to_string(cost_stats) << "\n"
-            << "Lambda:" << lambda << "\n"
+            << "Cost stats: [";
+            for(const auto& cost_stat : cost_statistics_) {
+              ss << UctStatistic::ucb_stats_to_string(cost_stat.ucb_statistics_) << ", ";
+            } 
+            ss << "]\n" << "Lambda:" << lambda << "\n"
             << "Ucb values: " << ucb_values << "\n"
             << "Mean step cost: C(a=" << action << ") = " << mean_step_costs_.at(action) << "\n";
         return ss.str();
     }
 
     Reward get_normalized_cost_action_value(const ActionIdx& action) const {
-      return cost_statistic_.get_normalized_ucb_value(action);
+      return cost_statistics_.at(CONSTRAINT_COST_IDX).get_normalized_ucb_value(action);
     }
 
-    MctsParameters make_cost_statistic_parameters(const MctsParameters& mcts_parameters) const {
-      MctsParameters cost_statistic_parameters(mcts_parameters);
-      cost_statistic_parameters.uct_statistic.LOWER_BOUND = mcts_parameters.cost_constrained_statistic.COST_LOWER_BOUND;
-      cost_statistic_parameters.uct_statistic.UPPER_BOUND = mcts_parameters.cost_constrained_statistic.COST_UPPER_BOUND;
+    MctsParameters make_cost_statistics_parameters(const MctsParameters& mcts_parameters) const {
+      MctsParameters cost_statistics_parameters(mcts_parameters);
+      cost_statistics_parameters.uct_statistic.LOWER_BOUND = mcts_parameters.cost_constrained_statistic.COST_LOWER_BOUND;
+      cost_statistics_parameters.uct_statistic.UPPER_BOUND = mcts_parameters.cost_constrained_statistic.COST_UPPER_BOUND;
 
-      cost_statistic_parameters.DISCOUNT_FACTOR = 1.0; //< For risk estimation, we do not apply a discount
-      return cost_statistic_parameters;
+      cost_statistics_parameters.DISCOUNT_FACTOR = 1.0; //< For risk estimation, we do not apply a discount
+      return cost_statistics_parameters;
     }
 
     MctsParameters make_reward_statistic_parameters(const MctsParameters& mcts_parameters) const {
@@ -293,8 +319,8 @@ public:
       return reward_statistic_parameters;
     }
 
-    const UctStatistic::UcbStatistics& get_cost_ucb_statistics() const {
-      return cost_statistic_.ucb_statistics_;
+    const UctStatistic::UcbStatistics& get_cost_ucb_statistics(const unsigned int& cost_index) const {
+      return cost_statistics_.at(cost_index).ucb_statistics_;
     }
 
     const UctStatistic::UcbStatistics& get_reward_ucb_statistics() const {
@@ -303,7 +329,10 @@ public:
 
     std::string sprintf() const {
       std::stringstream ss;
-      ss << "Cost statistic: " << cost_statistic_.sprintf();
+      ss << "Cost statistic: ";
+      for(const auto& cost_statistic : cost_statistics_) {
+        ss << cost_statistic.sprintf() << ", ";
+      }
       return ss.str();
     }
 
@@ -311,9 +340,9 @@ public:
 private:
 
     UctStatistic reward_statistic_;
-    UctStatistic cost_statistic_;
+    std::vector<UctStatistic> cost_statistics_;
     std::vector<ActionIdx> unexpanded_actions_;
-    std::unordered_map<ActionIdx, Cost> mean_step_costs_;
+    std::unordered_map<ActionIdx, std::vector<Cost>> mean_step_costs_;
 
     const double& lambda;
     const double kappa;

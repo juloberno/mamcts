@@ -212,13 +212,13 @@ protected:
     std::vector<ActionIdx> unexpanded_actions_; // contains all action indexes which have not been expanded yet
 
     // PARAMS
-    const double upper_bound;
-    const double lower_bound;
-    const double k_discount_factor;
-    const double exploration_constant;
+    double upper_bound;
+    double lower_bound;
+    double k_discount_factor;
+    double exploration_constant;
 
-    const double progressive_widening_k;
-    const double progressive_widening_alpha;
+    double progressive_widening_k;
+    double progressive_widening_alpha;
 
 };
 
