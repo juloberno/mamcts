@@ -94,7 +94,7 @@ struct CostConstrainedNStepTest : public CostConstrainedTest {
   }
 };
 
-/*
+
 TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_eq) {
   SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, 0.82f, 2.2f, false, 2000);
 
@@ -211,8 +211,6 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
   LOG(INFO) << "Collision risk:" << collision_risk;
   EXPECT_NEAR(collision_risk, 0.35, 0.05);
 }
-
-*/
 
 TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
   SetUp(3, 1.0f, 1.0f, 0.4f, 0.3f, 0.35f, 2.0f, true, 8000);

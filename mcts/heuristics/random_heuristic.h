@@ -21,23 +21,7 @@ public:
             RandomGenerator(mcts_parameters.RANDOM_SEED) {}
 
     template<class S, class SE, class SO, class H>
-    std::pair<SE, std::unordered_map<AgentIdx, SO>> calculate_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node) {
-        //catch case where newly expanded state is terminal
-        if(node->get_state()->is_terminal()){
-            const auto ego_agent_idx = node->get_state()->get_ego_agent_idx();
-            const ActionIdx num_ego_actions = node->get_state()->get_num_actions(ego_agent_idx); 
-            SE ego_heuristic(num_ego_actions, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
-            ego_heuristic.set_heuristic_estimate(0.0f, {0.0f, 0.0f});
-            std::unordered_map<AgentIdx, SO> other_heuristic_estimates;
-            for (const auto& ai : node->get_state()->get_other_agent_idx())
-            { 
-              SO statistic(node->get_state()->get_num_actions(ai), ai, mcts_parameters_);
-              statistic.set_heuristic_estimate(0.0f, {0.0f, 0.0f});
-              other_heuristic_estimates.insert(std::pair<AgentIdx, SO>(ai, statistic));
-            }
-            return std::pair<SE, std::unordered_map<AgentIdx, SO>>(ego_heuristic, other_heuristic_estimates) ;
-        }
-        
+    std::pair<SE, std::unordered_map<AgentIdx, SO>> calculate_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node) {      
         namespace chr = std::chrono;
         auto start = std::chrono::high_resolution_clock::now();
         std::shared_ptr<S> state = node->get_state()->clone();
@@ -48,7 +32,7 @@ public:
           other_accum_rewards[ai] = 0.0f;
         }
 
-        EgoCosts accum_cost = {0.0f, 0.0f};
+        EgoCosts accum_cost;
         const double k_discount_factor = mcts_parameters_.DISCOUNT_FACTOR; 
         double modified_discount_factor = k_discount_factor;
         int num_iterations = 0;
@@ -71,7 +55,7 @@ public:
               action_idx++;
             }
 
-            EgoCosts ego_cost{0.0f};
+            EgoCosts ego_cost;
             std::vector<Reward> step_rewards(state->get_num_agents());
             auto new_state = state->execute(jointaction, step_rewards, ego_cost);
 
@@ -82,7 +66,13 @@ public:
               action_idx++;
             }
 
-            accum_cost[0] += modified_discount_factor*ego_cost[0];
+            if(accum_cost.empty()) {
+              accum_cost.resize(ego_cost.size(), 0.0f);
+            } else {
+              for (std::size_t cost_stat_idx = 0; cost_stat_idx < accum_cost.size(); ++cost_stat_idx) {
+                accum_cost[cost_stat_idx] += modified_discount_factor*ego_cost[cost_stat_idx];
+              }
+            }
             modified_discount_factor = modified_discount_factor*k_discount_factor;
 
             state = new_state->clone();
@@ -90,11 +80,17 @@ public:
             current_depth += 1;
          };
         // generate an extra node statistic for each agent
+
+        // convert to probabilities 
+        if(!accum_cost.empty()) {
+          const auto ego_agent_idx = node->get_state()->get_ego_agent_idx();
+          const ActionIdx num_ego_actions = node->get_state()->get_num_actions(ego_agent_idx);
+          accum_cost[0] = double(accum_cost[0] > 0.0)*std::pow(1.0/num_ego_actions, num_iterations);
+        }
+        
+
         SE ego_heuristic(0, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
-        const auto ego_agent_idx = node->get_state()->get_ego_agent_idx();
-        const ActionIdx num_ego_actions = node->get_state()->get_num_actions(ego_agent_idx);
-        ego_heuristic.set_heuristic_estimate(ego_accum_reward, 
-            EgoCosts({double(accum_cost[0] > 0.0)*std::pow(1.0/num_ego_actions, num_iterations), 0.0f})); // correct by probability of random selected ego actions
+        ego_heuristic.set_heuristic_estimate(ego_accum_reward, accum_cost); // correct by probability of random selected ego actions
         std::unordered_map<AgentIdx, SO> other_heuristic_estimates;
         AgentIdx reward_idx=1;
         for (auto agent_idx : node->get_state()->get_other_agent_idx())
