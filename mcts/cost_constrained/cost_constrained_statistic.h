@@ -111,7 +111,7 @@ public:
 
           const auto exploration_term = kappa_local * 
               sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(action_idx).action_count_));
-          const auto value = reward_value_normalized - (std::isnan(exploration_term) ? std::numeric_limits<double>::max() : exploration_term);
+          const auto value = reward_value_normalized + (std::isnan(exploration_term) ? std::numeric_limits<double>::max() : exploration_term);
           if(value > maximizing_value) {
             maximizing_action = action_idx;
             maximizing_value = value;
@@ -353,11 +353,11 @@ public:
         calculate_ucb_values_with_lambda(ucb_values, 0.0f);
         std::stringstream ss;
         ss  << "Reward stats: " << UctStatistic::ucb_stats_to_string(reward_stats) << "\n"
-            << "Cost stats: [";
+            << "Cost stats: ";
             for(std::size_t cost_stat_idx = 0; cost_stat_idx < cost_statistics_.size(); ++cost_stat_idx) {
-              ss << cost_stat_idx <<  ") " << UctStatistic::ucb_stats_to_string(cost_statistics_.at(cost_stat_idx).ucb_statistics_);
+              ss << cost_stat_idx <<  ") [" << UctStatistic::ucb_stats_to_string(cost_statistics_.at(cost_stat_idx).ucb_statistics_) << "]  ";
             } 
-            ss << "]\n" << "Lambda:" << lambda << "\n"
+            ss << "\n" << "Lambda:" << lambda << "\n"
             << "Ucb values: " << ucb_values << "\n"
             << "Mean step cost: C(a=" << action << ") = " << mean_step_costs_.at(action) << "\n";
         return ss.str();

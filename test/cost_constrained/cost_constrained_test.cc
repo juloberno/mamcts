@@ -94,7 +94,7 @@ struct CostConstrainedNStepTest : public CostConstrainedTest {
   }
 };
 
-
+/*
 TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_eq) {
   SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, 0.82f, 2.2f, false, 2000);
 
@@ -212,6 +212,8 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
   EXPECT_NEAR(collision_risk, 0.35, 0.05);
 }
 
+*/
+
 TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
   SetUp(3, 1.0f, 1.0f, 0.4f, 0.3f, 0.35f, 2.0f, true, 8000);
 
@@ -224,11 +226,11 @@ TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
     EgoCosts ego_cost = {0.0f, 0.0f};
 
     auto mcts_parameters_local = mcts_parameters_;
-    mcts_parameters_local.cost_constrained_statistic.KAPPA = 0.0;
+    mcts_parameters_local.cost_constrained_statistic.KAPPA = 10.0;
     mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0;
     mcts_parameters_local.cost_constrained_statistic.USE_LAMBDA_POLICY = false;
     mcts_parameters_local.cost_constrained_statistic.USE_COST_THRESHOLDING = {true, false};
-    mcts_parameters_local.cost_constrained_statistic.COST_THRESHOLDS = {0.35, 0.0};
+    mcts_parameters_local.cost_constrained_statistic.COST_THRESHOLDS = {0.4, 0.0};
 
     auto state = make_initial_state(i);
     VLOG(4) << "------------------------ Next sample -------------------------";
