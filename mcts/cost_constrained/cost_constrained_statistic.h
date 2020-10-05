@@ -415,7 +415,7 @@ private:
 
     const std::vector<bool> use_cost_thresholding_;
     const std::vector<bool> use_chance_constrained_updates_;
-    const std::vector<Cost> cost_tresholds_;
+    const std::vector<float> cost_tresholds_;
     const bool use_lambda_policy_;
 };
 
