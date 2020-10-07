@@ -98,6 +98,8 @@ public:
 
     const AgentIdx get_num_agents() const;
 
+    const std::size_t get_num_costs() const;
+
     static const AgentIdx ego_agent_idx;
 
     std::string sprintf() const;
@@ -127,6 +129,11 @@ inline std::shared_ptr<Implementation> StateInterface<Implementation>::clone() c
 template<typename Implementation>
 inline ActionIdx StateInterface<Implementation>::get_num_actions(AgentIdx agent_idx) const {
     return impl().get_num_actions(agent_idx);
+}
+
+template<typename Implementation>
+inline const std::size_t StateInterface<Implementation>::get_num_costs() const {
+    return impl().get_num_costs();
 }
 
 template<typename Implementation>

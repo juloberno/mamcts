@@ -86,6 +86,9 @@ public:
             return other_agent_states_[agent_idx-1].last_action;
         }
     }
+    const std::size_t get_num_costs() const {
+      return 1;
+    }
 
     Probability get_prior(const HypothesisId& hypothesis, const AgentIdx& agent_idx) const { return 0.5f;}
 

@@ -40,12 +40,16 @@ public:
         return std::make_shared<CostConstrainedStatisticTestState>(*this);
     }
 
+    const std::size_t get_num_costs() const {
+      return 1;
+    }
+
     std::shared_ptr<CostConstrainedStatisticTestState> execute(const JointAction& joint_action, std::vector<Reward>& rewards, EgoCosts& ego_cost) const {
         rewards.resize(1);
         const auto ego_agent_action = joint_action[CostConstrainedStatisticTestState::ego_agent_idx];
         if(ego_agent_action == 0) {
             rewards[0] = 0;
-            ego_cost = {0.0f, 0.0f};
+            ego_cost = {0.0f};
             return std::make_shared<CostConstrainedStatisticTestState>(0, n_steps_, collision_risk1_, collision_risk2_,
                                                             reward_goal1_, reward_goal2_, true);
         } else {
@@ -72,19 +76,19 @@ public:
             }
           if (new_state >= n_steps_) {
             rewards = std::vector<Reward>{reward_goal1_};
-            ego_cost = {0.0f, 0.0f};
+            ego_cost = {0.0f};
             is_terminal = true;
           } else if(new_state <= - n_steps_) {
             rewards = std::vector<Reward>{reward_goal2_};
-            ego_cost = {0.0f, 0.0f};
+            ego_cost = {0.0f};
             is_terminal = true;
           } else if (collision) {
             rewards = std::vector<Reward>{0.0f};
-            ego_cost = {1.0f, 0.0f};
+            ego_cost = {1.0f};
             is_terminal = true;
           } else {
             rewards[0] = 0;
-            ego_cost = {0.0f, 0.0f};
+            ego_cost = {0.0f};
           }
           return std::make_shared<CostConstrainedStatisticTestState>(new_state, n_steps_, collision_risk1_, collision_risk2_,
                                                             reward_goal1_, reward_goal2_, is_terminal, seed_*10);

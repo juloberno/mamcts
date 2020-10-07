@@ -178,7 +178,7 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
 
   for(int i = 0; i < num_samples; ++i) {
     std::vector<Reward> rewards;
-    EgoCosts ego_cost = {0.0f, 0.0f};
+    EgoCosts ego_cost = {0.0f};
 
     auto mcts_parameters_local = mcts_parameters_;
     mcts_parameters_local.cost_constrained_statistic.KAPPA = 10.0;
@@ -221,14 +221,14 @@ TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
 
   for(int i = 0; i < num_samples; ++i) {
     std::vector<Reward> rewards;
-    EgoCosts ego_cost = {0.0f, 0.0f};
+    EgoCosts ego_cost = {0.0f};
 
     auto mcts_parameters_local = mcts_parameters_;
     mcts_parameters_local.cost_constrained_statistic.KAPPA = 10.0;
     mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0;
     mcts_parameters_local.cost_constrained_statistic.USE_LAMBDA_POLICY = false;
-    mcts_parameters_local.cost_constrained_statistic.USE_COST_THRESHOLDING = {true, false};
-    mcts_parameters_local.cost_constrained_statistic.COST_THRESHOLDS = {0.4, 0.0};
+    mcts_parameters_local.cost_constrained_statistic.USE_COST_THRESHOLDING = {true};
+    mcts_parameters_local.cost_constrained_statistic.COST_THRESHOLDS = {0.5};
 
     auto state = make_initial_state(i);
     VLOG(4) << "------------------------ Next sample -------------------------";

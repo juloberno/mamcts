@@ -32,7 +32,7 @@ public:
           other_accum_rewards[ai] = 0.0f;
         }
 
-        EgoCosts accum_cost;
+        EgoCosts accum_cost(state->get_num_costs(), 0.0f);
         const double k_discount_factor = mcts_parameters_.DISCOUNT_FACTOR; 
         double modified_discount_factor = k_discount_factor;
         int num_iterations = 0;
@@ -66,9 +66,7 @@ public:
               action_idx++;
             }
 
-            if(accum_cost.empty()) {
-              accum_cost.resize(ego_cost.size(), 0.0f);
-            } else {
+            if(!accum_cost.empty()) {
               for (std::size_t cost_stat_idx = 0; cost_stat_idx < accum_cost.size(); ++cost_stat_idx) {
                 accum_cost[cost_stat_idx] += modified_discount_factor*ego_cost[cost_stat_idx];
               }

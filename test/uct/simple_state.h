@@ -57,6 +57,10 @@ public:
         return 2;
     }
 
+    const std::size_t get_num_costs() const {
+      return 0;
+    }
+
     bool is_terminal() const {
         return state_length_ >= winning_state_length_ || state_length_ <= loosing_state_length_;
     }
