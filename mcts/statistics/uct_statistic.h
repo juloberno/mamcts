@@ -27,7 +27,7 @@ public:
         unsigned action_count_;
         double action_value_;
     } UcbPair;
-    typedef std::unordered_map<ActionIdx, UcbPair> UcbStatistics;
+    typedef std::map<ActionIdx, UcbPair> UcbStatistics;
 
     UctStatistic(ActionIdx num_actions, AgentIdx agent_idx, const MctsParameters & mcts_parameters) :
              NodeStatistic<UctStatistic>(num_actions, agent_idx, mcts_parameters),
