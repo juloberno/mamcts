@@ -213,7 +213,7 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
 }
 
 TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
-  SetUp(3, 1.0f, 1.0f, 0.4f, 0.3f, 0.35f, 2.0f, true, 8000);
+  SetUp(3, 1.0f, 1.0f, 0.4f, 0.3f, 0.1f, 2.0f, true, 8000);
 
   int num_samples = 100;
   int num_collisions = 0;
@@ -252,7 +252,7 @@ TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
   const double collision_risk = double(num_collisions)/num_samples;
   const double goal_rate = double(num_goal_reached)/num_samples;
   LOG(INFO) << "Collision risk:" << collision_risk;
-  EXPECT_NEAR(collision_risk, 0.35, 0.05);
+  EXPECT_NEAR(collision_risk, 0.0, 0.05);
 }
 
 
