@@ -42,6 +42,7 @@ public:
                     exploration_constant(mcts_parameters.hypothesis_statistic.EXPLORATION_CONSTANT),
                     cost_based_action_selection_(mcts_parameters.hypothesis_statistic.COST_BASED_ACTION_SELECTION),
                     progressive_widening_hypothesis_based_(mcts_parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_HYPOTHESIS_BASED),
+                    use_chance_constrained_updates_(mcts_parameters.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES),
                     progressive_widening_k(mcts_parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_K),
                     progressive_widening_alpha(mcts_parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_ALPHA)
                     {}
@@ -119,7 +120,9 @@ public:
         //Action Value update step
         UcbPair& ucb_pair = ucb_statistics_[hypothesis_id_current_iteration_][collected_cost_.first]; // we remembered for which action we got the reward, must be the same as during backprop, if we linked parents and childs correctly
         //action value: Q'(s,a) = Q(s,a) + (latest_return - Q(s,a))/N =  1/(N+1 ( latest_return + N*Q(s,a))
-        latest_ego_cost_ = collected_cost_.second[0] + k_discount_factor * changed_uct_statistic.latest_ego_cost_;
+        bool chance_update = !use_chance_constrained_updates_.empty() && use_chance_constrained_updates_.at(0);
+        latest_ego_cost_ = chance_update ? (std::max( collected_cost_.second[0], changed_uct_statistic.latest_ego_cost_)) :
+                         ( collected_cost_.second[0] + k_discount_factor * changed_uct_statistic.latest_ego_cost_);
         ucb_pair.action_count_ += 1;
         ucb_pair.action_ego_cost_ = ucb_pair.action_ego_cost_ + (latest_ego_cost_ - ucb_pair.action_ego_cost_) / ucb_pair.action_count_;
         VLOG_EVERY_N(6, 10) << "Agent "<< agent_idx_ <<", Action ego cost, action " << collected_cost_.first << ", C(s,a) = " << ucb_pair.action_ego_cost_;
@@ -282,6 +285,7 @@ private: // members
 
     const bool cost_based_action_selection_;
     const bool progressive_widening_hypothesis_based_;
+    const std::vector<bool> use_chance_constrained_updates_;
 
     const double progressive_widening_k;
     const double progressive_widening_alpha;
