@@ -106,11 +106,12 @@ public:
         this->update_statistics_from_backpropagated(changed_uct_statistic.latest_return_);
     }
     
-    void update_statistics_from_backpropagated(const Reward& backpropagated) {
+    void update_statistics_from_backpropagated(const Reward& backpropagated, bool chance_update = false) {
         //Action Value update step
         UcbPair& ucb_pair = ucb_statistics_[collected_reward_.first]; // we remembered for which action we got the reward, must be the same as during backprop, if we linked parents and childs correctly
         //action value: Q'(s,a) = Q(s,a) + (latest_return - Q(s,a))/N =  1/(N+1 ( latest_return + N*Q(s,a))
-        latest_return_ = collected_reward_.second + k_discount_factor * backpropagated;
+        latest_return_ = chance_update ? (std::max(collected_reward_.second, backpropagated)) :
+                         (collected_reward_.second + k_discount_factor * backpropagated);
         ucb_pair.action_count_ += 1;
         ucb_pair.action_value_ = ucb_pair.action_value_ + (latest_return_ - ucb_pair.action_value_) / ucb_pair.action_count_;
         VLOG_EVERY_N(6, 10) << "Agent "<< agent_idx_ <<", Action reward, action " << collected_cost_.first << ", Q(s,a) = " << ucb_pair.action_value_;

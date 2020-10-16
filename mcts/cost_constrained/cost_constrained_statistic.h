@@ -308,7 +308,9 @@ public:
         cost_statistics_[cost_stat_idx].collected_reward_ = std::pair<ActionIdx, Cost>(collected_cost_.first,
                                                                       collected_cost_.second[cost_stat_idx]);
         cost_statistics_[cost_stat_idx].collected_action_transition_counts_ = collected_action_transition_counts_;
-        cost_statistics_[cost_stat_idx].update_statistics_from_backpropagated(cost_latest_return);
+
+        bool chance_update = !use_chance_constrained_updates_.empty() && use_chance_constrained_updates_.at(cost_stat_idx);
+        cost_statistics_[cost_stat_idx].update_statistics_from_backpropagated(cost_latest_return, chance_update);
 
         mean_step_costs_[collected_cost_.first][cost_stat_idx] += (collected_cost_.second[cost_stat_idx] - mean_step_costs_[collected_cost_.first][cost_stat_idx]) /
                                                     (cost_statistics_.at(cost_stat_idx).ucb_statistics_[collected_cost_.first].action_count_);

@@ -229,6 +229,7 @@ TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
     mcts_parameters_local.cost_constrained_statistic.USE_LAMBDA_POLICY = false;
     mcts_parameters_local.cost_constrained_statistic.USE_COST_THRESHOLDING = {true};
     mcts_parameters_local.cost_constrained_statistic.COST_THRESHOLDS = {0.5};
+    mcts_parameters_local.cost_constrained_statistic.COST_THRESHOLDS = {0.5};
 
     auto state = make_initial_state(i);
     VLOG(4) << "------------------------ Next sample -------------------------";
