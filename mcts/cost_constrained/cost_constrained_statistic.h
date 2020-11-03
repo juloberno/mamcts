@@ -393,6 +393,14 @@ public:
       return reward_statistic_.ucb_statistics_;
     }
 
+    const UctStatistic& get_reward_statistic() const {
+      return reward_statistic_;
+    }
+
+    const UctStatistic& get_cost_statistic(const unsigned int& cost_index) const {
+      return cost_statistics_.at(cost_index);
+    }
+
     std::string sprintf() const {
       std::stringstream ss;
       ss << "Cost statistic: ";
