@@ -11,7 +11,7 @@
 #define DEBUG
 #define PLAN_DEBUG_INFO
 #include "mcts/cost_constrained/cost_constrained_statistic.h"
-#include "test/cost_constrained/cost_constrained_statistic_test_state.h"
+#include "test/cost_constrained/cost_constrained_statistic_test_state_single_cost.h"
 #include "mcts/heuristics/random_heuristic.h"
 #include "mcts/statistics/random_actions_statistic.h"
 #include <cstdio>
@@ -39,7 +39,7 @@ struct CostConstrainedTest : public ::testing::Test {
             risk_action2_ = risk_action2;
             cost_constraint_ = cost_constraint;
             lambda_init_ = lambda_init;
-            state_ = new CostConstrainedStatisticTestState(n_steps, risk_action1, risk_action2,
+            state_ = new CostConstrainedStatisticTestStateSingleCost(n_steps, risk_action1, risk_action2,
                                                   goal_reward1, goal_reward2, false);
 
             mcts_parameters_ = mcts_default_parameters();
@@ -65,12 +65,12 @@ struct CostConstrainedTest : public ::testing::Test {
             }
 
             mcts_parameters_.cost_constrained_statistic.LAMBDAS = {lambda_init};
-            mcts_ = new Mcts<CostConstrainedStatisticTestState, CostConstrainedStatistic,
+            mcts_ = new Mcts<CostConstrainedStatisticTestStateSingleCost, CostConstrainedStatistic,
                         RandomActionsStatistic, RandomHeuristic>(mcts_parameters_);
     }
 
-    CostConstrainedStatisticTestState* state_;
-    Mcts<CostConstrainedStatisticTestState, CostConstrainedStatistic,
+    CostConstrainedStatisticTestStateSingleCost* state_;
+    Mcts<CostConstrainedStatisticTestStateSingleCost, CostConstrainedStatistic,
                         RandomActionsStatistic, RandomHeuristic>* mcts_;
     MctsParameters mcts_parameters_;
     int n_steps_;
@@ -89,7 +89,7 @@ struct CostConstrainedNStepTest : public CostConstrainedTest {
   virtual ~CostConstrainedNStepTest() {}
 
   auto make_initial_state(unsigned int seed) const {
-     return std::make_shared<CostConstrainedStatisticTestState>(n_steps_, risk_action1_, risk_action2_,
+     return std::make_shared<CostConstrainedStatisticTestStateSingleCost>(n_steps_, risk_action1_, risk_action2_,
                                             goal_reward1_, goal_reward2_, false, seed);
   }
 };
@@ -187,7 +187,7 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
     auto state = make_initial_state(i);
     VLOG(4) << "------------------------ Next sample -------------------------";
     while(!state->is_terminal()) {
-      Mcts<CostConstrainedStatisticTestState, CostConstrainedStatistic,
+      Mcts<CostConstrainedStatisticTestStateSingleCost, CostConstrainedStatistic,
                         RandomActionsStatistic, RandomHeuristic> mcts(mcts_parameters_local);
       mcts.search(*state_);
       auto sampled_policy = mcts.get_root().get_ego_int_node().greedy_policy(
@@ -233,7 +233,7 @@ TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
     auto state = make_initial_state(i);
     VLOG(4) << "------------------------ Next sample -------------------------";
     while(!state->is_terminal()) {
-      Mcts<CostConstrainedStatisticTestState, CostConstrainedStatistic,
+      Mcts<CostConstrainedStatisticTestStateSingleCost, CostConstrainedStatistic,
                         RandomActionsStatistic, RandomHeuristic> mcts(mcts_parameters_local);
       mcts.search(*state_);
       auto sampled_policy = mcts.get_root().get_ego_int_node().greedy_policy(

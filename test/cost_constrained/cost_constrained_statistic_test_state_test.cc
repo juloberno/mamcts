@@ -10,7 +10,7 @@
 #define UNIT_TESTING
 #define DEBUG
 #define PLAN_DEBUG_INFO
-#include "test/cost_constrained/cost_constrained_statistic_test_state.h"
+#include "test/cost_constrained/cost_constrained_statistic_test_state_single_cost.h"
 #include <cstdio>
 
 using namespace std;
@@ -27,7 +27,7 @@ TEST(cost_constrained_statistic, action_risk_0) {
   int num_collisions = 0;
 
   for(int i = 0; i < num_samples; ++i) {
-    auto state = std::make_shared<CostConstrainedStatisticTestState>(n_steps, risk_action1, risk_action2,
+    auto state = std::make_shared<CostConstrainedStatisticTestStateSingleCost>(n_steps, risk_action1, risk_action2,
                                             goal_reward1, goal_reward2, false);
     std::vector<Reward> rewards;
     EgoCosts ego_cost = {0.0, 0.0f};
@@ -52,7 +52,7 @@ TEST(cost_constrained_statistic, one_step_action_risk_1) {
   int num_samples = 10000;
   int num_collisions = 0;
 
-  auto state = std::make_shared<CostConstrainedStatisticTestState>(n_steps, risk_action1, risk_action2,
+  auto state = std::make_shared<CostConstrainedStatisticTestStateSingleCost>(n_steps, risk_action1, risk_action2,
                                             goal_reward1, goal_reward2, false);
   for(int i = 0; i < num_samples; ++i) {
     std::vector<Reward> rewards;
@@ -77,7 +77,7 @@ TEST(cost_constrained_statistic, one_step_action_risk_2) {
   int num_samples = 10000;
   int num_collisions = 0;
 
-  auto state = std::make_shared<CostConstrainedStatisticTestState>(n_steps, risk_action1, risk_action2,
+  auto state = std::make_shared<CostConstrainedStatisticTestStateSingleCost>(n_steps, risk_action1, risk_action2,
                                             goal_reward1, goal_reward2, false);
   for(int i = 0; i < num_samples; ++i) {
     std::vector<Reward> rewards;
@@ -104,7 +104,7 @@ TEST(cost_constrained_statistic, n_step_action_risk_1) {
   for(int i = 0; i < num_samples; ++i) {
     std::vector<Reward> rewards;
     EgoCosts ego_cost = {0.0, 0.0f};
-    auto state = std::make_shared<CostConstrainedStatisticTestState>(n_steps, risk_action1, risk_action2,
+    auto state = std::make_shared<CostConstrainedStatisticTestStateSingleCost>(n_steps, risk_action1, risk_action2,
                                             goal_reward1, goal_reward2, false, i);
     while(!state->is_terminal()) {
       state = state->execute(JointAction{1}, rewards, ego_cost);

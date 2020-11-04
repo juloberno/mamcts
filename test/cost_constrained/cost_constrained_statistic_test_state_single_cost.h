@@ -4,8 +4,8 @@
 // For a copy, see <https://opensource.org/licenses/MIT>.
 // ========================================================
 
-#ifndef COST_CONSTRAINED_TEST_STATE_H
-#define COST_CONSTRAINED_TEST_STATE_H
+#ifndef COST_CONSTRAINED_TEST_STATE_SINGLE_COST_H
+#define COST_CONSTRAINED_TEST_STATE_SINGLE_COST_H
 
 #include <iostream>
 #include <cmath>
@@ -16,16 +16,16 @@
 typedef double Probability;
 
 using namespace mcts;
-
-class CostConstrainedStatisticTestState : public mcts::StateInterface<CostConstrainedStatisticTestState>, 
+template <class T>
+class CostConstrainedStatisticTestStateBase : public mcts::StateInterface<T>, 
   public RandomGenerator
 {
 public:
-    CostConstrainedStatisticTestState(int n_steps, Cost collision_risk1, Cost collision_risk2,
+    CostConstrainedStatisticTestStateBase(int n_steps, Cost collision_risk1, Cost collision_risk2,
                                      Reward reward_goal1, Reward reward_goal2, bool is_terminal, unsigned int seed = 1000) :
-                                     CostConstrainedStatisticTestState(0, n_steps, collision_risk1, collision_risk2,
+                                     CostConstrainedStatisticTestStateBase(0, n_steps, collision_risk1, collision_risk2,
                                       reward_goal1, reward_goal2, is_terminal, seed) {}
-    CostConstrainedStatisticTestState(int current_state, int n_steps, Cost collision_risk1, Cost collision_risk2,
+    CostConstrainedStatisticTestStateBase(int current_state, int n_steps, Cost collision_risk1, Cost collision_risk2,
                                      Reward reward_goal1, Reward reward_goal2, bool is_terminal, unsigned int seed) : 
                                      RandomGenerator(seed),
                                       current_state_(current_state), n_steps_(n_steps), seed_(seed),
@@ -34,23 +34,23 @@ public:
                                       is_terminal_(is_terminal) {}
 
 
-    ~CostConstrainedStatisticTestState() {};
+    ~CostConstrainedStatisticTestStateBase() {};
 
-    std::shared_ptr<CostConstrainedStatisticTestState> clone() const {
-        return std::make_shared<CostConstrainedStatisticTestState>(*this);
+    std::shared_ptr<T> clone() const {
+        return std::make_shared<T>(*this);
     }
 
     const std::size_t get_num_costs() const {
       return 1;
     }
 
-    std::shared_ptr<CostConstrainedStatisticTestState> execute(const JointAction& joint_action, std::vector<Reward>& rewards, EgoCosts& ego_cost) const {
+    std::shared_ptr<T> execute(const JointAction& joint_action, std::vector<Reward>& rewards, EgoCosts& ego_cost) const {
         rewards.resize(1);
-        const auto ego_agent_action = joint_action[CostConstrainedStatisticTestState::ego_agent_idx];
+        const auto ego_agent_action = joint_action[CostConstrainedStatisticTestStateBase::ego_agent_idx];
         if(ego_agent_action == 0) {
             rewards[0] = 0;
             ego_cost = {0.0f};
-            return std::make_shared<CostConstrainedStatisticTestState>(0, n_steps_, collision_risk1_, collision_risk2_,
+            return std::make_shared<T>(0, n_steps_, collision_risk1_, collision_risk2_,
                                                             reward_goal1_, reward_goal2_, true);
         } else {
             bool is_terminal = false;
@@ -76,23 +76,39 @@ public:
             }
           if (new_state >= n_steps_) {
             rewards = std::vector<Reward>{reward_goal1_};
-            ego_cost = {0.0f};
+            ego_cost = get_goal1_cost();
             is_terminal = true;
           } else if(new_state <= - n_steps_) {
             rewards = std::vector<Reward>{reward_goal2_};
-            ego_cost = {0.0f};
+            ego_cost = get_goal2_cost();
             is_terminal = true;
           } else if (collision) {
             rewards = std::vector<Reward>{0.0f};
-            ego_cost = {1.0f};
+            ego_cost = get_collision_cost();
             is_terminal = true;
           } else {
             rewards[0] = 0;
-            ego_cost = {0.0f};
+            ego_cost = get_other_cost();
           }
-          return std::make_shared<CostConstrainedStatisticTestState>(new_state, n_steps_, collision_risk1_, collision_risk2_,
+          return std::make_shared<T>(new_state, n_steps_, collision_risk1_, collision_risk2_,
                                                             reward_goal1_, reward_goal2_, is_terminal, seed_*10);
         }
+    }
+
+    std::vector<Cost> get_collision_cost() const {
+       return {1.0f};
+    }
+
+    std::vector<Cost> get_goal1_cost() const {
+       return {0.0f};
+    }
+
+    std::vector<Cost> get_goal2_cost() const {
+       return {0.0f};
+    }
+
+    std::vector<Cost> get_other_cost() const {
+       return {0.0f};
     }
 
     Probability get_transition_to_goal_probability(const ActionIdx& ego_action) const {
@@ -128,7 +144,7 @@ public:
     std::string sprintf() const
     {
         std::stringstream ss;
-        ss << "CostConstrainedStatisticTestState (current_state: " << current_state_ << ")";
+        ss << "CostConstrainedStatisticTestStateBase (current_state: " << current_state_ << ")";
         return ss.str();
     }
 private:
@@ -143,6 +159,11 @@ private:
     const Cost collision_risk1_;
     const Cost collision_risk2_;
 };
+
+class CostConstrainedStatisticTestStateSingleCost : 
+    public CostConstrainedStatisticTestStateBase<CostConstrainedStatisticTestStateSingleCost> {
+      using CostConstrainedStatisticTestStateBase<CostConstrainedStatisticTestStateSingleCost>::CostConstrainedStatisticTestStateBase;
+    };
 
 
 
