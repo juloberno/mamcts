@@ -3,7 +3,7 @@ cc_test(
     srcs = [
         "google_or_example.cc",
     ],
-    copts = ["-Iexternal/gtest/include"],
+    copts = ["-Iexternal/gtest/include", "-DNDEBUG"],
     deps = [
         "@google_or//ortools/linear_solver:linear_solver",
         "@gtest//:main",

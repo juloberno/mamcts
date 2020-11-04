@@ -5,12 +5,12 @@
 namespace operations_research {
 
 void SimpleLpProgram() {
-    std::vector<std::vector<double>> action_values{{0.6, 0.1, 0.2, 0.3}, {0.1, 0.7, 0.01, 0.3}};
+    std::vector<std::vector<double>> action_values{{0.6, 0.1, 0.2, 0.3, 0.1, 0.8, 0.3}, {0.1, 0.7, 0.01, 0.3, 0.2, 0.1, 0.1}};
     std::vector<double> lambdas{0.2, 0.3};
     std::vector<double> constraints{0.3, 0.0};
 
 
-
+    auto start = std::chrono::high_resolution_clock::now();
     // Create the linear solver with the GLOP backend.
     MPSolver solver("simple_lp_program", MPSolver::GLOP_LINEAR_PROGRAMMING);
 
@@ -71,7 +71,7 @@ void SimpleLpProgram() {
     }
     objective->SetMinimization();
 
-    auto start = std::chrono::high_resolution_clock::now();
+    
     solver.Solve();
     unsigned int duration =
       std::chrono::duration_cast<std::chrono::microseconds>( std::chrono::high_resolution_clock::now() - start ).count();
