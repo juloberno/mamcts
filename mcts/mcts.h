@@ -57,9 +57,7 @@ public:
     void printTreeToDotFile(std::string filename="tree");
 
     void set_heuristic_function(const H& heuristic) {heuristic_ = heuristic;}
-    const mcts::StageNode<S, SE, SO, H>& get_root() const {
-        LOG(INFO) << "root with lambda" << iteration_parameters_.cost_constrained_statistic.LAMBDA;
-        return *root_;}
+    const mcts::StageNode<S, SE, SO, H>& get_root() const { return *root_;}
 
     template<class StateTransitionInfo> 
     std::vector<MctsEdgeInfo<StateTransitionInfo>> visit_mcts_tree_edges(
