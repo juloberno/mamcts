@@ -4,8 +4,9 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = 
     [
-        "@com_github_google_glog//:glog",
+        "@com_github_glog_glog//:glog",
         "@boost//:functional",
-        "@boost//:variant"
+        "@boost//:variant",
+        "@google_or//ortools/linear_solver:linear_solver",
     ]
 )

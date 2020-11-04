@@ -47,13 +47,6 @@ def google_or_dependencies():
 
     _maybe(
     git_repository,
-    name = "com_github_glog_glog",
-    commit = "96a2f23",  # release v0.4.0
-    remote = "https://github.com/google/glog.git",
-    )
-
-    _maybe(
-    git_repository,
     name = "bazel_skylib",
     commit = "e59b620",  # release 1.0.2
     remote = "https://github.com/bazelbuild/bazel-skylib.git",

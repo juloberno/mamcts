@@ -60,10 +60,10 @@ cc_library(
     )
 
     _maybe(
-      git_repository,
-      name = "com_github_google_glog",
-      commit = "3ba8976592274bc1f907c402ce22558011d6fc5e",
-      remote = "https://github.com/google/glog"
+    git_repository,
+    name = "com_github_glog_glog",
+    commit = "96a2f23",  # release v0.4.0
+    remote = "https://github.com/google/glog.git",
     )
 
     _maybe(

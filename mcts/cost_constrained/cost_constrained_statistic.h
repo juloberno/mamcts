@@ -10,6 +10,7 @@
 #include "mcts/statistics/uct_statistic.h"
 #include "mcts/cost_constrained/risk_uct_statistic.h"
 #include "mcts/cost_constrained/lp_single_cost_solver.h"
+#include "mcts/cost_constrained/lp_multi_cost_solver.h"
 #include <iostream>
 #include <iomanip>
 #include <random>
@@ -157,15 +158,17 @@ public:
     }
 
     PolicySampled solve_LP_and_sample(const std::vector<ActionIdx>& feasible_actions) const {
-     // if (feasible_actions.size() == 1) {
-     //   return PolicySampled();
-    //  }
-      if (cost_statistics_.size() > 1) {
-        #ifdef or_tools
-          return PolicySampled();
-        #else
-          LOG(WARNING) << "Build with --define or_tools=true to enable linear program solving for multiple cost constraints. Using single cost version.";
-        #endif
+      if (feasible_actions.size() == 1) {
+          Policy policy;
+          const auto& cost_stats = cost_statistics_.at(0).get_ucb_statistics();
+          for ( const auto action : cost_stats) {
+              policy[action.first] = 0.0;
+          }
+          policy[feasible_actions.at(0)] = 1.0;
+          return PolicySampled(feasible_actions.at(0), policy);
+      } else if (cost_statistics_.size() > 1) {
+          return lp_multiple_cost_solver(feasible_actions, cost_statistics_, cost_constraints_,
+           mcts_parameters_.cost_constrained_statistic.LAMBDAS, random_generator_);
       }
       return lp_single_cost_solver(
           feasible_actions, cost_statistics_.at(CONSTRAINT_COST_IDX),
