@@ -43,13 +43,13 @@ struct CostConstrainedTest : public ::testing::Test {
                                                   goal_reward1, goal_reward2, false);
 
             mcts_parameters_ = mcts_default_parameters();
-            mcts_parameters_.cost_constrained_statistic.COST_CONSTRAINT = cost_constraint;
+            mcts_parameters_.cost_constrained_statistic.COST_CONSTRAINTS = {cost_constraint};
             mcts_parameters_.cost_constrained_statistic.REWARD_UPPER_BOUND = std::max(goal_reward1_, goal_reward2_);
             mcts_parameters_.cost_constrained_statistic.REWARD_LOWER_BOUND = 0.0f;
             mcts_parameters_.cost_constrained_statistic.COST_LOWER_BOUND = 0.0f;
             mcts_parameters_.cost_constrained_statistic.COST_UPPER_BOUND = 1.0f;
             mcts_parameters_.cost_constrained_statistic.KAPPA = 10.0f;
-            mcts_parameters_.cost_constrained_statistic.GRADIENT_UPDATE_STEP = 1.0f;
+            mcts_parameters_.cost_constrained_statistic.GRADIENT_UPDATE_STEP = 1.5f;
             mcts_parameters_.cost_constrained_statistic.TAU_GRADIENT_CLIP = 1.0f;
             mcts_parameters_.cost_constrained_statistic.ACTION_FILTER_FACTOR = 1.0f;
             mcts_parameters_.cost_constrained_statistic.USE_LAMBDA_POLICY = true;
@@ -64,7 +64,7 @@ struct CostConstrainedTest : public ::testing::Test {
               mcts_parameters_.random_actions_statistic.PROGRESSIVE_WIDENING_K = 1.0;
             }
 
-            mcts_parameters_.cost_constrained_statistic.LAMBDA = lambda_init;
+            mcts_parameters_.cost_constrained_statistic.LAMBDAS = {lambda_init};
             mcts_ = new Mcts<CostConstrainedStatisticTestState, CostConstrainedStatistic,
                         RandomActionsStatistic, RandomHeuristic>(mcts_parameters_);
     }
@@ -96,7 +96,7 @@ struct CostConstrainedNStepTest : public CostConstrainedTest {
 
 
 TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_eq) {
-  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, 0.82f, 2.2f, false, 2000);
+  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, 0.82f, 1.0f, false, 2000);
 
   mcts_->search(*state_);
   auto best_action = mcts_->returnBestAction();
@@ -121,7 +121,7 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_eq) {
 
 
 TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_lower) {
-  SetUp(1, 1.0f, 1.0f, 0.8f, 0.3f, 0.75f, 2.2f, false, 2000);
+  SetUp(1, 1.0f, 1.0f, 0.8f, 0.3f, 0.75f, 1.0f, false, 2000);
   mcts_->search(*state_);
   auto best_action = mcts_->returnBestAction();
   const auto root = mcts_->get_root();
@@ -192,12 +192,12 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
       mcts.search(*state_);
       auto sampled_policy = mcts.get_root().get_ego_int_node().greedy_policy(
               0, mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR);
-      VLOG(5) << "Constraint: " << mcts_parameters_local.cost_constrained_statistic.COST_CONSTRAINT << ", Action: " << sampled_policy.first << "\n" <<
+      VLOG(5) << "Constraint: " << mcts_parameters_local.cost_constrained_statistic.COST_CONSTRAINTS.at(0) << ", Action: " << sampled_policy.first << "\n" <<
                 mcts.get_root().get_ego_int_node().print_edge_information(0);
       state = state->execute(JointAction{sampled_policy.first}, rewards, ego_cost);
-      const auto& current_constraint = mcts_parameters_local.cost_constrained_statistic.COST_CONSTRAINT;
-      mcts_parameters_local.cost_constrained_statistic.COST_CONSTRAINT =
-      mcts.get_root().get_ego_int_node().calc_updated_constraint_based_on_policy(sampled_policy, current_constraint);
+      const auto& current_constraints = mcts_parameters_local.cost_constrained_statistic.COST_CONSTRAINTS;
+      mcts_parameters_local.cost_constrained_statistic.COST_CONSTRAINTS =
+      mcts.get_root().get_ego_int_node().calc_updated_constraints_based_on_policy(sampled_policy, current_constraints);
     }
     if(ego_cost[0] > 0.0f) {
       num_collisions++;
@@ -229,7 +229,6 @@ TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
     mcts_parameters_local.cost_constrained_statistic.USE_LAMBDA_POLICY = false;
     mcts_parameters_local.cost_constrained_statistic.USE_COST_THRESHOLDING = {true};
     mcts_parameters_local.cost_constrained_statistic.COST_THRESHOLDS = {0.5};
-    mcts_parameters_local.cost_constrained_statistic.COST_THRESHOLDS = {0.5};
 
     auto state = make_initial_state(i);
     VLOG(4) << "------------------------ Next sample -------------------------";
@@ -259,7 +258,7 @@ TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
 
 int main(int argc, char **argv) {
   FLAGS_alsologtostderr = true;
-  FLAGS_v = 4;
+  FLAGS_v = 3;
   google::InitGoogleLogging("test");
   ::testing::InitGoogleTest(&argc, argv);
 

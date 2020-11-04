@@ -182,6 +182,8 @@ public:
         return UctStatistic::ucb_stats_to_string(ucb_statistics_);
     }
 
+    const UcbStatistics& get_ucb_statistics() const { return ucb_statistics_; }
+
     static std::string ucb_stats_to_string(const UcbStatistics& ucb_stats) {
       std::stringstream ss;
       for(const auto& ucb_stat : ucb_stats) {

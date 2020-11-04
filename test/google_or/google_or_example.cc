@@ -5,7 +5,7 @@
 namespace operations_research {
 
 void SimpleLpProgram() {
-    std::vector<std::vector<double>> action_values{{0.6, 0.1, 0.2, 0.3, 0.1, 0.8, 0.3}, {0.1, 0.7, 0.01, 0.3, 0.2, 0.1, 0.1}};
+    std::vector<std::vector<double>> action_values{{0.6, 0.1, 0.5, 0.3, 0.1, 0.8, 0.3}, {0.1, 0.7, 0.01, 0.3, 0.2, 0.1, 0.7}};
     std::vector<double> lambdas{0.2, 0.3};
     std::vector<double> constraints{0.3, 0.0};
 

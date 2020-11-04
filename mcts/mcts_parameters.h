@@ -37,12 +37,12 @@ struct MctsParameters{
   };
 
   struct CostConstrainedStatisticParameters {
-      double LAMBDA;
+      std::vector<double> LAMBDAS;
       double COST_UPPER_BOUND;
       double COST_LOWER_BOUND;
       double REWARD_UPPER_BOUND;
       double REWARD_LOWER_BOUND;
-      double COST_CONSTRAINT;
+      std::vector<double> COST_CONSTRAINTS;
       double KAPPA;
       double GRADIENT_UPDATE_STEP;
       double TAU_GRADIENT_CLIP;

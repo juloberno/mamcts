@@ -16,6 +16,7 @@ namespace mcts {
 
 typedef double ActionWeight;
 typedef std::unordered_map<ActionIdx, ActionWeight> Policy;
+typedef std::pair<ActionIdx, Policy> PolicySampled;
 
 template <class Implementation>
 class NodeStatistic
