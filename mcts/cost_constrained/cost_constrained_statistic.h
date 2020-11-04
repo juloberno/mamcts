@@ -427,8 +427,8 @@ void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsPa
                                                                             gradient_update_step,
                                                                             cost_constraints.at(cost_idx),
                                                                             tau_gradient_clip,
-                                                                            normalized_cost_sampled_action,
                                                                             parameters.DISCOUNT_FACTOR,
+                                                                            normalized_cost_sampled_action,
                                                                             root_statistic.get_reward_statistic().get_reward_lower_bound(),
                                                                             root_statistic.get_reward_statistic().get_reward_upper_bound());
     parameters.cost_constrained_statistic.LAMBDAS[cost_idx] = new_lambda;

@@ -96,7 +96,7 @@ struct CostConstrainedNStepTest : public CostConstrainedTest {
 
 
 TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_eq) {
-  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, 0.82f, 1.0f, false, 2000);
+  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, 0.82f, 2.2f, false, 2000);
 
   mcts_->search(*state_);
   auto best_action = mcts_->returnBestAction();
@@ -121,7 +121,7 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_eq) {
 
 
 TEST_F(CostConstrainedTest, one_step_higher_reward_higher_risk_constraint_lower) {
-  SetUp(1, 1.0f, 1.0f, 0.8f, 0.3f, 0.75f, 1.0f, false, 2000);
+  SetUp(1, 1.0f, 1.0f, 0.8f, 0.3f, 0.75f, 2.2f, false, 2000);
   mcts_->search(*state_);
   auto best_action = mcts_->returnBestAction();
   const auto root = mcts_->get_root();
