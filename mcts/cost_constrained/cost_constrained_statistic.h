@@ -31,7 +31,6 @@ public:
              cost_statistics_(),
              unexpanded_actions_(num_actions),
              mean_step_costs_(),
-             lambda(mcts_parameters.cost_constrained_statistic.LAMBDA),
              kappa(mcts_parameters.cost_constrained_statistic.KAPPA),
              action_filter_factor(mcts_parameters.cost_constrained_statistic.ACTION_FILTER_FACTOR),
              cost_constraint(mcts_parameters.cost_constrained_statistic.COST_CONSTRAINT),
@@ -132,13 +131,14 @@ public:
         std::transform(reward_statistic_.ucb_statistics_.begin(), reward_statistic_.ucb_statistics_.end(), 
                    allowed_actions.begin(),[](auto p) {return p.first; });
       }
+
       for (const auto& action_idx  : allowed_actions) {
           double cost_value_normalized = cost_statistics_.at(CONSTRAINT_COST_IDX).get_normalized_ucb_value(action_idx);
           double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(action_idx);
-
+          
           const auto exploration_term = kappa_local * 
               sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(action_idx).action_count_));
-          values[action_idx] = reward_value_normalized - lambda * cost_value_normalized 
+          values[action_idx] = reward_value_normalized - mcts_parameters_.cost_constrained_statistic.LAMBDA * cost_value_normalized 
                  + (std::isnan(exploration_term) ? std::numeric_limits<double>::max() : exploration_term);
       }
     }
@@ -359,7 +359,7 @@ public:
             for(std::size_t cost_stat_idx = 0; cost_stat_idx < cost_statistics_.size(); ++cost_stat_idx) {
               ss << cost_stat_idx <<  ") [" << UctStatistic::ucb_stats_to_string(cost_statistics_.at(cost_stat_idx).ucb_statistics_) << "]  ";
             } 
-            ss << "\n" << "Lambda:" << lambda << "\n"
+            ss << "\n" << "Lambda:" << mcts_parameters_.cost_constrained_statistic.LAMBDA << "\n"
             << "Ucb values: " << ucb_values << "\n"
             << "Mean step cost: C(a=" << action << ") = " << mean_step_costs_.at(action) << "\n";
         return ss.str();
@@ -418,7 +418,6 @@ private:
     std::vector<ActionIdx> unexpanded_actions_;
     std::unordered_map<ActionIdx, std::vector<Cost>> mean_step_costs_;
 
-    const double& lambda;
     const double kappa;
     const double action_filter_factor;
     const double cost_constraint;
@@ -437,7 +436,7 @@ void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsPa
     return;
   }
   const double current_lambda = parameters.cost_constrained_statistic.LAMBDA;
-  const double gradient_update_step = parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP/(0.1*current_iteration + 1);
+  const double gradient_update_step = parameters.cost_constrained_statistic.GRADIENT_UPDATE_STEP/(current_iteration + 1);
   const double cost_constraint = parameters.cost_constrained_statistic.COST_CONSTRAINT;
   const double tau_gradient_clip = parameters.cost_constrained_statistic.TAU_GRADIENT_CLIP;
   const double new_lambda =  CostConstrainedStatistic::calculate_next_lambda(current_lambda,

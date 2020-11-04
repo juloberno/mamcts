@@ -57,7 +57,9 @@ public:
     void printTreeToDotFile(std::string filename="tree");
 
     void set_heuristic_function(const H& heuristic) {heuristic_ = heuristic;}
-    const mcts::StageNode<S, SE, SO, H>& get_root() const {return *root_;}
+    const mcts::StageNode<S, SE, SO, H>& get_root() const {
+        LOG(INFO) << "root with lambda" << iteration_parameters_.cost_constrained_statistic.LAMBDA;
+        return *root_;}
 
     template<class StateTransitionInfo> 
     std::vector<MctsEdgeInfo<StateTransitionInfo>> visit_mcts_tree_edges(
@@ -99,12 +101,12 @@ Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker& beli
     const auto max_iterations = mcts_parameters_.MAX_NUMBER_OF_ITERATIONS;
     const auto max_search_time_ms = mcts_parameters_.MAX_SEARCH_TIME;
 
-    MctsParameters iteration_params(mcts_parameters_);
+    iteration_parameters_ = mcts_parameters_;
     root_ = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
-            const unsigned int&> (nullptr, current_state.clone(),JointAction(),0,  iteration_params);
+            const unsigned int&> (nullptr, current_state.clone(),JointAction(),0,  iteration_parameters_);
     num_iterations_ = 0;
     while (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() < max_search_time_ms && num_iterations_<max_iterations) {
-        NodeStatistic<SE>::update_statistic_parameters(iteration_params, root_->get_ego_int_node(), num_iterations_);
+        NodeStatistic<SE>::update_statistic_parameters(iteration_parameters_, root_->get_ego_int_node(), num_iterations_);
         belief_tracker.sample_current_hypothesis();
         iterate(root_);
         num_iterations_ += 1;
