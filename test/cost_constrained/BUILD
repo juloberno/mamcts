@@ -31,7 +31,7 @@ cc_test(
         "cost_constrained_statistic_test_state_multiple_cost.h",
         "cost_constrained_statistic_test_state_single_cost.h"
     ],
-    copts = ["-Iexternal/gtest/include"],
+    copts = ["-Iexternal/gtest/include", "-DNDEBUG"],
     deps = [
         "//mcts:mamcts",
         "@gtest//:main",

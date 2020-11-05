@@ -237,7 +237,7 @@ TEST(lp_multiple_cost_solver, one_is_one) {
 
 int main(int argc, char **argv) {
   FLAGS_alsologtostderr = true;
-  FLAGS_v = 3;
+  FLAGS_v = 0;
   google::InitGoogleLogging("test");
   ::testing::InitGoogleTest(&argc, argv);
 
