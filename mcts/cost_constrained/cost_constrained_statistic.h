@@ -91,7 +91,7 @@ public:
       return policy;
     }
 
-    Cost calc_updated_constraint_based_on_policy(const PolicySampled& policy, const Cost& current_constraint) const {
+    Cost calc_updated_constraint_based_on_policy(const PolicySampled& policy, const Cost& current_constraint, const Cost& mean_step_cost) const {
       double other_actions_costs = 0.0f;
       for(const auto& action_pair : policy.second) {
         if(action_pair.first == policy.first) {
@@ -99,14 +99,15 @@ public:
         }
         other_actions_costs += action_pair.second * cost_statistics_.at(CONSTRAINT_COST_IDX).ucb_statistics_.at(action_pair.first).action_value_;
       }
-      return (current_constraint - policy.second.at(policy.first)*mean_step_costs_.at(policy.first).at(CONSTRAINT_COST_IDX) - other_actions_costs) /
+      return (current_constraint - policy.second.at(policy.first)* - other_actions_costs) /
               (cost_statistics_.at(CONSTRAINT_COST_IDX).k_discount_factor * policy.second.at(policy.first));
     }
 
     std::vector<Cost> calc_updated_constraints_based_on_policy(const PolicySampled& policy, const std::vector<Cost>& current_constraints) const {
       std::vector<Cost> new_constraints;
-      for (const auto current_constraint : current_constraints) {
-        new_constraints.push_back(calc_updated_constraint_based_on_policy(policy, current_constraint));
+      for (std::size_t cost_idx = 0; cost_idx < current_constraints.size(); ++cost_idx) {
+        new_constraints.push_back(calc_updated_constraint_based_on_policy(policy, current_constraints.at(cost_idx),
+             mean_step_costs_.at(policy.first).at(cost_idx)));
       }
       return new_constraints;
     }
