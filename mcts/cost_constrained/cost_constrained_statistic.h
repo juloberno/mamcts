@@ -323,12 +323,15 @@ public:
       return ss.str();
     }
 
-    Cost expected_policy_cost(const Policy& policy) const {
-      Cost expected_cost = 0.0;
-      const auto& cost_stats = cost_statistics_.at(CONSTRAINT_COST_IDX).ucb_statistics_;
-      for(const auto& cost_stat : cost_stats) {
-        expected_cost += policy.at(cost_stat.first) * cost_stat.second.action_value_;
-      } 
+    std::vector<mcts::Cost> expected_policy_cost(const Policy& policy) const {
+      std::vector<mcts::Cost> expected_cost(2, 0.0);
+      for ( std::size_t cost_idx; cost_idx < cost_statistics_.size(); ++cost_idx) {
+        const auto& cost_stats = cost_statistics_.at(cost_idx);
+        const auto& ucb_stats = cost_stats.ucb_statistics_;
+        for(const auto& ucb_stat : ucb_stats) {
+          expected_cost[cost_idx] += policy.at(ucb_stat.first) * ucb_stat.second.action_value_;
+        } 
+      }
       return expected_cost;
     }
 

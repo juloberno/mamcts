@@ -20,7 +20,7 @@ PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_act
            std::mt19937& random_generator) {
 
     std::vector<std::vector<Cost>> action_values;
-    for (std::size_t cost_idx; cost_idx < cost_statistics.size(); ++cost_idx) {
+    for (std::size_t cost_idx = 0; cost_idx < cost_statistics.size(); ++cost_idx) {
         std::vector<Cost> action_values_lambda;
         const auto& cost_stats = cost_statistics.at(cost_idx).get_ucb_statistics();
         for (const auto feasible_action : feasible_actions) {
