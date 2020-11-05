@@ -8,5 +8,6 @@ cc_library(
         "@boost//:functional",
         "@boost//:variant",
         "@google_or//ortools/linear_solver:linear_solver",
-    ]
+    ],
+    copts = ["-Iexternal/gtest/include", "-DNDEBUG", "-O3"],
 )
