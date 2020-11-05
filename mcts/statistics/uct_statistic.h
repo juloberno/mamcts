@@ -24,6 +24,8 @@ public:
     typedef struct UcbPair
     {
         UcbPair() : action_count_(0), action_value_(0.0f) {};
+        UcbPair(unsigned count, double value) : 
+            action_count_(count), action_value_(value) {};
         unsigned action_count_;
         double action_value_;
     } UcbPair;
@@ -204,6 +206,8 @@ public:
     inline unsigned int num_expanded_actions() const {
         return ucb_statistics_.size();
     }
+
+    void SetUcbStatistics(const UcbStatistics& ucb_stats) { ucb_statistics_ = ucb_stats; }
 
 
 protected:

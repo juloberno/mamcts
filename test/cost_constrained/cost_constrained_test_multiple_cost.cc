@@ -210,7 +210,29 @@ TEST_F(CostConstrainedTest, allow_no_safety_violation_and_no_collision) {
 }
 
 TEST(lp_multiple_cost_solver, one_is_one) {
-  
+  std::vector<UctStatistic> cost_statistics;
+  cost_statistics.push_back(
+    UctStatistic(7, 1, mcts_default_parameters()));
+  cost_statistics.push_back(
+    UctStatistic(7, 1, mcts_default_parameters()));
+
+  using ucb = UctStatistic::UcbPair;
+  UctStatistic::UcbStatistics ucb_stats1{{2, ucb(0, 0.2)}, {4, ucb(0, 0.2)}, {5, ucb(0, 0.3)}};
+  UctStatistic::UcbStatistics ucb_stats2{{2, ucb(0, 0.1)}, {4, ucb(0, 0.5)}, {5, ucb(0, 0.1)}};
+
+  cost_statistics[0].SetUcbStatistics(ucb_stats1);
+  cost_statistics[1].SetUcbStatistics(ucb_stats2);
+
+  auto random_generator = std::mt19937();
+  auto policy_sampled = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.2, 0.1}, {0.1, 0.1}, random_generator);
+  EXPECT_EQ(policy_sampled.first, 2);
+  EXPECT_EQ(policy_sampled.second.at(0), 1.0);
+  EXPECT_EQ(policy_sampled.second.at(1), 0.0);
+  EXPECT_EQ(policy_sampled.second.at(2), 1.0);
+  EXPECT_EQ(policy_sampled.second.at(3), 0.0);
+  EXPECT_EQ(policy_sampled.second.at(4), 0.0);
+  EXPECT_EQ(policy_sampled.second.at(5), 0.0);
+  EXPECT_EQ(policy_sampled.second.at(6), 0.0);
 }
 
 int main(int argc, char **argv) {
