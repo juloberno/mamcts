@@ -16,16 +16,15 @@
 typedef double Probability;
 
 using namespace mcts;
-template <class T>
-class CostConstrainedStatisticTestStateBase : public mcts::StateInterface<T>, 
+class CostConstrainedStatisticTestStateSingleCost : public mcts::StateInterface<CostConstrainedStatisticTestStateSingleCost>, 
   public RandomGenerator
 {
 public:
-    CostConstrainedStatisticTestStateBase(int n_steps, Cost collision_risk1, Cost collision_risk2,
+    CostConstrainedStatisticTestStateSingleCost(int n_steps, Cost collision_risk1, Cost collision_risk2,
                                      Reward reward_goal1, Reward reward_goal2, bool is_terminal, unsigned int seed = 1000) :
-                                     CostConstrainedStatisticTestStateBase(0, n_steps, collision_risk1, collision_risk2,
+                                     CostConstrainedStatisticTestStateSingleCost(0, n_steps, collision_risk1, collision_risk2,
                                       reward_goal1, reward_goal2, is_terminal, seed) {}
-    CostConstrainedStatisticTestStateBase(int current_state, int n_steps, Cost collision_risk1, Cost collision_risk2,
+    CostConstrainedStatisticTestStateSingleCost(int current_state, int n_steps, Cost collision_risk1, Cost collision_risk2,
                                      Reward reward_goal1, Reward reward_goal2, bool is_terminal, unsigned int seed) : 
                                      RandomGenerator(seed),
                                       current_state_(current_state), n_steps_(n_steps), seed_(seed),
@@ -33,24 +32,23 @@ public:
                                       reward_goal1_(reward_goal1), reward_goal2_(reward_goal2),
                                       is_terminal_(is_terminal) {}
 
+    ~CostConstrainedStatisticTestStateSingleCost() {};
 
-    ~CostConstrainedStatisticTestStateBase() {};
-
-    std::shared_ptr<T> clone() const {
-        return std::make_shared<T>(*this);
+    std::shared_ptr<CostConstrainedStatisticTestStateSingleCost> clone() const {
+        return std::make_shared<CostConstrainedStatisticTestStateSingleCost>(*this);
     }
 
     const std::size_t get_num_costs() const {
       return 1;
     }
 
-    std::shared_ptr<T> execute(const JointAction& joint_action, std::vector<Reward>& rewards, EgoCosts& ego_cost) const {
+    std::shared_ptr<CostConstrainedStatisticTestStateSingleCost> execute(const JointAction& joint_action, std::vector<Reward>& rewards, EgoCosts& ego_cost) const {
         rewards.resize(1);
-        const auto ego_agent_action = joint_action[CostConstrainedStatisticTestStateBase::ego_agent_idx];
+        const auto ego_agent_action = joint_action[CostConstrainedStatisticTestStateSingleCost::ego_agent_idx];
         if(ego_agent_action == 0) {
             rewards[0] = 0;
             ego_cost = {0.0f};
-            return std::make_shared<T>(0, n_steps_, collision_risk1_, collision_risk2_,
+            return std::make_shared<CostConstrainedStatisticTestStateSingleCost>(0, n_steps_, collision_risk1_, collision_risk2_,
                                                             reward_goal1_, reward_goal2_, true);
         } else {
             bool is_terminal = false;
@@ -90,7 +88,7 @@ public:
             rewards[0] = 0;
             ego_cost = get_other_cost();
           }
-          return std::make_shared<T>(new_state, n_steps_, collision_risk1_, collision_risk2_,
+          return std::make_shared<CostConstrainedStatisticTestStateSingleCost>(new_state, n_steps_, collision_risk1_, collision_risk2_,
                                                             reward_goal1_, reward_goal2_, is_terminal, seed_*10);
         }
     }
@@ -144,7 +142,7 @@ public:
     std::string sprintf() const
     {
         std::stringstream ss;
-        ss << "CostConstrainedStatisticTestStateBase (current_state: " << current_state_ << ")";
+        ss << "CostConstrainedStatisticTestStateSingleCost (current_state: " << current_state_ << ")";
         return ss.str();
     }
 private:
@@ -159,12 +157,6 @@ private:
     const Cost collision_risk1_;
     const Cost collision_risk2_;
 };
-
-class CostConstrainedStatisticTestStateSingleCost : 
-    public CostConstrainedStatisticTestStateBase<CostConstrainedStatisticTestStateSingleCost> {
-      using CostConstrainedStatisticTestStateBase<CostConstrainedStatisticTestStateSingleCost>::CostConstrainedStatisticTestStateBase;
-    };
-
 
 
 #endif 
