@@ -93,35 +93,6 @@ struct CostConstrainedNStepTest : public CostConstrainedTest {
 };
 
 
-TEST_F(CostConstrainedTest, allow_safety_violation_but_no_collision) {
-  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, {0.35f, 0.7f}, 2.2f, false, 2000);
-
-  mcts_->search(*state_);
-  auto best_action = mcts_->returnBestAction();
-  const auto root = mcts_->get_root();
-  const auto& reward_stats = root.get_ego_int_node().get_reward_ucb_statistics();
-  const auto& cost_stats1 = root.get_ego_int_node().get_cost_ucb_statistics(0);
-  const auto& cost_stats2 = root.get_ego_int_node().get_cost_ucb_statistics(1);
-
-  // Cost statistics desired
-  EXPECT_NEAR(cost_stats1.at(0).action_value_, 0.0, 0.0);
-  EXPECT_NEAR(cost_stats1.at(1).action_value_, 0.0, 0.05);
-  EXPECT_NEAR(cost_stats1.at(2).action_value_, 0.3, 0.05);
-
-  EXPECT_NEAR(cost_stats2.at(0).action_value_, 0.0, 0.0);
-  EXPECT_NEAR(cost_stats2.at(1).action_value_, 0.8, 0.05);
-  EXPECT_NEAR(cost_stats2.at(2).action_value_, 0.0, 0.00);
-
-  // Reward statistics desired
-  EXPECT_NEAR(reward_stats.at(2).action_value_, (1-risk_action2_)*goal_reward2_, 0.08);
-  EXPECT_NEAR(reward_stats.at(1).action_value_, (1-risk_action1_)*goal_reward1_, 0.08);
-  EXPECT_NEAR(reward_stats.at(0).action_value_, 0, 0.00);
-
-  EXPECT_EQ(best_action, 2);
-
-  LOG(INFO) << "\n"  << root.get_ego_int_node().print_edge_information(0);
-}
-
 TEST_F(CostConstrainedTest, allow_collision_and_safety_violation) {
   SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, {0.4f, 0.82f}, 2.2f, false, 2000);
 
@@ -147,64 +118,6 @@ TEST_F(CostConstrainedTest, allow_collision_and_safety_violation) {
   EXPECT_NEAR(reward_stats.at(0).action_value_, 0, 0.00);
 
   EXPECT_EQ(best_action, 1);
-
-  LOG(INFO) << "\n"  << root.get_ego_int_node().print_edge_information(0);
-}
-
-TEST_F(CostConstrainedTest, allow_no_safety_violation_but_collision) {
-  SetUp(1, 0.5f, 2.0f, 0.8f, 0.3f, {0.25f, 0.82f}, 2.2f, false, 2000);
-
-  mcts_->search(*state_);
-  auto best_action = mcts_->returnBestAction();
-  const auto root = mcts_->get_root();
-  const auto& reward_stats = root.get_ego_int_node().get_reward_ucb_statistics();
-  const auto& cost_stats1 = root.get_ego_int_node().get_cost_ucb_statistics(0);
-  const auto& cost_stats2 = root.get_ego_int_node().get_cost_ucb_statistics(1);
-
-  // Cost statistics desired
-  EXPECT_NEAR(cost_stats1.at(0).action_value_, 0.0, 0.0);
-  EXPECT_NEAR(cost_stats1.at(1).action_value_, 0.0, 0.05);
-  EXPECT_NEAR(cost_stats1.at(2).action_value_, 0.3, 0.05);
-
-  EXPECT_NEAR(cost_stats2.at(0).action_value_, 0.0, 0.0);
-  EXPECT_NEAR(cost_stats2.at(1).action_value_, 0.8, 0.05);
-  EXPECT_NEAR(cost_stats2.at(2).action_value_, 0.0, 0.00);
-
-  // Reward statistics desired
-  EXPECT_NEAR(reward_stats.at(2).action_value_, (1-risk_action2_)*goal_reward2_, 0.08);
-  EXPECT_NEAR(reward_stats.at(1).action_value_, (1-risk_action1_)*goal_reward1_, 0.08);
-  EXPECT_NEAR(reward_stats.at(0).action_value_, 0, 0.00);
-
-  EXPECT_EQ(best_action, 1);
-
-  LOG(INFO) << "\n"  << root.get_ego_int_node().print_edge_information(0);
-}
-
-TEST_F(CostConstrainedTest, allow_no_safety_violation_and_no_collision) {
-  SetUp(1, 0.5f, 2.0f, 0.8f, 0.3f, {0.2f, 0.7f}, 2.2f, false, 2000);
-
-  mcts_->search(*state_);
-  auto best_action = mcts_->returnBestAction();
-  const auto root = mcts_->get_root();
-  const auto& reward_stats = root.get_ego_int_node().get_reward_ucb_statistics();
-  const auto& cost_stats1 = root.get_ego_int_node().get_cost_ucb_statistics(0);
-  const auto& cost_stats2 = root.get_ego_int_node().get_cost_ucb_statistics(1);
-
-  // Cost statistics desired
-  EXPECT_NEAR(cost_stats1.at(0).action_value_, 0.0, 0.0);
-  EXPECT_NEAR(cost_stats1.at(1).action_value_, 0.0, 0.05);
-  EXPECT_NEAR(cost_stats1.at(2).action_value_, 0.3, 0.05);
-
-  EXPECT_NEAR(cost_stats2.at(0).action_value_, 0.0, 0.0);
-  EXPECT_NEAR(cost_stats2.at(1).action_value_, 0.8, 0.05);
-  EXPECT_NEAR(cost_stats2.at(2).action_value_, 0.0, 0.00);
-
-  // Reward statistics desired
-  EXPECT_NEAR(reward_stats.at(2).action_value_, (1-risk_action2_)*goal_reward2_, 0.08);
-  EXPECT_NEAR(reward_stats.at(1).action_value_, (1-risk_action1_)*goal_reward1_, 0.08);
-  EXPECT_NEAR(reward_stats.at(0).action_value_, 0, 0.00);
-
-  EXPECT_EQ(best_action, 0);
 
   LOG(INFO) << "\n"  << root.get_ego_int_node().print_edge_information(0);
 }
