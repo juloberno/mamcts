@@ -149,8 +149,8 @@ public:
 
     Reward get_normalized_ucb_value(const ActionIdx& action) const {
       double action_value_normalized =  (ucb_statistics_.at(action).action_value_-lower_bound)/(upper_bound-lower_bound); 
-      MCTS_EXPECT_TRUE(action_value_normalized>=0);
-      MCTS_EXPECT_TRUE(action_value_normalized<=1);
+      
+      LOG_IF(FATAL, action_value_normalized>1 || action_value_normalized < 0) << "Wrong action value normalization: " << action_value_normalized;
       return action_value_normalized;
     }
 
@@ -181,18 +181,14 @@ public:
     }
 
     std::string sprintf() const {
-        return UctStatistic::ucb_stats_to_string(ucb_statistics_);
+        std::stringstream ss;
+        for(const auto& ucb_stat : ucb_statistics_) {
+            ss << "a=" <<  ucb_stat.first << ", q=" << get_normalized_ucb_value(ucb_stat.first) << ", n=" << ucb_stat.second.action_count_ << "|";
+        }
+        return ss.str();
     }
 
     const UcbStatistics& get_ucb_statistics() const { return ucb_statistics_; }
-
-    static std::string ucb_stats_to_string(const UcbStatistics& ucb_stats) {
-      std::stringstream ss;
-      for(const auto& ucb_stat : ucb_stats) {
-          ss << "a=" <<  ucb_stat.first << ", q=" << ucb_stat.second.action_value_ << ", n=" << ucb_stat.second.action_count_ << "|";
-      }
-      return ss.str();
-    }
 
      inline bool require_progressive_widening_total() const {
         const auto widening_term = progressive_widening_k * std::pow(total_node_visits_,

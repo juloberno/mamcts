@@ -24,7 +24,7 @@ PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_act
         std::vector<Cost> action_values_lambda;
         const auto& cost_stats = cost_statistics.at(cost_idx).get_ucb_statistics();
         for (const auto feasible_action : feasible_actions) {
-            action_values_lambda.push_back(cost_stats.at(feasible_action).action_value_);
+            action_values_lambda.push_back(cost_statistics.at(cost_idx).get_normalized_ucb_value(feasible_action));
         }
         action_values.push_back(action_values_lambda);
     }

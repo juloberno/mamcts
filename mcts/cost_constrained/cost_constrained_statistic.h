@@ -330,7 +330,7 @@ public:
         const auto& cost_stats = cost_statistics_.at(cost_idx);
         const auto& ucb_stats = cost_stats.ucb_statistics_;
         for(const auto& ucb_stat : ucb_stats) {
-          expected_cost[cost_idx] += policy.at(ucb_stat.first) * ucb_stat.second.action_value_;
+          expected_cost[cost_idx] += policy.at(ucb_stat.first) * cost_stats.get_normalized_ucb_value(ucb_stat.first);
         } 
       }
       return expected_cost;
@@ -341,10 +341,10 @@ public:
         std::unordered_map<ActionIdx, double> ucb_values;
         calculate_ucb_values_with_lambda(ucb_values, 0.0f);
         std::stringstream ss;
-        ss  << "Reward stats: " << UctStatistic::ucb_stats_to_string(reward_stats) << "\n"
+        ss  << "Reward stats: " << reward_statistic_.sprintf() << "\n"
             << "Cost stats: ";
             for(std::size_t cost_stat_idx = 0; cost_stat_idx < cost_statistics_.size(); ++cost_stat_idx) {
-              ss << cost_stat_idx <<  ") [" << UctStatistic::ucb_stats_to_string(cost_statistics_.at(cost_stat_idx).ucb_statistics_) << "]  ";
+              ss << cost_stat_idx <<  ") [" << cost_statistics_.at(cost_stat_idx).sprintf() << "]  ";
             } 
             ss << "\n" << "Lambdas:" << mcts_parameters_.cost_constrained_statistic.LAMBDAS << "\n"
             << "Ucb values: " << ucb_values << "\n"
