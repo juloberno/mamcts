@@ -17,7 +17,7 @@ namespace mcts{
 PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_actions,
            const std::vector<UctStatistic>& cost_statistics, const std::vector<Cost> cost_constraints,
             std::vector<double> lambdas,
-           std::mt19937& random_generator) {
+           std::mt19937& random_generator, double max_errors = 1.0) {
 
     std::vector<std::vector<Cost>> action_values;
     for (std::size_t cost_idx = 0; cost_idx < cost_statistics.size(); ++cost_idx) {
@@ -43,8 +43,8 @@ PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_act
     }
 
     for (std::size_t lambda_idx = 0; lambda_idx <  lambdas.size(); ++lambda_idx) {
-        pos_errors.push_back(solver.MakeNumVar(0.0, 1.0, std::string("pe_") + std::to_string(lambda_idx)));
-        neg_errors.push_back(solver.MakeNumVar(0.0, 1.0, std::string("ne_") + std::to_string(lambda_idx)));
+        pos_errors.push_back(solver.MakeNumVar(0.0, max_errors, std::string("pe_") + std::to_string(lambda_idx)));
+        neg_errors.push_back(solver.MakeNumVar(0.0, max_errors, std::string("ne_") + std::to_string(lambda_idx)));
     }
 
     // constraints for weights times costs and errors
@@ -86,13 +86,27 @@ PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_act
     }
     objective->SetMinimization();
     
-    solver.Solve();
+    const auto solver_status = solver.Solve();
 
     Policy policy;
     const auto& cost_stats = cost_statistics.at(0).get_ucb_statistics();
     for ( const auto action : cost_stats) {
         policy[action.first] = 0.0f;
     }
+    if(solver_status == operations_research::MPSolverResponseStatus::MPSOLVER_INFEASIBLE) {
+        std::stringstream ss;
+        for (std::size_t cost_idx = 0; cost_idx < cost_statistics.size(); ++cost_idx) {
+            ss << "Cost stat " << cost_idx << ": " <<cost_statistics.at(cost_idx).sprintf() << ", ";
+            }
+        const auto min_idx = std::min_element(action_values.at(1).begin(), action_values.at(1).end()) -
+                            action_values.at(1).begin();
+        const ActionIdx min_action = feasible_actions.at(min_idx);
+        LOG(WARNING) << "MultiCostSolver Infeasible for costs: " << ss.str() << " and lambdas " << lambdas <<
+         ". Returning lowest cost action " << min_action;
+        policy[min_action] = 1.0;
+        return std::make_pair(min_action, policy);
+    }
+
     std::vector<int> discrete_probability_weights;
     for (std::size_t action_idx = 0; action_idx < action_weights.size(); ++action_idx) {
         policy[feasible_actions.at(action_idx)] = action_weights[action_idx]->solution_value();

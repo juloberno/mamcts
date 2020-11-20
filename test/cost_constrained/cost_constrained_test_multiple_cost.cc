@@ -147,10 +147,13 @@ TEST(lp_multiple_cost_solver, one_is_one) {
 
 TEST(lp_multiple_cost_solver, two_are_half) {
   std::vector<UctStatistic> cost_statistics;
+  auto mcts_parameters = mcts_default_parameters();
+  mcts_parameters.uct_statistic.LOWER_BOUND = 0.0;
+  mcts_parameters.uct_statistic.UPPER_BOUND = 1.0;
   cost_statistics.push_back(
-    UctStatistic(7, 1, mcts_default_parameters()));
+    UctStatistic(7, 1, mcts_parameters));
   cost_statistics.push_back(
-    UctStatistic(7, 1, mcts_default_parameters()));
+    UctStatistic(7, 1, mcts_parameters));
 
   using ucb = UctStatistic::UcbPair;
   UctStatistic::UcbStatistics ucb_stats1{{1, ucb(0, 0.8)}, {2, ucb(0, 0.3)}, {4, ucb(0, 0.1)}, {5, ucb(0, 0.3)}};
@@ -161,7 +164,7 @@ TEST(lp_multiple_cost_solver, two_are_half) {
 
   auto random_generator = std::mt19937();
   auto policy_sampled = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.2, 0.2}, {0.1, 0.1}, random_generator);
-  EXPECT_EQ(policy_sampled.first, 2);
+  EXPECT_TRUE(policy_sampled.first == 2 || policy_sampled.first == 4);
   EXPECT_EQ(policy_sampled.second.at(1), 0.0);
   EXPECT_NEAR(policy_sampled.second.at(2), 0.5, 0.001);
   EXPECT_NEAR(policy_sampled.second.at(4), 0.5, 0.001);
@@ -189,6 +192,32 @@ TEST(lp_multiple_cost_solver, use_error_one_is_one) {
   EXPECT_NEAR(policy_sampled.second.at(2), 0.0, 0.000);
   EXPECT_NEAR(policy_sampled.second.at(4), 1.0, 0.000);
   EXPECT_EQ(policy_sampled.second.at(5), 0.0);
+}
+
+TEST(lp_multiple_cost_solver, no_solution) {
+  std::vector<UctStatistic> cost_statistics;
+  auto mcts_parameters = mcts_default_parameters();
+  mcts_parameters.uct_statistic.LOWER_BOUND = 0.0;
+  mcts_parameters.uct_statistic.UPPER_BOUND = 1.0;
+  cost_statistics.push_back(
+    UctStatistic(7, 1, mcts_parameters));
+  cost_statistics.push_back(
+    UctStatistic(7, 1, mcts_parameters));
+
+  using ucb = UctStatistic::UcbPair;
+  UctStatistic::UcbStatistics ucb_stats1{{1, ucb(0, 0.8)}, {2, ucb(0, 0.9)}, {4, ucb(0, 0.8)}, {5, ucb(0, 0.8)}};
+  UctStatistic::UcbStatistics ucb_stats2{{1, ucb(0, 0.8)}, {2, ucb(0, 0.3)}, {4, ucb(0, 0.4)}, {5, ucb(0, 0.1)}};
+
+  cost_statistics[0].SetUcbStatistics(ucb_stats1);
+  cost_statistics[1].SetUcbStatistics(ucb_stats2);
+
+  auto random_generator = std::mt19937();
+  auto policy_sampled = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.8, 0.01}, {0.5, 0.5}, random_generator, 0.05);
+  EXPECT_EQ(policy_sampled.first, 5);
+  EXPECT_EQ(policy_sampled.second.at(1), 0.0);
+  EXPECT_NEAR(policy_sampled.second.at(2), 0.0, 0.000);
+  EXPECT_NEAR(policy_sampled.second.at(4), 0.0, 0.000);
+  EXPECT_EQ(policy_sampled.second.at(5), 1.0);
 }
 
 int main(int argc, char **argv) {
