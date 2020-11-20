@@ -101,7 +101,7 @@ PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_act
         const auto min_idx = std::min_element(action_values.at(1).begin(), action_values.at(1).end()) -
                             action_values.at(1).begin();
         const ActionIdx min_action = feasible_actions.at(min_idx);
-        LOG(WARNING) << "MultiCostSolver Infeasible for costs: " << ss.str() << " and lambdas " << lambdas <<
+        LOG_EVERY_N(WARNING, 100) << "MultiCostSolver Infeasible for costs: " << ss.str() << " and lambdas " << lambdas <<
          ". Returning lowest cost action " << min_action;
         policy[min_action] = 1.0;
         return std::make_pair(min_action, policy);
