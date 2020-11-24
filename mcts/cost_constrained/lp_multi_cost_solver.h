@@ -93,7 +93,8 @@ PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_act
     for ( const auto action : cost_stats) {
         policy[action.first] = 0.0f;
     }
-    if(solver_status == operations_research::MPSolverResponseStatus::MPSOLVER_INFEASIBLE) {
+    if(solver_status == operations_research::MPSolverResponseStatus::MPSOLVER_INFEASIBLE || 
+      solver_status == operations_research::MPSolverResponseStatus::MPSOLVER_ABNORMAL ) {
         std::stringstream ss;
         for (std::size_t cost_idx = 0; cost_idx < cost_statistics.size(); ++cost_idx) {
             ss << "Cost stat " << cost_idx << ": " <<cost_statistics.at(cost_idx).sprintf() << ", ";
@@ -101,7 +102,7 @@ PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_act
         const auto min_idx = std::min_element(action_values.at(1).begin(), action_values.at(1).end()) -
                             action_values.at(1).begin();
         const ActionIdx min_action = feasible_actions.at(min_idx);
-        LOG_EVERY_N(WARNING, 100) << "MultiCostSolver Infeasible for costs: " << ss.str() << " and lambdas " << lambdas <<
+        LOG_EVERY_N(WARNING, 100) << "MultiCostSolver status " << solver_status << " for costs: " << ss.str() << " and lambdas " << lambdas <<
          ". Returning lowest cost action " << min_action;
         policy[min_action] = 1.0;
         return std::make_pair(min_action, policy);
