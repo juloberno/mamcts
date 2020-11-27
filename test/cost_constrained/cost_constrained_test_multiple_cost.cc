@@ -52,6 +52,7 @@ struct CostConstrainedTest : public ::testing::Test {
             mcts_parameters_.cost_constrained_statistic.TAU_GRADIENT_CLIP = 1.0f;
             mcts_parameters_.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0.2f;
             mcts_parameters_.cost_constrained_statistic.USE_LAMBDA_POLICY = true;
+            mcts_parameters_.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES = {false, true};
             mcts_parameters_.DISCOUNT_FACTOR = 0.9;
             mcts_parameters_.MAX_SEARCH_TIME = 1000000000;
             mcts_parameters_.MAX_NUMBER_OF_ITERATIONS = number_of_iters;

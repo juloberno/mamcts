@@ -12,6 +12,8 @@
 #include <chrono>
 
  namespace mcts {
+class CostConstrainedStatistic;
+
 // assumes all agents have equal number of actions and the same node statistic
 class RandomHeuristic :  public mcts::Heuristic<RandomHeuristic>, mcts::RandomGenerator
 {
@@ -41,7 +43,7 @@ public:
         while((!state->is_terminal())&&(num_iterations<mcts_parameters_.random_heuristic.MAX_NUMBER_OF_ITERATIONS)&&
                 (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() 
                     < mcts_parameters_.random_heuristic.MAX_SEARCH_TIME ) &&
-                  current_depth <= mcts_parameters_.MAX_SEARCH_DEPTH) {
+                  current_depth < mcts_parameters_.MAX_SEARCH_DEPTH) {
             // Build joint action by calling statistics for each agent
             JointAction jointaction(state->get_num_agents());
             SE ego_statistic(state->get_num_actions(state->get_ego_agent_idx()),
@@ -58,7 +60,7 @@ public:
             EgoCosts ego_cost;
             std::vector<Reward> step_rewards(state->get_num_agents());
             auto new_state = state->execute(jointaction, step_rewards, ego_cost);
-
+            modified_discount_factor = k_discount_factor * modified_discount_factor;
             ego_accum_reward += modified_discount_factor*step_rewards[S::ego_agent_idx];
             AgentIdx reward_idx = 1;
             for (const auto& ai : state->get_other_agent_idx()) {
@@ -68,7 +70,8 @@ public:
 
             if(!accum_cost.empty()) {
               for (std::size_t cost_stat_idx = 0; cost_stat_idx < accum_cost.size(); ++cost_stat_idx) {
-                accum_cost[cost_stat_idx] += modified_discount_factor*ego_cost[cost_stat_idx];
+                // Do not discount costs 
+                accum_cost[cost_stat_idx] += ego_cost[cost_stat_idx];
               }
             }
             modified_discount_factor = modified_discount_factor*k_discount_factor;
@@ -80,10 +83,13 @@ public:
         // generate an extra node statistic for each agent
 
         // convert to probabilities 
-        if(!accum_cost.empty()) {
-          const auto ego_agent_idx = node->get_state()->get_ego_agent_idx();
-          const ActionIdx num_ego_actions = node->get_state()->get_num_actions(ego_agent_idx);
-          accum_cost[0] = double(accum_cost[0] > 0.0)*std::pow(1.0/num_ego_actions, num_iterations);
+        if(std::is_same<SE, CostConstrainedStatistic>::value && !accum_cost.empty() && num_iterations > 0) {
+          for (std::size_t cost_stat_idx = 0; cost_stat_idx < accum_cost.size(); ++cost_stat_idx) {
+                // Do not discount costs 
+                if(mcts_parameters_.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES.at(cost_stat_idx)) {
+                  accum_cost[cost_stat_idx] = accum_cost[cost_stat_idx]/num_iterations;
+                }
+          }
         }
         
 
