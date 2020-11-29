@@ -44,7 +44,8 @@ public:
              k_discount_factor(mcts_parameters.DISCOUNT_FACTOR), 
              exploration_constant(mcts_parameters.uct_statistic.EXPLORATION_CONSTANT),
              progressive_widening_k(mcts_parameters.uct_statistic.PROGRESSIVE_WIDENING_K),
-             progressive_widening_alpha(mcts_parameters.uct_statistic.PROGRESSIVE_WIDENING_ALPHA) {
+             progressive_widening_alpha(mcts_parameters.uct_statistic.PROGRESSIVE_WIDENING_ALPHA),
+             use_bound_estimation_(mcts_parameters.USE_BOUND_ESTIMATION) {
                  // initialize action indexes from 0 to (number of actions -1)
                  std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
              }
@@ -107,6 +108,18 @@ public:
         const UctStatistic& changed_uct_statistic = changed_child_statistic.impl();
         this->update_statistics_from_backpropagated(changed_uct_statistic.latest_return_);
     }
+
+    std::pair<Reward, Reward> calculate_bounds_based_on_stat(const UcbStatistics& ucb_stats) const {
+        const auto minmax_return = std::minmax_element(ucb_stats.begin(), ucb_stats.end(), [](const auto& ucb1, const auto& ucb2) {
+              return ucb1.second.action_value_ < ucb2.second.action_value_;});
+        std::pair<Reward, Reward> bounds{minmax_return.first->second.action_value_, 
+                                         minmax_return.second->second.action_value_};
+        if (bounds.first == bounds.second) {
+            if(bounds.second != 0.0) return std::make_pair(Reward(0.0), Reward(bounds.second));
+            else return std::make_pair(Reward(0.0), Reward(1.0));   
+        }
+        return bounds;
+    }
     
     void update_statistics_from_backpropagated(const Reward& backpropagated, bool chance_update = false) {
         //Action Value update step
@@ -148,10 +161,15 @@ public:
     }
 
     Reward get_normalized_ucb_value(const ActionIdx& action) const {
-      double action_value_normalized =  (ucb_statistics_.at(action).action_value_-lower_bound)/(upper_bound-lower_bound); 
       
-      LOG_IF(FATAL, action_value_normalized>1 || action_value_normalized < 0) << "Wrong action value normalization: " << action_value_normalized;
-      return action_value_normalized;
+        std::pair<Reward, Reward> bounds(lower_bound, upper_bound);
+        if(use_bound_estimation_) {
+            bounds = calculate_bounds_based_on_stat(ucb_statistics_);
+        }
+        double action_value_normalized =  (ucb_statistics_.at(action).action_value_-bounds.first)/(bounds.second-bounds.first); 
+        
+        LOG_IF(FATAL, action_value_normalized>1 || action_value_normalized < 0) << "Wrong action value normalization: " << action_value_normalized;
+        return action_value_normalized;
     }
 
     Reward get_reward_lower_bound() const {
@@ -167,8 +185,13 @@ public:
         ActionIdx maximizing_action = 0;
         double max_value = std::numeric_limits<double>::min();
 
+        std::pair<Reward, Reward> bounds(lower_bound, upper_bound);
+        if(use_bound_estimation_) {
+            bounds = calculate_bounds_based_on_stat(ucb_statistics);
+        }
+
         for (const auto ucb_pair : ucb_statistics) {   
-            double action_value_normalized = (ucb_pair.second.action_value_-lower_bound)/(upper_bound-lower_bound); 
+            double action_value_normalized = (ucb_pair.second.action_value_-bounds.first)/(bounds.second-bounds.first); 
             MCTS_EXPECT_TRUE(action_value_normalized>=0);
             MCTS_EXPECT_TRUE(action_value_normalized<=1);
             values[ucb_pair.first] = action_value_normalized + 2 * exploration_constant * sqrt( (2* log(total_node_visits_)) / ( ucb_pair.second.action_count_)  );
@@ -222,6 +245,8 @@ protected:
 
     double progressive_widening_k;
     double progressive_widening_alpha;
+
+    bool use_bound_estimation_;
 
 };
 

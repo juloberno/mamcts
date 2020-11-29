@@ -81,18 +81,6 @@ public:
             current_depth += 1;
          };
         // generate an extra node statistic for each agent
-
-        // convert to probabilities 
-        if(std::is_same<SE, CostConstrainedStatistic>::value && !accum_cost.empty() && num_iterations > 0) {
-          for (std::size_t cost_stat_idx = 0; cost_stat_idx < accum_cost.size(); ++cost_stat_idx) {
-                // Do not discount costs 
-                if(mcts_parameters_.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES.at(cost_stat_idx)) {
-                  accum_cost[cost_stat_idx] = accum_cost[cost_stat_idx]/num_iterations;
-                }
-          }
-        }
-        
-
         SE ego_heuristic(0, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
         ego_heuristic.set_heuristic_estimate(ego_accum_reward, accum_cost); // correct by probability of random selected ego actions
         std::unordered_map<AgentIdx, SO> other_heuristic_estimates;

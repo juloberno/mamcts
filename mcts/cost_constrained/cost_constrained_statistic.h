@@ -429,7 +429,8 @@ void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsPa
   for (std::size_t cost_idx = 0; cost_idx < parameters.cost_constrained_statistic.LAMBDAS.size(); ++cost_idx) {
     const double current_lambda = parameters.cost_constrained_statistic.LAMBDAS.at(cost_idx);
     const ActionIdx policy_sampled_action = root_statistic.greedy_policy(0.0f, 0.0f).first;
-    const double normalized_cost_sampled_action = root_statistic.get_normalized_cost_action_value(policy_sampled_action);
+    const double normalized_cost_sampled_action = root_statistic.get_cost_statistic(cost_idx).
+                    get_ucb_statistics().at(policy_sampled_action).action_value_;
     const double new_lambda =  CostConstrainedStatistic::calculate_next_lambda(current_lambda,
                                                                             gradient_update_step,
                                                                             cost_constraints.at(cost_idx),

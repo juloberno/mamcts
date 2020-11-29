@@ -44,7 +44,8 @@ public:
                     progressive_widening_hypothesis_based_(mcts_parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_HYPOTHESIS_BASED),
                     use_chance_constrained_updates_(mcts_parameters.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES),
                     progressive_widening_k(mcts_parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_K),
-                    progressive_widening_alpha(mcts_parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_ALPHA)
+                    progressive_widening_alpha(mcts_parameters.hypothesis_statistic.PROGRESSIVE_WIDENING_ALPHA),
+                    use_bound_estimation_(mcts_parameters.USE_BOUND_ESTIMATION)
                     {}
 
     inline void init_hypothesis_variables(const HypothesisId hypothesis_id) {
@@ -137,9 +138,15 @@ public:
 
     Policy get_policy() const {
         Policy policy;
+
+        std::pair<Reward, Reward> bounds(lower_cost_bound, upper_cost_bound);
+
         for(const auto hyp_ub_stat : ucb_statistics_) {
+            if(use_bound_estimation_) {
+                bounds = calculate_bounds_based_on_stat(hyp_ub_stat.second);
+            }   
             for (const auto& ucb_pair : hyp_ub_stat.second) {
-                double action_cost_normalized = (ucb_pair.second.action_ego_cost_-lower_cost_bound)/(upper_cost_bound-lower_cost_bound); 
+                double action_cost_normalized = (ucb_pair.second.action_ego_cost_-bounds.first)/(bounds.second-bounds.first); 
                 policy[ucb_pair.first] = action_cost_normalized;
             }
         }
@@ -171,12 +178,17 @@ public:
         double largest_cost = std::numeric_limits<double>::lowest();
         ActionIdx worst_action = ucb_statistics.begin()->first;
 
+        std::pair<Reward, Reward> bounds(lower_cost_bound, upper_cost_bound);
+        if(use_bound_estimation_) {
+            bounds = calculate_bounds_based_on_stat(ucb_statistics);
+        }
+
         for (const auto& ucb_pair : ucb_statistics) 
         {
-            double action_cost_normalized = (ucb_pair.second.action_ego_cost_-lower_cost_bound)/(upper_cost_bound-lower_cost_bound); 
+            double action_cost_normalized = (ucb_pair.second.action_ego_cost_-bounds.first)/(bounds.second-bounds.first); 
             if(action_cost_normalized < 0 || action_cost_normalized > 1) {
               LOG(ERROR) << "Cost normalization wrong: " << action_cost_normalized << ", at ace=" << ucb_pair.second.action_ego_cost_ << ", lcb=" << 
-                  lower_cost_bound << ", ucb=" << upper_cost_bound;
+                  bounds.first << ", ucb=" << bounds.second;
             }
             const double ucb_cost = action_cost_normalized + 2 * exploration_constant * sqrt( (2* std::log(node_visits)) / (ucb_pair.second.action_count_)  );
             if (ucb_cost > largest_cost) {
@@ -204,6 +216,17 @@ public:
             }
         }
         throw std::logic_error("No actions available to sample from.");
+    }
+
+    std::pair<Reward, Reward> calculate_bounds_based_on_stat(const std::unordered_map<ActionIdx, UcbPair>& ucb_stats) const {
+        const auto minmax_return = std::minmax_element(ucb_stats.begin(), ucb_stats.end(), [](const auto& ucb1, const auto& ucb2) {
+              return ucb1.second.action_ego_cost_ < ucb2.second.action_ego_cost_;});
+        std::pair<Reward, Reward> bounds{minmax_return.first->second.action_ego_cost_, 
+                                         minmax_return.second->second.action_ego_cost_};
+        if (bounds.first == bounds.second) {
+            return std::make_pair(Reward(0.0), Reward(bounds.second));
+        }
+        return bounds;
     }
 
     ActionIdx get_total_worst_case_action() const {
@@ -289,6 +312,8 @@ private: // members
 
     const double progressive_widening_k;
     const double progressive_widening_alpha;
+
+    bool use_bound_estimation_;
 };
 
 } // namespace mcts
