@@ -206,7 +206,7 @@ public:
     std::string sprintf() const {
         std::stringstream ss;
         for(const auto& ucb_stat : ucb_statistics_) {
-            ss << "a=" <<  ucb_stat.first << ", q=" << get_normalized_ucb_value(ucb_stat.first) << ", n=" << ucb_stat.second.action_count_ << "|";
+            ss << "a=" <<  ucb_stat.first << ", q=" << ucb_stat.second.action_value_ << ", n=" << ucb_stat.second.action_count_ << "|";
         }
         return ss.str();
     }

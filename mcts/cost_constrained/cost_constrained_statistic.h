@@ -150,7 +150,7 @@ public:
           
           double cost_lambda_term = 0.0;
           for (std::size_t cost_idx = 0; cost_idx < cost_statistics_.size(); ++cost_idx) {
-            cost_lambda_term += cost_statistics_.at(cost_idx).get_normalized_ucb_value(action_idx) * 
+            cost_lambda_term += cost_statistics_.at(cost_idx).get_ucb_statistics().at(action_idx).action_value_ * 
                   mcts_parameters_.cost_constrained_statistic.LAMBDAS.at(cost_idx);
           }
           values[action_idx] = reward_value_normalized - cost_lambda_term
@@ -169,7 +169,8 @@ public:
           return PolicySampled(feasible_actions.at(0), policy);
       } else if (cost_statistics_.size() > 1) {
           return lp_multiple_cost_solver(feasible_actions, cost_statistics_, cost_constraints_,
-           mcts_parameters_.cost_constrained_statistic.LAMBDAS, random_generator_);
+           mcts_parameters_.cost_constrained_statistic.LAMBDAS, random_generator_,
+              std::max(*std::max_element(cost_constraints_.begin(), cost_constraints_.end()), 1.0));
       }
       return lp_single_cost_solver(
           feasible_actions, cost_statistics_.at(CONSTRAINT_COST_IDX),
@@ -210,12 +211,13 @@ public:
                                         const double& reward_lower_bound,
                                         const double& reward_upper_bound) {
         const double gradient = (cost_sampled_action - cost_constraint);
-        VLOG_EVERY_N(5, 10) << "Norm. UCBSampled: " << cost_sampled_action << ", grad = "
-                             << gradient << ", step = " << gradient_update_step ;
         const double new_lambda = current_lambda + gradient_update_step * gradient;
         const double clip_upper_limit = (reward_upper_bound - reward_lower_bound) /
                                          (tau_gradient_clip * ( 1 - discount_factor));
         const double clipped_new_lambda = std::min(std::max(new_lambda, double(0.0f)), clip_upper_limit);
+        VLOG_EVERY_N(5, 10) << "Norm. UCBSampled: " << cost_sampled_action << ", grad = "
+                             << gradient << ", step = " << gradient_update_step <<", clipp_upper_lim = " << 
+                            clip_upper_limit << ", clipped_lambda = " << clipped_new_lambda;
         return clipped_new_lambda;
     }
 
@@ -330,7 +332,7 @@ public:
         const auto& cost_stats = cost_statistics_.at(cost_idx);
         const auto& ucb_stats = cost_stats.ucb_statistics_;
         for(const auto& ucb_stat : ucb_stats) {
-          expected_cost[cost_idx] += policy.at(ucb_stat.first) * cost_stats.get_normalized_ucb_value(ucb_stat.first);
+          expected_cost[cost_idx] += policy.at(ucb_stat.first) * ucb_stat.second.action_value_;
         } 
       }
       return expected_cost;
