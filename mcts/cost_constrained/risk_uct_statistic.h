@@ -42,14 +42,15 @@ public:
  
         if (chance_update) {
             latest_return_ = std::max(collected_reward_.second, backpropagated);
-            ucb_pair.action_value_ = ucb_pair.action_value_ + (latest_return_ - ucb_pair.action_value_) / ucb_pair.action_count_;
         } else {
             latest_return_ = collected_reward_.second + backpropagated;
-            backpropagated_step_length_ = backpropagated_step_length + step_length_;
-            auto step_length_normalized_return = latest_return_ / backpropagated_step_length_;
-            ucb_pair.action_value_ = ucb_pair.action_value_ + (step_length_normalized_return - ucb_pair.action_value_) / ucb_pair.action_count_;
         }
-        VLOG_EVERY_N(6, 10) << "Agent "<< agent_idx_ <<", Action reward, action " << collected_cost_.first << ", Q(s,a) = " << ucb_pair.action_value_;
+        backpropagated_step_length_ = backpropagated_step_length + step_length_;
+        auto step_length_normalized_return = latest_return_ / backpropagated_step_length_;
+        ucb_pair.action_value_ = ucb_pair.action_value_ + (step_length_normalized_return - ucb_pair.action_value_) / ucb_pair.action_count_;
+        VLOG_EVERY_N(6, 10) << "Agent "<< agent_idx_ <<", Action reward, action " << collected_cost_.first << ", Q(s,a) = " << ucb_pair.action_value_
+            << ", normalized_return=" << step_length_normalized_return << ", back_prop_l" << backpropagated_step_length_ << ", step length =" << step_length_;
+        
         total_node_visits_ += 1;
         value_ = value_ + (latest_return_ - value_) / total_node_visits_;
     }

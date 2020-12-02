@@ -87,7 +87,8 @@ public:
         SE ego_heuristic(0, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
         if constexpr(std::is_same<SE, CostConstrainedStatistic>::value) {
           ego_heuristic.set_heuristic_estimate(ego_accum_reward, accum_cost, executed_step_length);
-        } else {
+          VLOG_EVERY_N(6, 10) << "accum cost = " << accum_cost << ", heuristic_step_length = " << executed_step_length;
+         } else {
           ego_heuristic.set_heuristic_estimate(ego_accum_reward, accum_cost); 
         }
         std::unordered_map<AgentIdx, SO> other_heuristic_estimates;

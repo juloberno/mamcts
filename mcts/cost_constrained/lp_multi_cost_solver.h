@@ -82,8 +82,8 @@ PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_act
             objective->SetCoefficient(action_weights[action_idx], 0.0);
     }
     for (std::size_t error_idx = 0; error_idx <  lambdas.size(); ++error_idx) {
-        objective->SetCoefficient(pos_errors[error_idx], 1.0);
-        objective->SetCoefficient(neg_errors[error_idx], 1.0);
+        objective->SetCoefficient(pos_errors[error_idx], lambdas[error_idx]);
+        objective->SetCoefficient(neg_errors[error_idx], lambdas[error_idx]);
     }
     objective->SetMinimization();
     
