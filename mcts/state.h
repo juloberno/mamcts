@@ -104,6 +104,8 @@ public:
 
     std::string sprintf() const;
 
+    double get_execution_step_length() const;
+
     ~StateInterface() {};
 
     static const Implementation& cast();
@@ -162,6 +164,10 @@ inline std::string StateInterface<Implementation>::sprintf() const {
     return impl().sprintf();
 }
 
+template<typename Implementation>
+inline double StateInterface<Implementation>::get_execution_step_length() const {
+    return impl().get_execution_step_length();
+}
 
 template<typename Implementation>
 const AgentIdx StateInterface<Implementation>::ego_agent_idx = 0;

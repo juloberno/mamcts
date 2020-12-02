@@ -41,6 +41,10 @@ public:
         }
     }
 
+    double get_excution_step_length() const {
+      return 1.0;
+    }
+
     void change_actions() {use_first_action_ = !use_first_action_;}
 
     const std::vector<AgentIdx> get_other_agent_idx() const {

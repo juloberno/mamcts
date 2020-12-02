@@ -8,6 +8,7 @@
 #define RANDOM_HEURISTIC_H
 
 #include "mcts/mcts.h"
+#include <type_traits>
 #include <iostream>
 #include <chrono>
 
@@ -38,6 +39,7 @@ public:
         const double k_discount_factor = mcts_parameters_.DISCOUNT_FACTOR; 
         double modified_discount_factor = k_discount_factor;
         int num_iterations = 0;
+        double executed_step_length = 0.0;
         auto current_depth = node->get_depth();
         
         while((!state->is_terminal())&&(num_iterations<mcts_parameters_.random_heuristic.MAX_NUMBER_OF_ITERATIONS)&&
@@ -76,13 +78,18 @@ public:
             }
             modified_discount_factor = modified_discount_factor*k_discount_factor;
 
-            state = new_state->clone();
+            executed_step_length += state->get_execution_step_length();
             num_iterations +=1;
             current_depth += 1;
+            state = new_state->clone();
          };
         // generate an extra node statistic for each agent
         SE ego_heuristic(0, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
-        ego_heuristic.set_heuristic_estimate(ego_accum_reward, accum_cost); // correct by probability of random selected ego actions
+        if constexpr(std::is_same<SE, CostConstrainedStatistic>::value) {
+          ego_heuristic.set_heuristic_estimate(ego_accum_reward, accum_cost, executed_step_length);
+        } else {
+          ego_heuristic.set_heuristic_estimate(ego_accum_reward, accum_cost); 
+        }
         std::unordered_map<AgentIdx, SO> other_heuristic_estimates;
         AgentIdx reward_idx=1;
         for (auto agent_idx : node->get_state()->get_other_agent_idx())

@@ -124,11 +124,11 @@ TEST_F(CostConstrainedTest, allow_collision_and_safety_violation) {
 }
 
 TEST(lp_multiple_cost_solver, one_is_one) {
-  std::vector<UctStatistic> cost_statistics;
+  std::vector<RiskUctStatistic> cost_statistics;
   cost_statistics.push_back(
-    UctStatistic(7, 1, mcts_default_parameters()));
+    RiskUctStatistic(7, 1, mcts_default_parameters()));
   cost_statistics.push_back(
-    UctStatistic(7, 1, mcts_default_parameters()));
+    RiskUctStatistic(7, 1, mcts_default_parameters()));
 
   using ucb = UctStatistic::UcbPair;
   UctStatistic::UcbStatistics ucb_stats1{{1, ucb(0, 0.8)}, {2, ucb(0, 0.2)}, {4, ucb(0, 0.2)}, {5, ucb(0, 0.3)}};
@@ -147,14 +147,14 @@ TEST(lp_multiple_cost_solver, one_is_one) {
 }
 
 TEST(lp_multiple_cost_solver, two_are_half) {
-  std::vector<UctStatistic> cost_statistics;
+  std::vector<RiskUctStatistic> cost_statistics;
   auto mcts_parameters = mcts_default_parameters();
   mcts_parameters.uct_statistic.LOWER_BOUND = 0.0;
   mcts_parameters.uct_statistic.UPPER_BOUND = 1.0;
   cost_statistics.push_back(
-    UctStatistic(7, 1, mcts_parameters));
+    RiskUctStatistic(7, 1, mcts_parameters));
   cost_statistics.push_back(
-    UctStatistic(7, 1, mcts_parameters));
+    RiskUctStatistic(7, 1, mcts_parameters));
 
   using ucb = UctStatistic::UcbPair;
   UctStatistic::UcbStatistics ucb_stats1{{1, ucb(0, 0.8)}, {2, ucb(0, 0.3)}, {4, ucb(0, 0.1)}, {5, ucb(0, 0.3)}};
@@ -173,11 +173,11 @@ TEST(lp_multiple_cost_solver, two_are_half) {
 }
 
 TEST(lp_multiple_cost_solver, use_error_one_is_one) {
-  std::vector<UctStatistic> cost_statistics;
+  std::vector<RiskUctStatistic> cost_statistics;
   cost_statistics.push_back(
-    UctStatistic(7, 1, mcts_default_parameters()));
+    RiskUctStatistic(7, 1, mcts_default_parameters()));
   cost_statistics.push_back(
-    UctStatistic(7, 1, mcts_default_parameters()));
+    RiskUctStatistic(7, 1, mcts_default_parameters()));
 
   using ucb = UctStatistic::UcbPair;
   UctStatistic::UcbStatistics ucb_stats1{{1, ucb(0, 0.8)}, {2, ucb(0, 0.7)}, {4, ucb(0, 0.2)}, {5, ucb(0, 0.6)}};
@@ -196,14 +196,14 @@ TEST(lp_multiple_cost_solver, use_error_one_is_one) {
 }
 
 TEST(lp_multiple_cost_solver, no_solution) {
-  std::vector<UctStatistic> cost_statistics;
+  std::vector<RiskUctStatistic> cost_statistics;
   auto mcts_parameters = mcts_default_parameters();
   mcts_parameters.uct_statistic.LOWER_BOUND = 0.0;
   mcts_parameters.uct_statistic.UPPER_BOUND = 1.0;
   cost_statistics.push_back(
-    UctStatistic(7, 1, mcts_parameters));
+    RiskUctStatistic(7, 1, mcts_parameters));
   cost_statistics.push_back(
-    UctStatistic(7, 1, mcts_parameters));
+    RiskUctStatistic(7, 1, mcts_parameters));
 
   using ucb = UctStatistic::UcbPair;
   UctStatistic::UcbStatistics ucb_stats1{{1, ucb(0, 0.8)}, {2, ucb(0, 0.9)}, {4, ucb(0, 0.8)}, {5, ucb(0, 0.8)}};

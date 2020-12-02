@@ -8,6 +8,7 @@
 #define SOLVE_LP_MULTIPLE_COST_H_
 
 #include "mcts/statistics/uct_statistic.h"
+#include "mcts/cost_constrained/risk_uct_statistic.h"
 #include "ortools/linear_solver/linear_solver.h"
 #include <vector>
 #include <unordered_map>
@@ -15,7 +16,7 @@
 namespace mcts{ 
 
 PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_actions,
-           const std::vector<UctStatistic>& cost_statistics, const std::vector<Cost> cost_constraints,
+           const std::vector<RiskUctStatistic>& cost_statistics, const std::vector<Cost> cost_constraints,
             std::vector<double> lambdas,
            std::mt19937& random_generator, double max_errors = 1.0) {
 

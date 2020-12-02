@@ -49,6 +49,7 @@ public:
 
     template <class S>
     ActionIdx choose_next_action(const S& state) {
+       step_length_ = state.get_execution_step_length();
        if(unexpanded_actions_.empty())
         {
           // Expansion policy does consider node counts
@@ -255,7 +256,7 @@ public:
     void init_cost_statistics(std::size_t size) {
       if(cost_statistics_.empty()) {
         for(std::size_t idx = 0; idx < size; ++idx) {
-          cost_statistics_.push_back(UctStatistic(num_actions_, agent_idx_, make_cost_statistics_parameters(mcts_parameters_)));
+          cost_statistics_.push_back(RiskUctStatistic(num_actions_, agent_idx_, make_cost_statistics_parameters(mcts_parameters_)));
         }
         ActionIdx action_idx = 0;
         while(action_idx < num_actions_) {
@@ -276,7 +277,8 @@ public:
       init_cost_statistics(cost_stats_heuristic.size());
       for (auto cost_stat_idx = 0; cost_stat_idx < cost_stats_heuristic.size(); ++cost_stat_idx) {
         const auto heuristic_cost_value = cost_stats_heuristic.at(cost_stat_idx).value_;
-        cost_statistics_[0].update_from_heuristic_from_backpropagated(heuristic_cost_value);
+        const auto backpropagated_step_length = cost_stats_heuristic.at(cost_stat_idx).backpropagated_step_length_;
+        cost_statistics_[cost_stat_idx].update_from_heuristic_from_backpropagated(heuristic_cost_value, backpropagated_step_length);
       }
     }
 
@@ -291,25 +293,28 @@ public:
       init_cost_statistics(cost_stats_child.size());
       for (auto cost_stat_idx = 0; cost_stat_idx < cost_stats_child.size(); ++cost_stat_idx) {
         const auto cost_latest_return = statistic_impl.cost_statistics_.at(cost_stat_idx).latest_return_;
+        const auto backpropagated_step_length = statistic_impl.cost_statistics_.at(cost_stat_idx).backpropagated_step_length_;
         cost_statistics_[cost_stat_idx].collected_reward_ = std::pair<ActionIdx, Cost>(collected_cost_.first,
                                                                       collected_cost_.second[cost_stat_idx]);
         cost_statistics_[cost_stat_idx].collected_action_transition_counts_ = collected_action_transition_counts_;
 
         bool chance_update = !use_chance_constrained_updates_.empty() && use_chance_constrained_updates_.at(cost_stat_idx);
-        cost_statistics_[cost_stat_idx].update_statistics_from_backpropagated(cost_latest_return, chance_update);
+        cost_statistics_[cost_stat_idx].set_step_length(step_length_);
+        cost_statistics_[cost_stat_idx].update_statistics_from_backpropagated(cost_latest_return, chance_update, backpropagated_step_length);
 
         mean_step_costs_[collected_cost_.first][cost_stat_idx] += (collected_cost_.second[cost_stat_idx] - mean_step_costs_[collected_cost_.first][cost_stat_idx]) /
                                                     (cost_statistics_.at(cost_stat_idx).ucb_statistics_[collected_cost_.first].action_count_);
       }
     }
 
-    void set_heuristic_estimate(const Reward& accum_rewards, const EgoCosts& accum_ego_cost)
+    void set_heuristic_estimate(const Reward& accum_rewards, const EgoCosts& accum_ego_cost, double backpropated_step_length)
     {
       reward_statistic_.set_heuristic_estimate_from_backpropagated(accum_rewards);
     
       init_cost_statistics(accum_ego_cost.size());
       for (auto cost_stat_idx = 0; cost_stat_idx < accum_ego_cost.size(); ++cost_stat_idx) {
         cost_statistics_.at(cost_stat_idx).set_heuristic_estimate_from_backpropagated(accum_ego_cost.at(cost_stat_idx));
+        cost_statistics_.at(cost_stat_idx).set_backpropagated_step_length(backpropated_step_length);
       }
     }
 
@@ -403,9 +408,10 @@ public:
 private:
 
     UctStatistic reward_statistic_;
-    std::vector<UctStatistic> cost_statistics_;
+    std::vector<RiskUctStatistic> cost_statistics_;
     std::vector<ActionIdx> unexpanded_actions_;
     std::unordered_map<ActionIdx, std::vector<Cost>> mean_step_costs_;
+    double step_length_;
 
     const double kappa;
     const double action_filter_factor;

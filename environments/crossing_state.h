@@ -90,6 +90,10 @@ public:
       return 1;
     }
 
+    double get_execution_step_length() const {
+      return 1.0;
+    }
+
     Probability get_prior(const HypothesisId& hypothesis, const AgentIdx& agent_idx) const { return 0.5f;}
 
     HypothesisId get_num_hypothesis(const AgentIdx& agent_idx) const {return hypothesis_.size();}

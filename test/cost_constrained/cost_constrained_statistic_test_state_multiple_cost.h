@@ -42,6 +42,10 @@ public:
       return 2;
     }
 
+    double get_execution_step_length() const {
+      return 1.0;
+    }
+
     std::shared_ptr<CostConstrainedStatisticTestStateMultipleCost> execute(const JointAction& joint_action, std::vector<Reward>& rewards, EgoCosts& ego_cost) const {
         rewards.resize(1);
         const auto ego_agent_action = joint_action[CostConstrainedStatisticTestStateMultipleCost::ego_agent_idx];

@@ -61,6 +61,10 @@ public:
       return 0;
     }
 
+    double get_execution_step_length() const {
+      return 1.0;
+    }
+
     bool is_terminal() const {
         return state_length_ >= winning_state_length_ || state_length_ <= loosing_state_length_;
     }
