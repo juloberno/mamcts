@@ -41,6 +41,7 @@ public:
         int num_iterations = 0;
         double executed_step_length = 0.0;
         auto current_depth = node->get_depth();
+        double ego_action_probability = 1.0;
         
         while((!state->is_terminal())&&(num_iterations<mcts_parameters_.random_heuristic.MAX_NUMBER_OF_ITERATIONS)&&
                 (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() 
@@ -79,10 +80,21 @@ public:
             modified_discount_factor = modified_discount_factor*k_discount_factor;
 
             executed_step_length += state->get_execution_step_length();
+            ego_action_probability *= 1.0/state->get_num_actions(state->get_ego_agent_idx());
             num_iterations +=1;
             current_depth += 1;
             state = new_state->clone();
          };
+
+        // correct estimate by probability that they occcur
+        ego_accum_reward *= ego_action_probability;
+        if(!accum_cost.empty()) {
+            for (std::size_t cost_stat_idx = 0; cost_stat_idx < accum_cost.size(); ++cost_stat_idx) {
+              // Do not discount costs 
+              accum_cost[cost_stat_idx] *= ego_action_probability;
+            }
+        }
+
         // generate an extra node statistic for each agent
         SE ego_heuristic(0, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
         if constexpr(std::is_same<SE, CostConstrainedStatistic>::value) {
