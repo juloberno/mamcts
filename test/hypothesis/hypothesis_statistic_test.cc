@@ -33,7 +33,7 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   stat_parent.collect( 1, EgoCosts{2.3f, 0.0f}, action_idx, {0,0});
 
   HypothesisStatistic heuristic(5,1, mcts_default_parameters());
-  heuristic.set_heuristic_estimate(10.0f , EgoCosts{20.0f, 0.0f});
+  heuristic.set_heuristic_estimate(10.0f , EgoCosts{20.0f, 1.2323f});
 
   HypothesisStatistic stat_child(5,1, mcts_default_parameters());
   stat_child.update_from_heuristic(heuristic);
@@ -43,7 +43,7 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   const auto node_counts = stat_parent.get_total_node_visits();
 
   EXPECT_NEAR(ucb_stats.at(0).at(action_idx).action_ego_cost_, 2.3f
-                    +mcts_default_parameters().DISCOUNT_FACTOR*20.0f, 0.001);
+                    +mcts_default_parameters().DISCOUNT_FACTOR*(20.0f+1.2323f), 0.001);
   EXPECT_EQ(ucb_stats.at(0).at(action_idx).action_count_, 1);
   EXPECT_EQ(node_counts.at(0), 1);
 
@@ -62,7 +62,7 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   const auto node_counts2 = stat_parent.get_total_node_visits();
 
   EXPECT_NEAR(ucb_stats2.at(0).at(action_idx2).action_ego_cost_, (2.3f+4.3
-                    +mcts_default_parameters().DISCOUNT_FACTOR*20.0f+
+                    +mcts_default_parameters().DISCOUNT_FACTOR*(20.0f+1.2323f)+
                     mcts_default_parameters().DISCOUNT_FACTOR*24.5f)/2, 0.001);
   EXPECT_EQ(ucb_stats2.at(0).at(action_idx2).action_count_, 2);
   EXPECT_EQ(node_counts2.at(0), 2);
