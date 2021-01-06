@@ -30,7 +30,7 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   HypothesisStatistic stat_parent(5, 1, mcts_default_parameters()); // agents 1 statistic 
   auto action_idx = stat_parent.choose_next_action(state);
   EXPECT_EQ(action_idx, 5);
-  stat_parent.collect( 1, EgoCosts{2.3f, 0.0f}, action_idx, {0,0});
+  stat_parent.collect( 1, EgoCosts{2.3f, 5.0f}, action_idx, {0,0});
 
   HypothesisStatistic heuristic(5,1, mcts_default_parameters());
   heuristic.set_heuristic_estimate(10.0f , EgoCosts{20.0f, 1.2323f});
@@ -42,48 +42,48 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   const auto ucb_stats =stat_parent.get_ucb_statistics();
   const auto node_counts = stat_parent.get_total_node_visits();
 
-  EXPECT_NEAR(ucb_stats.at(0).at(action_idx).action_ego_cost_, 2.3f
-                    +mcts_default_parameters().DISCOUNT_FACTOR*(20.0f+1.2323f), 0.001);
+  EXPECT_NEAR(ucb_stats.at(0).at(action_idx).action_ego_cost_, 5.0f
+                    +mcts_default_parameters().DISCOUNT_FACTOR*(1.2323f), 0.001);
   EXPECT_EQ(ucb_stats.at(0).at(action_idx).action_count_, 1);
   EXPECT_EQ(node_counts.at(0), 1);
 
   // Second update with hypothesis 0 for agent 1, action is the same as only one action available
   HypothesisStatistic heuristic2(5,1, mcts_default_parameters());
-  heuristic2.set_heuristic_estimate(15.0f , EgoCosts{24.5f, 0.0f});
+  heuristic2.set_heuristic_estimate(15.0f , EgoCosts{24.5f, 23.0f});
 
   HypothesisStatistic stat_child2(5,1, mcts_default_parameters());
   stat_child2.update_from_heuristic(heuristic2);
   auto action_idx2 = stat_parent.choose_next_action(state);
   EXPECT_EQ(action_idx2, 5);
-  stat_parent.collect( 1, EgoCosts{4.3f, 0.0f}, action_idx2, {0,0});
+  stat_parent.collect( 1, EgoCosts{4.3f, 4.0f}, action_idx2, {0,0});
   stat_parent.update_statistic(stat_child2);
 
   const auto ucb_stats2 =stat_parent.get_ucb_statistics();
   const auto node_counts2 = stat_parent.get_total_node_visits();
 
-  EXPECT_NEAR(ucb_stats2.at(0).at(action_idx2).action_ego_cost_, (2.3f+4.3
-                    +mcts_default_parameters().DISCOUNT_FACTOR*(20.0f+1.2323f)+
-                    mcts_default_parameters().DISCOUNT_FACTOR*24.5f)/2, 0.001);
+  EXPECT_NEAR(ucb_stats2.at(0).at(action_idx2).action_ego_cost_, (5.0f+4.0
+                    +mcts_default_parameters().DISCOUNT_FACTOR*(1.2323f)+
+                    mcts_default_parameters().DISCOUNT_FACTOR*23.0f)/2, 0.001);
   EXPECT_EQ(ucb_stats2.at(0).at(action_idx2).action_count_, 2);
   EXPECT_EQ(node_counts2.at(0), 2);
 
   // Third update with changed actions hypothesis 0 for agent 1
   state.change_actions();
   HypothesisStatistic heuristic3(5,1, mcts_default_parameters());
-  heuristic3.set_heuristic_estimate(15.0f , EgoCosts{450.5f, 0.0f});
+  heuristic3.set_heuristic_estimate(15.0f , EgoCosts{450.5f, 450.0f});
 
   HypothesisStatistic stat_child3(5,1, mcts_default_parameters());
   stat_child3.update_from_heuristic(heuristic3);
   auto action_idx3 = stat_parent.choose_next_action(state);
   EXPECT_EQ(action_idx3, 3);
-  stat_parent.collect( -1, EgoCosts{1000.3f, 0.0f}, action_idx3, {0,0});
+  stat_parent.collect( -1, EgoCosts{1000.3f, 1000.0f}, action_idx3, {0,0});
   stat_parent.update_statistic(stat_child3);
 
   const auto ucb_stats3 =stat_parent.get_ucb_statistics();
   const auto node_counts3 = stat_parent.get_total_node_visits();
 
-  EXPECT_NEAR(ucb_stats3.at(0).at(action_idx3).action_ego_cost_, 1000.3f +
-                           mcts_default_parameters().DISCOUNT_FACTOR*450.5f, 0.001);
+  EXPECT_NEAR(ucb_stats3.at(0).at(action_idx3).action_ego_cost_, 1000.0f +
+                           mcts_default_parameters().DISCOUNT_FACTOR*450.0f, 0.001);
   EXPECT_EQ(ucb_stats3.at(0).at(action_idx3).action_count_, 1);
   EXPECT_EQ(node_counts3.at(0), 3);
 
@@ -93,20 +93,20 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   }; //< state holds a refence to current selected hypothesis
 
   HypothesisStatistic heuristic4(5,1, mcts_default_parameters());
-  heuristic4.set_heuristic_estimate(15.0f , EgoCosts{45.5f, 0.0f});
+  heuristic4.set_heuristic_estimate(15.0f , EgoCosts{45.5f, 45.0f});
 
   HypothesisStatistic stat_child4(5,1, mcts_default_parameters());
   stat_child4.update_from_heuristic(heuristic4);
   auto action_idx4 = stat_parent.choose_next_action(state);
   EXPECT_EQ(action_idx4, 4);
-  stat_parent.collect( -1, EgoCosts{10.3f, 0.0f}, action_idx4, {0,0});
+  stat_parent.collect( -1, EgoCosts{10.3f, 10.0f}, action_idx4, {0,0});
   stat_parent.update_statistic(stat_child4);
 
   const auto ucb_stats4 =stat_parent.get_ucb_statistics();
   const auto node_counts4 = stat_parent.get_total_node_visits();
 
-  EXPECT_NEAR(ucb_stats4.at(1).at(action_idx4).action_ego_cost_, 10.3f +
-                           mcts_default_parameters().DISCOUNT_FACTOR*45.5f, 0.001);
+  EXPECT_NEAR(ucb_stats4.at(1).at(action_idx4).action_ego_cost_, 10.0f +
+                           mcts_default_parameters().DISCOUNT_FACTOR*45.0f, 0.001);
   EXPECT_EQ(ucb_stats4.at(1).at(action_idx4).action_count_, 1);
   EXPECT_EQ(node_counts4.at(1), 1);
 
@@ -121,10 +121,10 @@ TEST(hypothesis_statistic, backprop_heuristic_hyp1) {
   HypothesisStatisticTestState state(current_agents_hypothesis);
   HypothesisStatistic stat_parent(5,2, mcts_default_parameters()); // agents 2 statistic 
   auto action_idx = stat_parent.choose_next_action(state);
-  stat_parent.collect( 1, EgoCosts{5.3f, 0.0f}, action_idx, {0,0});
+  stat_parent.collect( 1, EgoCosts{5.3f, 6.0f}, action_idx, {0,0});
 
   HypothesisStatistic heuristic(5,2, mcts_default_parameters());
-  heuristic.set_heuristic_estimate(10.0f , EgoCosts{22.0f, 0.0f});
+  heuristic.set_heuristic_estimate(10.0f , EgoCosts{22.0f, 20.0f});
 
   HypothesisStatistic stat_child(5,2, mcts_default_parameters());
   stat_child.update_from_heuristic(heuristic);
@@ -133,8 +133,8 @@ TEST(hypothesis_statistic, backprop_heuristic_hyp1) {
   const auto ucb_stats =stat_parent.get_ucb_statistics();
   const auto node_counts = stat_parent.get_total_node_visits();
 
-  EXPECT_NEAR(ucb_stats.at(1).at(action_idx).action_ego_cost_, 5.3f
-                    +mcts_default_parameters().DISCOUNT_FACTOR*22.0f, 0.001);
+  EXPECT_NEAR(ucb_stats.at(1).at(action_idx).action_ego_cost_, 6.0f
+                    +mcts_default_parameters().DISCOUNT_FACTOR*20.0f, 0.001);
   EXPECT_EQ(ucb_stats.at(1).at(action_idx).action_count_, 1);
   EXPECT_EQ(node_counts.at(1), 1);
 }

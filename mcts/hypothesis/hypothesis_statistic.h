@@ -122,9 +122,9 @@ public:
         UcbPair& ucb_pair = ucb_statistics_[hypothesis_id_current_iteration_][collected_cost_.first]; // we remembered for which action we got the reward, must be the same as during backprop, if we linked parents and childs correctly
         //action value: Q'(s,a) = Q(s,a) + (latest_return - Q(s,a))/N =  1/(N+1 ( latest_return + N*Q(s,a))
         bool chance_update = !use_chance_constrained_updates_.empty() && use_chance_constrained_updates_.at(0);
-        auto collected_cost_sum = std::accumulate(collected_cost_.second.begin(), collected_cost_.second.end(), 0.0);
-        latest_ego_cost_ = chance_update ? (std::max( collected_cost_sum, changed_uct_statistic.latest_ego_cost_)) :
-                         ( collected_cost_sum + k_discount_factor * changed_uct_statistic.latest_ego_cost_);
+        auto collected_cost_worst_case = collected_cost_.second.back(); // assume last cost element is the worst case indicator
+        latest_ego_cost_ = chance_update ? (std::max( collected_cost_worst_case, changed_uct_statistic.latest_ego_cost_)) :
+                         ( collected_cost_worst_case + k_discount_factor * changed_uct_statistic.latest_ego_cost_);
         ucb_pair.action_count_ += 1;
         ucb_pair.action_ego_cost_ = ucb_pair.action_ego_cost_ + (latest_ego_cost_ - ucb_pair.action_ego_cost_) / ucb_pair.action_count_;
         VLOG_EVERY_N(6, 10) << "Agent "<< agent_idx_ <<", Action ego cost, action " << collected_cost_.first << ", C(s,a) = " << ucb_pair.action_ego_cost_;
@@ -155,8 +155,8 @@ public:
     }
 
     void set_heuristic_estimate(const Reward& accum_rewards, const EgoCosts& accum_ego_cost) {
-        auto collected_cost_sum = std::accumulate(accum_ego_cost.begin(), accum_ego_cost.end(), 0.0);
-        ego_cost_value_ = collected_cost_sum;
+        auto collected_cost_worst_case = accum_ego_cost.back();
+        ego_cost_value_ = collected_cost_worst_case;
     };
 
     std::string print_edge_information(const ActionIdx& action) const { return "";};
