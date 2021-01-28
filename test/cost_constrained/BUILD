@@ -37,3 +37,17 @@ cc_test(
         "@gtest//:main",
     ],
 )
+
+cc_test(
+    name = "cost_constrained_test_action_values",
+    srcs = [
+        "cost_constrained_test_action_values.cc",
+        "cost_constrained_statistic_test_state_multiple_cost.h",
+        "cost_constrained_statistic_test_state_single_cost.h"
+    ],
+    copts = ["-Iexternal/gtest/include", "-DNDEBUG"],
+    deps = [
+        "//mcts:mamcts",
+        "@gtest//:main",
+    ],
+)

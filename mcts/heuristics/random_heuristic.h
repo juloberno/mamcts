@@ -24,7 +24,11 @@ public:
             RandomGenerator(mcts_parameters.RANDOM_SEED) {}
 
     template<class S, class SE, class SO, class H>
-    std::pair<SE, std::unordered_map<AgentIdx, SO>> calculate_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node) {      
+    static std::tuple<Reward,
+                      std::unordered_map<AgentIdx, Reward>,
+                      EgoCosts,
+                      double> rollout(const std::shared_ptr<StageNode<S,SE,SO,H>> &node,
+                        const MctsParameters& mcts_parameters) {      
         namespace chr = std::chrono;
         auto start = std::chrono::high_resolution_clock::now();
         std::shared_ptr<S> state = node->get_state()->clone();
@@ -36,26 +40,26 @@ public:
         }
 
         EgoCosts accum_cost(state->get_num_costs(), 0.0f);
-        const double k_discount_factor = mcts_parameters_.DISCOUNT_FACTOR; 
+        const double k_discount_factor = mcts_parameters.DISCOUNT_FACTOR; 
         double modified_discount_factor = k_discount_factor;
         int num_iterations = 0;
         double executed_step_length = 0.0;
         auto current_depth = node->get_depth();
         double ego_action_probability = 1.0;
         
-        while((!state->is_terminal())&&(num_iterations<mcts_parameters_.random_heuristic.MAX_NUMBER_OF_ITERATIONS)&&
+        while((!state->is_terminal())&&(num_iterations<mcts_parameters.random_heuristic.MAX_NUMBER_OF_ITERATIONS)&&
                 (std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count() 
-                    < mcts_parameters_.random_heuristic.MAX_SEARCH_TIME ) &&
-                  current_depth < mcts_parameters_.MAX_SEARCH_DEPTH) {
+                    < mcts_parameters.random_heuristic.MAX_SEARCH_TIME ) &&
+                  current_depth < mcts_parameters.MAX_SEARCH_DEPTH) {
             // Build joint action by calling statistics for each agent
             JointAction jointaction(state->get_num_agents());
             SE ego_statistic(state->get_num_actions(state->get_ego_agent_idx()),
                           state->get_ego_agent_idx(),
-                          mcts_parameters_);
+                          mcts_parameters);
             jointaction[S::ego_agent_idx] = ego_statistic.choose_next_action(*state);
             AgentIdx action_idx = 1;
             for (const auto& ai : state->get_other_agent_idx()) {
-              SO statistic(state->get_num_actions(ai), ai, mcts_parameters_);
+              SO statistic(state->get_num_actions(ai), ai, mcts_parameters);
               jointaction[action_idx] = statistic.choose_next_action(*state);
               action_idx++;
             }
@@ -68,7 +72,7 @@ public:
             AgentIdx reward_idx = 1;
             for (const auto& ai : state->get_other_agent_idx()) {
               other_accum_rewards[ai] = modified_discount_factor*step_rewards[reward_idx];
-              action_idx++;
+              reward_idx++;
             }
 
             if(!accum_cost.empty()) {
@@ -94,6 +98,19 @@ public:
               accum_cost[cost_stat_idx] *= ego_action_probability;
             }
         }
+
+        return std::make_tuple(ego_accum_reward, other_accum_rewards, accum_cost, executed_step_length);
+    }
+
+    template<class S, class SE, class SO, class H>
+    std::pair<SE, std::unordered_map<AgentIdx, SO>> calculate_heuristic_values(const std::shared_ptr<StageNode<S,SE,SO,H>> &node) {   
+        Reward ego_accum_reward;
+        std::unordered_map<AgentIdx, Reward> other_accum_rewards;
+        EgoCosts accum_cost;
+        double executed_step_length;
+
+        std::tie(ego_accum_reward, other_accum_rewards, accum_cost, executed_step_length) = 
+              RandomHeuristic::rollout(node, mcts_parameters_);
 
         // generate an extra node statistic for each agent
         SE ego_heuristic(0, node->get_state()->get_ego_agent_idx(), mcts_parameters_);

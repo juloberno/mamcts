@@ -23,11 +23,13 @@ public:
 
     typedef struct UcbPair
     {
-        UcbPair() : action_count_(0), action_value_(0.0f) {};
+        UcbPair() : action_count_(0), action_value_(0.0f), init_value_(0.0) {};
+        UcbPair(double init_value) : action_count_(0), action_value_(0.0f), init_value_(init_value) {};
         UcbPair(unsigned count, double value) : 
             action_count_(count), action_value_(value) {};
         unsigned action_count_;
         double action_value_;
+        double init_value_;
     } UcbPair;
     typedef std::map<ActionIdx, UcbPair> UcbStatistics;
 
@@ -98,10 +100,15 @@ public:
     }
 
 
-    void update_from_heuristic_from_backpropagated(const Reward& backpropagated) {
-        value_ = backpropagated;
+    void update_from_heuristic_from_backpropagated(const Reward& backpropagated_value) {
+        value_ = backpropagated_value;
         latest_return_ = value_;
         total_node_visits_ += 1;
+    }
+
+    void update_from_heuristic_from_backpropagated(const Reward& backpropagated_value, const UcbStatistics& ucb_statistics) {
+        update_from_heuristic_from_backpropagated(backpropagated_value);
+        ucb_statistics_ = ucb_statistics;
     }
 
     void update_statistic(const NodeStatistic<UctStatistic>& changed_child_statistic) {
@@ -138,8 +145,17 @@ public:
       this->set_heuristic_estimate_from_backpropagated(accum_rewards);
     }
 
-    void set_heuristic_estimate_from_backpropagated(const Reward& backpropagated) {
-       value_ = backpropagated;
+
+    void set_heuristic_estimate_from_backpropagated(const Reward& value) {
+       value_ = value;
+    }
+
+    void set_heuristic_estimate_from_backpropagated(const std::unordered_map<ActionIdx, Reward>& action_returns) {
+        double val = 0.0;
+        for(const auto action_value : action_returns) {
+            ucb_statistics_[action_value.first] = UcbPair(action_value.second);
+        }
+        value_ = val / action_returns.size();
     }
 
     std::string print_node_information() const

@@ -313,8 +313,25 @@ public:
     
       init_cost_statistics(accum_ego_cost.size());
       for (auto cost_stat_idx = 0; cost_stat_idx < accum_ego_cost.size(); ++cost_stat_idx) {
-        cost_statistics_.at(cost_stat_idx).set_heuristic_estimate_from_backpropagated(accum_ego_cost.at(cost_stat_idx));
-        cost_statistics_.at(cost_stat_idx).set_backpropagated_step_length(backpropated_step_length);
+        cost_statistics_.at(cost_stat_idx).set_heuristic_estimate_from_backpropagated(
+            accum_ego_cost.at(cost_stat_idx), backpropated_step_length);
+
+      }
+    }
+
+    void set_heuristic_estimate(const std::unordered_map<ActionIdx, Reward> &action_returns,
+                                const std::unordered_map<ActionIdx, EgoCosts>& action_costs,
+                                const std::unordered_map<ActionIdx, double>& backpropated_step_length)
+    {
+      reward_statistic_.set_heuristic_estimate_from_backpropagated(action_returns);
+    
+      init_cost_statistics(action_costs.begin()->second.size());
+      for (auto cost_stat_idx = 0; cost_stat_idx < action_costs.begin()->second.size(); ++cost_stat_idx) {
+        std::unordered_map<ActionIdx, Reward> action_costs_stat;
+        for (const auto& action_value : action_costs) {
+          action_costs_stat[action_value.first] = action_value.second.at(cost_stat_idx);
+        }
+        cost_statistics_.at(cost_stat_idx).set_heuristic_estimate_from_backpropagated(action_costs_stat, backpropated_step_length);
       }
     }
 

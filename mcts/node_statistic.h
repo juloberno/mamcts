@@ -38,7 +38,8 @@ public:
     ActionIdx get_best_action() const;
     Policy get_policy() const;
 
-    void set_heuristic_estimate(const Reward& accum_rewards, const EgoCosts& accum_ego_cost);
+    template<typename... Args>
+    void set_heuristic_estimate(Args ... args);
 
     void collect(const Reward& reward,  const EgoCosts& cost, 
                 const ActionIdx& action_idx,
@@ -120,8 +121,9 @@ Policy NodeStatistic<Implementation>::get_policy() const {
 }
 
 template <class Implementation>
-void NodeStatistic<Implementation>::set_heuristic_estimate(const Reward& accum_rewards, const EgoCosts& accum_ego_cost) {
-    return impl().set_heuristic_estimate(accum_rewards, accum_ego_cost);
+template<typename... Args>
+void NodeStatistic<Implementation>::set_heuristic_estimate(Args ... args) {
+    return impl().set_heuristic_estimate(std::forward<Args>(args)...);
 }
 
 template <class Implementation>
