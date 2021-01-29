@@ -27,11 +27,12 @@ public:
     static std::tuple<Reward,
                       std::unordered_map<AgentIdx, Reward>,
                       EgoCosts,
-                      double> rollout(const std::shared_ptr<StageNode<S,SE,SO,H>> &node,
-                        const MctsParameters& mcts_parameters) {      
+                      double> rollout(const std::shared_ptr<S> &starting_state,
+                        const MctsParameters& mcts_parameters,
+                        unsigned current_depth) {      
         namespace chr = std::chrono;
         auto start = std::chrono::high_resolution_clock::now();
-        std::shared_ptr<S> state = node->get_state()->clone();
+        auto state = starting_state->clone();
 
         Reward ego_accum_reward = 0.0f;
         std::unordered_map<AgentIdx, Reward> other_accum_rewards;
@@ -44,7 +45,6 @@ public:
         double modified_discount_factor = k_discount_factor;
         int num_iterations = 0;
         double executed_step_length = 0.0;
-        auto current_depth = node->get_depth();
         double ego_action_probability = 1.0;
         
         while((!state->is_terminal())&&(num_iterations<mcts_parameters.random_heuristic.MAX_NUMBER_OF_ITERATIONS)&&
@@ -110,7 +110,7 @@ public:
         double executed_step_length;
 
         std::tie(ego_accum_reward, other_accum_rewards, accum_cost, executed_step_length) = 
-              RandomHeuristic::rollout(node, mcts_parameters_);
+              RandomHeuristic::rollout(node->get_state()->clone(), mcts_parameters_, node->get_depth());
 
         // generate an extra node statistic for each agent
         SE ego_heuristic(0, node->get_state()->get_ego_agent_idx(), mcts_parameters_);

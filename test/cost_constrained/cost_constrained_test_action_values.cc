@@ -31,7 +31,7 @@ struct CostConstrainedTest : public ::testing::Test {
 
   void SetUp( int n_steps, Reward goal_reward1, Reward goal_reward2,
              Cost risk_action1, Cost risk_action2, std::vector<Cost> cost_constraints,
-             double lambda_init, bool widening, unsigned int number_of_iters=3000) {
+             double lambda_init, bool widening, unsigned int number_of_iters=1) {
             n_steps_ = n_steps;
             goal_reward1_ = goal_reward1;
             goal_reward2_ = goal_reward2;
@@ -52,7 +52,7 @@ struct CostConstrainedTest : public ::testing::Test {
             mcts_parameters_.cost_constrained_statistic.TAU_GRADIENT_CLIP = 1.0f;
             mcts_parameters_.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0.2f;
             mcts_parameters_.cost_constrained_statistic.USE_LAMBDA_POLICY = true;
-            mcts_parameters_.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES = {false, true};
+            mcts_parameters_.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES = {false, false};
             mcts_parameters_.DISCOUNT_FACTOR = 0.9;
             mcts_parameters_.MAX_SEARCH_TIME = 1000000000;
             mcts_parameters_.MAX_NUMBER_OF_ITERATIONS = number_of_iters;

@@ -28,6 +28,24 @@ typedef double Reward;
 typedef double Cost;
 typedef std::vector<Cost> EgoCosts;
 
+template <class T>
+std::unordered_map<ActionIdx, T> ActionMapping(ActionIdx num_actions, const T& init) {
+    std::unordered_map<ActionIdx, T> ego_action_map;
+    for(ActionIdx ai = 0; ai < num_actions; ++ai) {
+        ego_action_map[ai] = init;
+    }
+    return ego_action_map;
+}
+
+template <class T>
+std::unordered_map<AgentIdx, T> AgentMapping(std::vector<AgentIdx> agent_idxs, const T& init) {
+    std::unordered_map<AgentIdx, T> agent_map;
+    for(const AgentIdx& ai : agent_idxs) {
+        agent_map[ai] = init;
+    }
+    return agent_map;
+}
+
     template <typename T>
 inline std::vector<T> operator+(const std::vector<T>& a, const std::vector<T>& b)
     {

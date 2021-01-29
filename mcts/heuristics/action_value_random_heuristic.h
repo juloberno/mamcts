@@ -30,11 +30,12 @@ public:
         std::shared_ptr<S> state = node->get_state()->clone();
 
         // For each ego action do a separate rollout
-        std::unordered_map<ActionIdx, Reward> action_returns; // todo init to zero
-        std::unordered_map<ActionIdx, EgoCosts> action_costs; // todo init to zero
-        std::unordered_map<ActionIdx, double> action_executed_step_lengths; // todo init to zero
-        std::unordered_map<AgentIdx, Reward> other_accum_rewards; // todo init to zero
-        for (ActionIdx action_idx = 0; action_idx < state->get_num_actions(state->get_ego_agent_idx()); ++action_idx) {
+        auto action_returns = ActionMapping(state->get_num_actions(state->get_ego_agent_idx()), 0.0); 
+        auto action_costs = ActionMapping(state->get_num_actions(state->get_ego_agent_idx()), EgoCosts(state->get_num_costs(), 0.0)); 
+        auto action_executed_step_lengths = ActionMapping(state->get_num_actions(state->get_ego_agent_idx()), 0.0);  
+        auto other_accum_rewards = AgentMapping(state->get_other_agent_idx(), 0.0); 
+        for (ActionIdx action_idx = 0; action_idx < state->get_num_actions(state->get_ego_agent_idx())
+                                       && !state->is_terminal(); ++action_idx) {
           // Build joint action with specific ego action
           JointAction jointaction(state->get_num_agents());
           jointaction[S::ego_agent_idx] = action_idx;
@@ -57,7 +58,7 @@ public:
           double executed_step_length_rollout;
           std::tie(ego_accum_reward_rollout, other_accum_rewards, 
                     accum_cost_rollout, executed_step_length_rollout) =
-                                  RandomHeuristic::rollout(node, mcts_parameters_);
+                                  RandomHeuristic::rollout<S, SE, SO, H>(new_state, mcts_parameters_, node->get_depth()+1);
 
           // Accumulate statistics
           action_returns[action_idx] += mcts_parameters_.DISCOUNT_FACTOR*step_rewards[S::ego_agent_idx]
@@ -70,6 +71,9 @@ public:
           }
 
           if(!accum_cost_rollout.empty()) {
+            if (action_costs[action_idx].empty()) {
+                 action_costs[action_idx] = EgoCosts(accum_cost_rollout.size(), 0.0);
+            }
             for (std::size_t cost_stat_idx = 0; cost_stat_idx < accum_cost_rollout.size(); ++cost_stat_idx) {
               // Do not discount costs 
               action_costs[action_idx][cost_stat_idx] += ego_cost[cost_stat_idx] +

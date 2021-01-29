@@ -270,15 +270,18 @@ public:
     {
       const CostConstrainedStatistic& statistic_impl = heuristic_statistic.impl();
 
-      const auto heuristic_reward_value = statistic_impl.reward_statistic_.value_;
-      reward_statistic_.update_from_heuristic_from_backpropagated(heuristic_reward_value);
+      const auto& heuristic_reward_value = statistic_impl.reward_statistic_.value_;
+      const auto& heuristic_ucb_stats = statistic_impl.reward_statistic_.ucb_statistics_;
+      reward_statistic_.update_from_heuristic_from_backpropagated(heuristic_reward_value, heuristic_ucb_stats);
 
       const auto& cost_stats_heuristic = statistic_impl.cost_statistics_;
       init_cost_statistics(cost_stats_heuristic.size());
       for (auto cost_stat_idx = 0; cost_stat_idx < cost_stats_heuristic.size(); ++cost_stat_idx) {
-        const auto heuristic_cost_value = cost_stats_heuristic.at(cost_stat_idx).value_;
-        const auto backpropagated_step_length = cost_stats_heuristic.at(cost_stat_idx).backpropagated_step_length_;
-        cost_statistics_[cost_stat_idx].update_from_heuristic_from_backpropagated(heuristic_cost_value, backpropagated_step_length);
+        const auto& heuristic_cost_value = cost_stats_heuristic.at(cost_stat_idx).value_;
+        const auto& backpropagated_step_length = cost_stats_heuristic.at(cost_stat_idx).backpropagated_step_length_;
+        const auto& heuristic_ucb_stats = cost_stats_heuristic.at(cost_stat_idx).ucb_statistics_;
+        cost_statistics_[cost_stat_idx].update_from_heuristic_from_backpropagated(heuristic_cost_value, backpropagated_step_length,
+                                                                                  heuristic_ucb_stats);
       }
     }
 

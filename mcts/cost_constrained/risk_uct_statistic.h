@@ -27,10 +27,12 @@ public:
 
     ~RiskUctStatistic() {};
 
-    void update_from_heuristic_from_backpropagated(const Reward& backpropagated, double backpropagated_step_length) {
+    void update_from_heuristic_from_backpropagated(const Reward& backpropagated, double backpropagated_step_length,
+                                                  const UcbStatistics& ucb_statistics) {
         value_ = backpropagated;
         latest_return_ = value_;
         backpropagated_step_length_ = backpropagated_step_length;
+        ucb_statistics_ = ucb_statistics;
         total_node_visits_ += 1;
     }
     
@@ -69,7 +71,7 @@ public:
             // if step normalized returns are empty, we assume that action returns are already risk-based
             auto step_normalized_return = action_step_lengths.empty() ? action_value.second :
                                                action_value.second / action_step_lengths.at(action_value.first);
-            ucb_statistics_[action_value.first] = UcbPair(step_normalized_return);
+            ucb_statistics_[action_value.first] = UcbPair(1, step_normalized_return, step_normalized_return);
             val += action_value.second;
             step += action_step_lengths.at(action_value.first);
         }

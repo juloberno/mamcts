@@ -24,12 +24,13 @@ public:
     typedef struct UcbPair
     {
         UcbPair() : action_count_(0), action_value_(0.0f), init_value_(0.0) {};
-        UcbPair(double init_value) : action_count_(0), action_value_(0.0f), init_value_(init_value) {};
+        UcbPair(unsigned count, double value, double init_value) : 
+            action_count_(count), action_value_(value), init_value_(init_value) {};
         UcbPair(unsigned count, double value) : 
-            action_count_(count), action_value_(value) {};
+            action_count_(count), action_value_(value), init_value_(value) {};
         unsigned action_count_;
         double action_value_;
-        double init_value_;
+        double init_value_; // rembembers first value, e.g. from a heuristic initialization
     } UcbPair;
     typedef std::map<ActionIdx, UcbPair> UcbStatistics;
 
@@ -153,7 +154,8 @@ public:
     void set_heuristic_estimate_from_backpropagated(const std::unordered_map<ActionIdx, Reward>& action_returns) {
         double val = 0.0;
         for(const auto action_value : action_returns) {
-            ucb_statistics_[action_value.first] = UcbPair(action_value.second);
+            val += action_value.second;
+            ucb_statistics_[action_value.first] = UcbPair(1, action_value.second, action_value.second);
         }
         value_ = val / action_returns.size();
     }
