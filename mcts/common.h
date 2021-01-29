@@ -67,8 +67,5 @@ class UctTest;
 struct RequiresHypothesis 
 {};
 
-struct RequiresCost 
-{};
-
 } // namespace mcts
 #endif
