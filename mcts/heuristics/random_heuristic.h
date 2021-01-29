@@ -110,7 +110,7 @@ public:
         double executed_step_length;
 
         std::tie(ego_accum_reward, other_accum_rewards, accum_cost, executed_step_length) = 
-              RandomHeuristic::rollout(node->get_state()->clone(), mcts_parameters_, node->get_depth());
+              RandomHeuristic::rollout<S, SE, SO, H>(node->get_state()->clone(), mcts_parameters_, node->get_depth());
 
         // generate an extra node statistic for each agent
         SE ego_heuristic(0, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
