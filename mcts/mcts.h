@@ -56,7 +56,7 @@ public:
     ActionIdx returnBestAction();
     void printTreeToDotFile(std::string filename="tree");
 
-    void set_heuristic_function(const H& heuristic) {heuristic_ = heuristic;}
+    H& get_heuristic_function() { return heuristic_;};
     const mcts::StageNode<S, SE, SO, H>& get_root() const { return *root_;}
 
     template<class StateTransitionInfo> 

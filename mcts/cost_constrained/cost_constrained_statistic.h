@@ -444,7 +444,7 @@ private:
 };
 
 template <>
-void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsParameters& parameters,
+inline void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters(MctsParameters& parameters,
                                             const CostConstrainedStatistic& root_statistic,
                                             const unsigned int& current_iteration) {
   if(!root_statistic.policy_is_ready()) {

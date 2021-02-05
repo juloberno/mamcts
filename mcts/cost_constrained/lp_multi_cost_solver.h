@@ -15,7 +15,7 @@
 
 namespace mcts{ 
 
-PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_actions,
+inline PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_actions,
            const std::vector<RiskUctStatistic>& cost_statistics, const std::vector<Cost> cost_constraints,
             std::vector<double> lambdas,
            std::mt19937& random_generator, double max_errors = 1.0) {

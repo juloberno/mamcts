@@ -11,7 +11,7 @@
 
 namespace mcts{
 
-PolicySampled lp_single_cost_solver(const std::vector<ActionIdx>& feasible_actions,
+inline PolicySampled lp_single_cost_solver(const std::vector<ActionIdx>& feasible_actions,
            const UctStatistic& cost_statistic, const Cost cost_constraint,
            std::mt19937& random_generator) {
       // Solved for K=1
