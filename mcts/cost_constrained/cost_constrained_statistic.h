@@ -424,6 +424,26 @@ public:
       return ss.str();
     }
 
+    
+    void merge_node_statistics(const std::vector<CostConstrainedStatistic>& statistics) {
+      reward_statistic_.merge_node_statistics([&](){
+        std::vector<UctStatistic> uct_statistics;
+        for ( const auto& cost_stat : statistics) {
+          uct_statistics.push_back(cost_stat.get_reward_statistic());
+        }
+        return uct_statistics;
+      });
+      for (unsigned cost_idx = 0; cost_idx < cost_statistics_.size(); ++cost_idx) {
+        cost_statistics_[cost_idx].merge_node_statistics([&](){
+          std::vector<UctStatistic> uct_statistics;
+          for ( const auto& cost_stat : statistics) {
+            uct_statistics.push_back(cost_stat.get_cost_statistic(cost_idx));
+          }
+          return uct_statistics;
+        });
+      }
+    }
+
 
 private:
 

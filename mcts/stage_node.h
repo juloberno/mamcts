@@ -104,6 +104,8 @@ struct container_hash {
 
         static void reset_counter();
 
+        void merge_node_statistics(std::vector<StageNode<S, SE, SO, H>> stage_nodes);
+
         MCTS_TEST
     };
 
@@ -264,6 +266,18 @@ struct container_hash {
     ActionIdx StageNode<S,SE, SO, H>::get_best_action() const{
         ActionIdx best = ego_int_node_.get_best_action();
         return best;
+    }
+
+    template<class S, class SE, class SO, class H>
+    void merge_node_statistics(std::vector<StageNode<S, SE, SO, H>> stage_nodes) {
+        // For now sufficient to merge only ego statistic (called only with root parallel mcts)
+        ego_int_node_.merge_node_statistics([&]() {
+        std::vector<SE> ego_statistics;
+        for(const& auto node : stage_nodes) {
+            ego_statistics.push_back(node.get_ego_int_node());
+        }
+        return ego_statistics;
+        });
     }
 
     template<class S, class SE, class SO, class H>

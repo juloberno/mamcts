@@ -160,6 +160,10 @@ public:
         value_ = val / action_returns.size();
     }
 
+    void merge_node_statistics(const std::vector<UctStatistic>& statistics) {
+        
+    }
+
     std::string print_node_information() const
     {
         std::stringstream ss;

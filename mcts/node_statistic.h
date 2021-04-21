@@ -52,6 +52,9 @@ public:
                                             const Implementation& root_statistic,
                                             const unsigned int& current_iteration);
 
+    void merge_node_statistics(const std::vector<Implementation>& statistics);
+    
+
     Implementation& impl();
     const Implementation& impl() const;
 
@@ -131,6 +134,11 @@ void NodeStatistic<Implementation>::update_statistic_parameters(MctsParameters& 
                                             const Implementation& root_statistic,
                                             const unsigned int& current_iteration) {
   return;
+}
+
+template <class Implementation>
+void NodeStatistic<Implementation>::merge_node_statistics(const std::vector<Implementation>& statistics) {
+    return impl().merge_node_statistics(statistics);
 }
 
 
