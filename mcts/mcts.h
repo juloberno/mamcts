@@ -51,8 +51,6 @@ public:
 
     void search(const S& current_state);
 
-    void search_parallel(const S& current_state);
-
     unsigned int numIterations();
     unsigned int searchTime();
     std::string nodeInfo();
@@ -135,26 +133,6 @@ void Mcts<S,SE,SO,H>::search(const S& current_state)
         num_iterations_ += 1;
     }
     search_time_ = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count();
-}
-
-template<class S, class SE, class SO, class H>
-void search_parallel_root(const S& current_state, const unsigned& num_parallel_mcts) {
-    std::vector<std::thread> threads;
-    std::vector<Mcts> parallel_mcts;
-
-    for(unsigned i = 0; i < num_parallel_mcts; ++i) {
-        parallel_mcts_.push_back(Mcts(mcts_parameters_))
-    }
-
-    for(unsigned i = 0; i < num_parallel_mcts; ++i) {
-        threads_.push_back(std::thread(&Mcts::search, &parallel_mcts_.at(i), current_state));
-    }
-    bool all_joined = false;
-    for(unsigned i = 0; i < num_parallel_mcts; ++i) {
-        threads_.at(i).join();
-    }
-
-    root_ = merge_parallel_trees(parallel_mcts_);
 }
 
 template<class S, class SE, class SO, class H>

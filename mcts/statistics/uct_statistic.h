@@ -161,7 +161,21 @@ public:
     }
 
     void merge_node_statistics(const std::vector<UctStatistic>& statistics) {
-        
+        ucb_statistics_.clear();
+        // Sum over all actions for statistics
+        for (const auto& stat : statistics) {
+            for (const auto& action_value : stat.get_ucb_statistics()) {
+                ucb_statistics_[action_value.first].action_value_ += action_value.second.action_value_;
+                ucb_statistics_[action_value.first].action_count_ += 1;
+            }
+        }
+        // Average action values and node value
+        value_ = 0.0;
+        for (auto& action_value : ucb_statistics_) {
+                action_value.second.action_value_ /= action_value.second.action_count_;
+                value_ += action_value.second.action_value_;
+        }
+        value_ /= ucb_statistics_.size();
     }
 
     std::string print_node_information() const

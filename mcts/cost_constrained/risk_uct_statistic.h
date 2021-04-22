@@ -25,6 +25,11 @@ public:
              step_length_(),
              backpropagated_step_length_(0.0) { }
 
+    RiskUctStatistic(const UctStatistic& uct_statistic) : 
+            UctStatistic(uct_statistic),
+            step_length_(),
+            backpropagated_step_length_(0.0) {}
+
     ~RiskUctStatistic() {};
 
     void update_from_heuristic_from_backpropagated(const Reward& backpropagated, double backpropagated_step_length,

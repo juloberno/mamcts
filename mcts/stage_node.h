@@ -269,11 +269,11 @@ struct container_hash {
     }
 
     template<class S, class SE, class SO, class H>
-    void merge_node_statistics(std::vector<StageNode<S, SE, SO, H>> stage_nodes) {
+    void StageNode<S,SE, SO, H>::merge_node_statistics(std::vector<StageNode<S, SE, SO, H>> stage_nodes) {
         // For now sufficient to merge only ego statistic (called only with root parallel mcts)
         ego_int_node_.merge_node_statistics([&]() {
         std::vector<SE> ego_statistics;
-        for(const& auto node : stage_nodes) {
+        for(const auto& node : stage_nodes) {
             ego_statistics.push_back(node.get_ego_int_node());
         }
         return ego_statistics;

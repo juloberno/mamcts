@@ -403,6 +403,8 @@ public:
       return cost_statistics_.at(cost_index).ucb_statistics_;
     }
 
+    unsigned get_num_costs() const { return cost_statistics_.size(); }
+
     const UctStatistic::UcbStatistics& get_reward_ucb_statistics() const {
       return reward_statistic_.ucb_statistics_;
     }
@@ -432,15 +434,19 @@ public:
           uct_statistics.push_back(cost_stat.get_reward_statistic());
         }
         return uct_statistics;
-      });
+      }());
+      cost_statistics_.clear();
+      init_cost_statistics(statistics.begin()->get_num_costs());
       for (unsigned cost_idx = 0; cost_idx < cost_statistics_.size(); ++cost_idx) {
-        cost_statistics_[cost_idx].merge_node_statistics([&](){
+        UctStatistic& this_uct = cost_statistics_[cost_idx];
+        this_uct.merge_node_statistics([&](){
           std::vector<UctStatistic> uct_statistics;
           for ( const auto& cost_stat : statistics) {
-            uct_statistics.push_back(cost_stat.get_cost_statistic(cost_idx));
+            const UctStatistic& uct_other = cost_stat.get_cost_statistic(cost_idx);
+            uct_statistics.push_back(uct_other);
           }
           return uct_statistics;
-        });
+        }());
       }
     }
 
