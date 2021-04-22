@@ -51,3 +51,12 @@ cc_test(
         "@gtest//:main",
     ],
 )
+
+cc_library(
+    name ="cost_constrained_test",
+    hdrs = [
+        "cost_constrained_statistic_test_state_multiple_cost.h",
+        "cost_constrained_statistic_test_state_single_cost.h"
+    ],
+    visibility = ["//visibility:public"],
+)
