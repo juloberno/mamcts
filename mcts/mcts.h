@@ -40,7 +40,8 @@ public:
     Mcts(const MctsParameters& mcts_parameters) : root_(),
                                                   num_iterations_(0),
                                                   mcts_parameters_(mcts_parameters), 
-                                                  heuristic_(mcts_parameters)
+                                                  heuristic_(mcts_parameters),
+                                                  parallel_mcts_(),
                                                   {}
 
     ~Mcts() {}
@@ -69,6 +70,16 @@ protected:
 
     void iterate(const StageNodeSPtr& root_node);
 
+    template< class Q = S>
+    typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
+    single_search(const S& current_state, HypothesisBeliefTracker& belief_tracker);
+    void single_search(const S& current_state);
+
+    template< class Q = S>
+    typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
+    parallel_search(const S& current_state, HypothesisBeliefTracker& belief_tracker);
+    void parallel_search(const S& current_state);
+
     StageNodeSPtr root_;
 
     unsigned int num_iterations_;
@@ -80,12 +91,16 @@ protected:
 
     H heuristic_;
 
+    std::vector<Mcts<S, SE, SO, H>> parallel_mcts_;
+
     std::string sprintf(const StageNodeSPtr& root_node) const;
 
     template<class StateTransitionInfo> 
     void visit_stage_node_edges(const StageNodeSPtr& root_node,
         const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
         std::vector<MctsEdgeInfo<StateTransitionInfo>>& edge_infos, unsigned int max_depth);
+
+    StageNodeSPtr merge_searched_trees(const std::vector<Mcts<S, SE, SO, H>>& searched_trees) const;
 
     MCTS_TEST
 };
@@ -94,6 +109,27 @@ template<class S, class SE, class SO, class H>
 template<class Q>
 typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
 Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker& belief_tracker) {
+    if(mcts_parameters_.NUM_PARALLEL_MCTS > 1) {
+        this->parallel_search(current_state, belief_tracker);
+    } else {
+        this->single_search(current_state, belief_tracker);
+    }
+}
+
+template<class S, class SE, class SO, class H>
+void Mcts<S,SE,SO,H>::search(const S& current_state)
+{
+    if(mcts_parameters_.NUM_PARALLEL_MCTS > 1) {
+        this->parallel_search(current_state);
+    } else {
+        this->single_search(current_state);
+    }
+}
+
+template<class S, class SE, class SO, class H>
+template<class Q>
+typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
+Mcts<S, SE, SO, H>::single_search(const S& current_state, HypothesisBeliefTracker& belief_tracker) {
     auto start = std::chrono::high_resolution_clock::now();
     StageNode<S,SE, SO, H>::reset_counter();
 
@@ -114,7 +150,7 @@ Mcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTracker& beli
 }
 
 template<class S, class SE, class SO, class H>
-void Mcts<S,SE,SO,H>::search(const S& current_state)
+void Mcts<S,SE,SO,H>::single_search(const S& current_state)
 {
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -133,6 +169,76 @@ void Mcts<S,SE,SO,H>::search(const S& current_state)
         num_iterations_ += 1;
     }
     search_time_ = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count();
+}
+
+template<class S, class SE, class SO, class H>
+void ParallelMcts<S, SE, SO, H>::parallel_search(const S& current_state) {
+    std::vector<std::thread> threads;
+    parallel_mcts_.clear();
+
+    for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
+        auto mcts_parameters_parallel_mcts = this->mcts_parameters_;
+       // mcts_parameters_parallel_mcts.RANDOM_SEED = this->mcts_parameters_.RANDOM_SEED*(i+1);
+        parallel_mcts_.push_back(Mcts<S, SE, SO, H>(mcts_parameters_parallel_mcts));
+    }
+
+    for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
+        const auto& cloned_state = current_state.clone();
+        cloned_state->choose_random_seed(i);
+        threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state){ 
+            mcts.search(state);
+        }, std::ref(parallel_mcts_.at(i)), *cloned_state));
+    }
+    bool all_joined = false;
+    for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
+        threads.at(i).join();
+    }
+
+    this->root_ = merge_searched_trees(parallel_mcts_);
+}
+
+template<class S, class SE, class SO, class H>
+template<class Q>
+typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
+ParallelMcts<S, SE, SO, H>::parallel_search(const S& current_state, HypothesisBeliefTracker& belief_tracker) {
+    std::vector<std::thread> threads;
+    parallel_mcts_.clear();
+
+    for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
+        auto mcts_parameters_parallel_mcts = this->mcts_parameters_;
+        //mcts_parameters_parallel_mcts.RANDOM_SEED = this->mcts_parameters_.RANDOM_SEED*(i+1);
+        parallel_mcts_.push_back(Mcts<S, SE, SO, H>(mcts_parameters_parallel_mcts));
+    }
+
+    for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
+        const auto& cloned_state = current_state.clone();
+        cloned_state->choose_random_seed(i);
+        threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state){ 
+            mcts.search(state);
+        }, std::ref(parallel_mcts_.at(i)), *cloned_state));
+    }
+    bool all_joined = false;
+    for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
+        threads.at(i).join();
+    }
+
+    this->root_ = merge_searched_trees(parallel_mcts_);
+}
+
+template<class S, class SE, class SO, class H>
+std::shared_ptr<StageNode<S, SE, SO, H>> ParallelMcts<S, SE, SO, H>::merge_searched_trees(
+                                            const std::vector<Mcts<S, SE, SO, H>>& searched_trees) const {
+
+    auto root = std::make_shared<StageNode<S,SE, SO, H>, StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
+            const unsigned int&> (nullptr, nullptr, JointAction(), 0, this->mcts_parameters_);
+    root->merge_node_statistics([&]() {
+        std::vector<StageNode<S,SE,SO, H>> root_nodes;
+        for(const auto& tree : searched_trees) {
+            root_nodes.push_back(tree.get_root());
+        }
+        return root_nodes;
+    }());
+    return root;
 }
 
 template<class S, class SE, class SO, class H>
