@@ -57,6 +57,7 @@ struct CostConstrainedTest : public ::testing::Test {
             mcts_parameters_.DISCOUNT_FACTOR = 0.9;
             mcts_parameters_.MAX_SEARCH_TIME = 1000000000;
             mcts_parameters_.MAX_NUMBER_OF_ITERATIONS = number_of_iters;
+            mcts_parameters_.NUM_PARALLEL_MCTS = 4;
             if (widening) {
               mcts_parameters_.random_actions_statistic.PROGRESSIVE_WIDENING_ALPHA = 0.25;
               mcts_parameters_.random_actions_statistic.PROGRESSIVE_WIDENING_K = 2.0;
@@ -66,12 +67,12 @@ struct CostConstrainedTest : public ::testing::Test {
             }
 
             mcts_parameters_.cost_constrained_statistic.LAMBDAS = {lambda_init, lambda_init};
-            mcts_ = new Mcts<CostConstrainedStatisticTestStateMultipleCost, CostConstrainedStatistic,
+            mcts_ = new ParallelMcts<CostConstrainedStatisticTestStateMultipleCost, CostConstrainedStatistic,
                         RandomActionsStatistic, RandomHeuristic>(mcts_parameters_);
     }
 
     CostConstrainedStatisticTestStateMultipleCost* state_;
-    Mcts<CostConstrainedStatisticTestStateMultipleCost, CostConstrainedStatistic,
+    ParallelMcts<CostConstrainedStatisticTestStateMultipleCost, CostConstrainedStatistic,
                         RandomActionsStatistic, RandomHeuristic>* mcts_;
     MctsParameters mcts_parameters_;
     int n_steps_;
@@ -96,7 +97,7 @@ struct CostConstrainedNStepTest : public CostConstrainedTest {
 
 
 TEST_F(CostConstrainedTest, allow_collision_and_safety_violation) {
-  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, {0.4f, 0.82f}, 2.2f, false, 2000);
+  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, {0.4f, 0.82f}, 2.2f, false, 500);
 
   mcts_->search(*state_);
   auto best_action = mcts_->returnBestAction();
@@ -124,103 +125,6 @@ TEST_F(CostConstrainedTest, allow_collision_and_safety_violation) {
   LOG(INFO) << "\n"  << root.get_ego_int_node().print_edge_information(0);
 }
 
-TEST(lp_multiple_cost_solver, one_is_one) {
-  std::vector<RiskUctStatistic> cost_statistics;
-  cost_statistics.push_back(
-    RiskUctStatistic(7, 1, mcts_default_parameters()));
-  cost_statistics.push_back(
-    RiskUctStatistic(7, 1, mcts_default_parameters()));
-
-  using ucb = UctStatistic::UcbPair;
-  UctStatistic::UcbStatistics ucb_stats1{{1, ucb(0, 0.8)}, {2, ucb(0, 0.2)}, {4, ucb(0, 0.2)}, {5, ucb(0, 0.3)}};
-  UctStatistic::UcbStatistics ucb_stats2{{1, ucb(0, 0.8)}, {2, ucb(0, 0.1)}, {4, ucb(0, 0.5)}, {5, ucb(0, 0.1)}};
-
-  cost_statistics[0].SetUcbStatistics(ucb_stats1);
-  cost_statistics[1].SetUcbStatistics(ucb_stats2);
-
-  auto random_generator = std::mt19937();
-  auto policy_sampled = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.2, 0.1}, {0.1, 0.1}, random_generator);
-  EXPECT_EQ(policy_sampled.first, 2);
-  EXPECT_EQ(policy_sampled.second.at(1), 0.0);
-  EXPECT_EQ(policy_sampled.second.at(2), 1.0);
-  EXPECT_EQ(policy_sampled.second.at(4), 0.0);
-  EXPECT_EQ(policy_sampled.second.at(5), 0.0);
-}
-
-TEST(lp_multiple_cost_solver, two_are_half) {
-  std::vector<RiskUctStatistic> cost_statistics;
-  auto mcts_parameters = mcts_default_parameters();
-  mcts_parameters.uct_statistic.LOWER_BOUND = 0.0;
-  mcts_parameters.uct_statistic.UPPER_BOUND = 1.0;
-  cost_statistics.push_back(
-    RiskUctStatistic(7, 1, mcts_parameters));
-  cost_statistics.push_back(
-    RiskUctStatistic(7, 1, mcts_parameters));
-
-  using ucb = UctStatistic::UcbPair;
-  UctStatistic::UcbStatistics ucb_stats1{{1, ucb(0, 0.8)}, {2, ucb(0, 0.3)}, {4, ucb(0, 0.1)}, {5, ucb(0, 0.3)}};
-  UctStatistic::UcbStatistics ucb_stats2{{1, ucb(0, 0.8)}, {2, ucb(0, 0.1)}, {4, ucb(0, 0.3)}, {5, ucb(0, 0.7)}};
-
-  cost_statistics[0].SetUcbStatistics(ucb_stats1);
-  cost_statistics[1].SetUcbStatistics(ucb_stats2);
-
-  auto random_generator = std::mt19937();
-  auto policy_sampled = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.2, 0.2}, {0.1, 0.1}, random_generator);
-  EXPECT_TRUE(policy_sampled.first == 2 || policy_sampled.first == 4);
-  EXPECT_EQ(policy_sampled.second.at(1), 0.0);
-  EXPECT_NEAR(policy_sampled.second.at(2), 0.5, 0.001);
-  EXPECT_NEAR(policy_sampled.second.at(4), 0.5, 0.001);
-  EXPECT_EQ(policy_sampled.second.at(5), 0.0);
-}
-
-TEST(lp_multiple_cost_solver, use_error_one_is_one) {
-  std::vector<RiskUctStatistic> cost_statistics;
-  cost_statistics.push_back(
-    RiskUctStatistic(7, 1, mcts_default_parameters()));
-  cost_statistics.push_back(
-    RiskUctStatistic(7, 1, mcts_default_parameters()));
-
-  using ucb = UctStatistic::UcbPair;
-  UctStatistic::UcbStatistics ucb_stats1{{1, ucb(0, 0.8)}, {2, ucb(0, 0.7)}, {4, ucb(0, 0.2)}, {5, ucb(0, 0.6)}};
-  UctStatistic::UcbStatistics ucb_stats2{{1, ucb(0, 0.8)}, {2, ucb(0, 0.1)}, {4, ucb(0, 0.1)}, {5, ucb(0, 0.1)}};
-
-  cost_statistics[0].SetUcbStatistics(ucb_stats1);
-  cost_statistics[1].SetUcbStatistics(ucb_stats2);
-
-  auto random_generator = std::mt19937();
-  auto policy_sampled = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.2, 0.0}, {0.1, 0.1}, random_generator);
-  EXPECT_EQ(policy_sampled.first, 4);
-  EXPECT_EQ(policy_sampled.second.at(1), 0.0);
-  EXPECT_NEAR(policy_sampled.second.at(2), 0.0, 0.000);
-  EXPECT_NEAR(policy_sampled.second.at(4), 1.0, 0.000);
-  EXPECT_EQ(policy_sampled.second.at(5), 0.0);
-}
-
-TEST(lp_multiple_cost_solver, no_solution) {
-  std::vector<RiskUctStatistic> cost_statistics;
-  auto mcts_parameters = mcts_default_parameters();
-  mcts_parameters.uct_statistic.LOWER_BOUND = 0.0;
-  mcts_parameters.uct_statistic.UPPER_BOUND = 1.0;
-  cost_statistics.push_back(
-    RiskUctStatistic(7, 1, mcts_parameters));
-  cost_statistics.push_back(
-    RiskUctStatistic(7, 1, mcts_parameters));
-
-  using ucb = UctStatistic::UcbPair;
-  UctStatistic::UcbStatistics ucb_stats1{{1, ucb(0, 0.8)}, {2, ucb(0, 0.9)}, {4, ucb(0, 0.8)}, {5, ucb(0, 0.8)}};
-  UctStatistic::UcbStatistics ucb_stats2{{1, ucb(0, 0.8)}, {2, ucb(0, 0.3)}, {4, ucb(0, 0.4)}, {5, ucb(0, 0.1)}};
-
-  cost_statistics[0].SetUcbStatistics(ucb_stats1);
-  cost_statistics[1].SetUcbStatistics(ucb_stats2);
-
-  auto random_generator = std::mt19937();
-  auto policy_sampled = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.8, 0.01}, {0.5, 0.5}, random_generator, 0.05);
-  EXPECT_EQ(policy_sampled.first, 5);
-  EXPECT_EQ(policy_sampled.second.at(1), 0.0);
-  EXPECT_NEAR(policy_sampled.second.at(2), 0.0, 0.000);
-  EXPECT_NEAR(policy_sampled.second.at(4), 0.0, 0.000);
-  EXPECT_EQ(policy_sampled.second.at(5), 1.0);
-}
 
 int main(int argc, char **argv) {
   FLAGS_alsologtostderr = true;

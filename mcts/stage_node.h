@@ -277,7 +277,7 @@ struct container_hash {
             ego_statistics.push_back(node.get_ego_int_node());
         }
         return ego_statistics;
-        });
+        }());
     }
 
     template<class S, class SE, class SO, class H>
