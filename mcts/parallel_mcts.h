@@ -53,11 +53,14 @@ void ParallelMcts<S, SE, SO, H>::search(const S& current_state) {
     parallel_mcts_.clear();
 
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
-        parallel_mcts_.push_back(Mcts<S, SE, SO, H>(this->mcts_parameters_));
+        auto mcts_parameters_parallel_mcts = this->mcts_parameters_;
+       // mcts_parameters_parallel_mcts.RANDOM_SEED = this->mcts_parameters_.RANDOM_SEED*(i+1);
+        parallel_mcts_.push_back(Mcts<S, SE, SO, H>(mcts_parameters_parallel_mcts));
     }
 
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
         const auto& cloned_state = current_state.clone();
+        cloned_state->choose_random_seed(i);
         threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state){ 
             mcts.search(state);
         }, std::ref(parallel_mcts_.at(i)), *cloned_state));
@@ -78,14 +81,17 @@ ParallelMcts<S, SE, SO, H>::search(const S& current_state, HypothesisBeliefTrack
     parallel_mcts_.clear();
 
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
-        parallel_mcts_.push_back(Mcts<S, SE, SO, H>(this->mcts_parameters_));
+        auto mcts_parameters_parallel_mcts = this->mcts_parameters_;
+        //mcts_parameters_parallel_mcts.RANDOM_SEED = this->mcts_parameters_.RANDOM_SEED*(i+1);
+        parallel_mcts_.push_back(Mcts<S, SE, SO, H>(mcts_parameters_parallel_mcts));
     }
 
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
-        threads.push_back(std::thread([&](){
-            const auto& cloned_state = current_state.clone();
-            parallel_mcts_.at(i).search(*cloned_state, belief_tracker);
-        }));
+        const auto& cloned_state = current_state.clone();
+        cloned_state->choose_random_seed(i);
+        threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state){ 
+            mcts.search(state);
+        }, std::ref(parallel_mcts_.at(i)), *cloned_state));
     }
     bool all_joined = false;
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {

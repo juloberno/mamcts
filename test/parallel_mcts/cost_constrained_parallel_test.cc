@@ -97,7 +97,7 @@ struct CostConstrainedNStepTest : public CostConstrainedTest {
 
 
 TEST_F(CostConstrainedTest, allow_collision_and_safety_violation) {
-  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, {0.4f, 0.82f}, 2.2f, false, 500);
+  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, {0.4f, 0.82f}, 2.2f, false, 30);
 
   mcts_->search(*state_);
   auto best_action = mcts_->returnBestAction();

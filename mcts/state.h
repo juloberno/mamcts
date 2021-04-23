@@ -124,6 +124,8 @@ public:
 
     double get_execution_step_length() const;
 
+    void choose_random_seed(const unsigned& seed_idx);
+
     ~StateInterface() {};
 
     static const Implementation& cast();
@@ -185,6 +187,11 @@ inline std::string StateInterface<Implementation>::sprintf() const {
 template<typename Implementation>
 inline double StateInterface<Implementation>::get_execution_step_length() const {
     return impl().get_execution_step_length();
+}
+
+template<typename Implementation>
+void StateInterface<Implementation>::choose_random_seed(const unsigned& seed_idx) {
+    return impl().choose_random_seed(seed_idx);
 }
 
 template<typename Implementation>

@@ -122,6 +122,11 @@ public:
        return {1.0f, 0.0f};
     }
 
+    void choose_random_seed(const unsigned& seed_idx) {
+      seed_ *= seed_idx;
+      RandomGenerator::random_generator_.seed(seed_);
+    }
+
 
     Probability get_transition_to_goal_probability(const ActionIdx& ego_action) const {
       if(ego_action == 1) {
