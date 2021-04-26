@@ -65,6 +65,8 @@ public:
       return 1.0;
     }
 
+    void choose_random_seed(const unsigned& seed_idx) {}
+
     bool is_terminal() const {
         return state_length_ >= winning_state_length_ || state_length_ <= loosing_state_length_;
     }

@@ -20,12 +20,13 @@ using namespace mcts;
 
 
 MctsParameters default_uct_params() {
-  MctsParameters parameters;
+  MctsParameters parameters(mcts_default_parameters());
   parameters.DISCOUNT_FACTOR = 0.9;
   parameters.RANDOM_SEED = 1000;
   parameters.MAX_NUMBER_OF_ITERATIONS = 10000;
   parameters.MAX_SEARCH_TIME = 1000;
   parameters.MAX_SEARCH_DEPTH = 1000;
+  parameters.NUM_PARALLEL_MCTS = 1;
   
   parameters.random_heuristic.MAX_SEARCH_TIME = 10;
   parameters.random_heuristic.MAX_NUMBER_OF_ITERATIONS = 1000;

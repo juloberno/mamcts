@@ -14,7 +14,7 @@
 #include "test/cost_constrained/cost_constrained_statistic_test_state_multiple_cost.h"
 #include "mcts/heuristics/random_heuristic.h"
 #include "mcts/statistics/random_actions_statistic.h"
-#include "mcts/parallel_mcts.h"
+#include "mcts/mcts.h"
 #include <cstdio>
 
 using namespace std;
@@ -67,12 +67,12 @@ struct CostConstrainedTest : public ::testing::Test {
             }
 
             mcts_parameters_.cost_constrained_statistic.LAMBDAS = {lambda_init, lambda_init};
-            mcts_ = new ParallelMcts<CostConstrainedStatisticTestStateMultipleCost, CostConstrainedStatistic,
+            mcts_ = new Mcts<CostConstrainedStatisticTestStateMultipleCost, CostConstrainedStatistic,
                         RandomActionsStatistic, RandomHeuristic>(mcts_parameters_);
     }
 
     CostConstrainedStatisticTestStateMultipleCost* state_;
-    ParallelMcts<CostConstrainedStatisticTestStateMultipleCost, CostConstrainedStatistic,
+    Mcts<CostConstrainedStatisticTestStateMultipleCost, CostConstrainedStatistic,
                         RandomActionsStatistic, RandomHeuristic>* mcts_;
     MctsParameters mcts_parameters_;
     int n_steps_;

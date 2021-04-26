@@ -41,7 +41,7 @@ public:
                                                   num_iterations_(0),
                                                   mcts_parameters_(mcts_parameters), 
                                                   heuristic_(mcts_parameters),
-                                                  parallel_mcts_(),
+                                                  parallel_mcts_()
                                                   {}
 
     ~Mcts() {}
@@ -172,7 +172,7 @@ void Mcts<S,SE,SO,H>::single_search(const S& current_state)
 }
 
 template<class S, class SE, class SO, class H>
-void ParallelMcts<S, SE, SO, H>::parallel_search(const S& current_state) {
+void Mcts<S, SE, SO, H>::parallel_search(const S& current_state) {
     std::vector<std::thread> threads;
     parallel_mcts_.clear();
 
@@ -186,7 +186,7 @@ void ParallelMcts<S, SE, SO, H>::parallel_search(const S& current_state) {
         const auto& cloned_state = current_state.clone();
         cloned_state->choose_random_seed(i);
         threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state){ 
-            mcts.search(state);
+            mcts.single_search(state);
         }, std::ref(parallel_mcts_.at(i)), *cloned_state));
     }
     bool all_joined = false;
@@ -200,7 +200,7 @@ void ParallelMcts<S, SE, SO, H>::parallel_search(const S& current_state) {
 template<class S, class SE, class SO, class H>
 template<class Q>
 typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
-ParallelMcts<S, SE, SO, H>::parallel_search(const S& current_state, HypothesisBeliefTracker& belief_tracker) {
+Mcts<S, SE, SO, H>::parallel_search(const S& current_state, HypothesisBeliefTracker& belief_tracker) {
     std::vector<std::thread> threads;
     parallel_mcts_.clear();
 
@@ -214,7 +214,7 @@ ParallelMcts<S, SE, SO, H>::parallel_search(const S& current_state, HypothesisBe
         const auto& cloned_state = current_state.clone();
         cloned_state->choose_random_seed(i);
         threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state){ 
-            mcts.search(state);
+            mcts.single_search(state);
         }, std::ref(parallel_mcts_.at(i)), *cloned_state));
     }
     bool all_joined = false;
@@ -226,7 +226,7 @@ ParallelMcts<S, SE, SO, H>::parallel_search(const S& current_state, HypothesisBe
 }
 
 template<class S, class SE, class SO, class H>
-std::shared_ptr<StageNode<S, SE, SO, H>> ParallelMcts<S, SE, SO, H>::merge_searched_trees(
+std::shared_ptr<StageNode<S, SE, SO, H>> Mcts<S, SE, SO, H>::merge_searched_trees(
                                             const std::vector<Mcts<S, SE, SO, H>>& searched_trees) const {
 
     auto root = std::make_shared<StageNode<S,SE, SO, H>, StageNodeSPtr, std::shared_ptr<S>, const JointAction&,

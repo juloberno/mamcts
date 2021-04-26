@@ -42,6 +42,8 @@ public:
         }
     }
 
+    void choose_random_seed(const unsigned& seed_idx) {}
+
     Probability get_prior(const HypothesisId& hypothesis, const AgentIdx& agent_idx) const { 
         if(hypothesis == 0) {
             if(agent_idx == 0) {

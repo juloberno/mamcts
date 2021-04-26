@@ -149,6 +149,9 @@ public:
         ss << "CostConstrainedStatisticTestStateSingleCost (current_state: " << current_state_ << ")";
         return ss.str();
     }
+
+    void choose_random_seed(const unsigned& seed_idx) {}
+
 private:
     int current_state_;
     bool is_terminal_;

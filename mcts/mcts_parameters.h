@@ -95,7 +95,7 @@ inline MctsParameters mcts_default_parameters() {
   parameters.MAX_SEARCH_TIME = 1000;
   parameters.MAX_SEARCH_DEPTH = 1000;
   parameters.USE_BOUND_ESTIMATION = true;
-  parameters.NUM_PARALLEL_MCTS = 4;
+  parameters.NUM_PARALLEL_MCTS = 1;
   
   parameters.random_heuristic.MAX_SEARCH_TIME = 10;
   parameters.random_heuristic.MAX_NUMBER_OF_ITERATIONS = 1000;

@@ -45,6 +45,8 @@ public:
       return 1.0;
     }
 
+    void choose_random_seed(const unsigned& seed_idx) {}
+
     void change_actions() {use_first_action_ = !use_first_action_;}
 
     const std::vector<AgentIdx> get_other_agent_idx() const {
