@@ -18,7 +18,9 @@ class RiskUctStatistic : public UctStatistic
 {
 public:
     MCTS_TEST
-    FRIEND_COST_CONSTRAINED_STATISTIC
+    #ifdef UCT_COST_CONSTRAINED_STATISTIC_H
+    friend class CostConstrainedStatistic;
+    #endif
 
     RiskUctStatistic(ActionIdx num_actions, AgentIdx agent_idx, const MctsParameters & mcts_parameters) :
              UctStatistic(num_actions, agent_idx, mcts_parameters),

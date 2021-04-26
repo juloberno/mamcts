@@ -19,7 +19,9 @@ class UctStatistic : public mcts::NodeStatistic<UctStatistic>, mcts::RandomGener
 {
 public:
     MCTS_TEST
-    FRIEND_COST_CONSTRAINED_STATISTIC
+    #ifdef UCT_COST_CONSTRAINED_STATISTIC_H
+    friend class CostConstrainedStatistic;
+    #endif
 
     typedef struct UcbPair
     {

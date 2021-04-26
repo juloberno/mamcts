@@ -213,9 +213,10 @@ Mcts<S, SE, SO, H>::parallel_search(const S& current_state, HypothesisBeliefTrac
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
         const auto& cloned_state = current_state.clone();
         cloned_state->choose_random_seed(i);
-        threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state){ 
-            mcts.single_search(state);
-        }, std::ref(parallel_mcts_.at(i)), *cloned_state));
+        threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state, const HypothesisBeliefTracker& belief_tracker){ 
+            HypothesisBeliefTracker local_belief_tracker = belief_tracker;
+            mcts.single_search(state, local_belief_tracker);
+        }, std::ref(parallel_mcts_.at(i)), *cloned_state, belief_tracker));
     }
     bool all_joined = false;
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
