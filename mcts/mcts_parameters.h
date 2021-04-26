@@ -51,7 +51,7 @@ struct MctsParameters{
       double ACTION_FILTER_FACTOR;
       std::vector<bool> USE_COST_THRESHOLDING;
       std::vector<bool> USE_CHANCE_CONSTRAINED_UPDATES;
-      std::vector<float> COST_THRESHOLDS;
+      std::vector<double> COST_THRESHOLDS;
       bool USE_LAMBDA_POLICY;
   };
 
