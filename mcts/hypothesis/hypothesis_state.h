@@ -35,9 +35,17 @@ public:
 
     HypothesisId get_current_hypothesis(const AgentIdx& agent_idx) const;
 
+    std::shared_ptr<Implementation>  change_belief_reference(const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis) const;
+
 protected:
     const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis_; // shared across all states
 };
+
+template<typename Implementation>
+inline std::shared_ptr<Implementation> HypothesisStateInterface<Implementation>::change_belief_reference(
+                const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis) const {
+ return StateInterface<Implementation>::impl().change_belief_reference(current_agents_hypothesis);
+}
 
 template<typename Implementation>
 inline ActionIdx HypothesisStateInterface<Implementation>::plan_action_current_hypothesis(const AgentIdx& agent_idx) const {

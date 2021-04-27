@@ -63,6 +63,18 @@ public:
         return std::make_shared<CrossingState>(*this);
     }
 
+    std::shared_ptr<CrossingState> change_belief_reference(
+                const std::unordered_map<AgentIdx, HypothesisId>& current_agents_hypothesis) const {
+        return std::make_shared<CrossingState<Domain>>(current_agents_hypothesis,
+                                                parameters_,
+                                                other_agent_states_,
+                                                ego_state_,
+                                                terminal_,
+                                                goal_reached_,
+                                                collided_,
+                                                hypothesis_);
+    }
+
     ActionIdx plan_action_current_hypothesis(const AgentIdx& agent_idx) const {
         const HypothesisId agt_hyp_id = this->current_agents_hypothesis_.at(agent_idx);
         return aconv(hypothesis_.at(agt_hyp_id).act(other_agent_states_[agent_idx-1],

@@ -62,6 +62,7 @@ TEST(hypothesis_crossing_state, hypothesis_friendly)
     const auto params = default_crossing_state_parameters<Domain>();
     auto mcts_params =mcts_default_parameters();
     mcts_params.hypothesis_belief_tracker.HISTORY_LENGTH = 100;
+    mcts_params.NUM_PARALLEL_MCTS = 4;
     HypothesisBeliefTracker belief_tracker(mcts_params);
     auto state = std::make_shared<CrossingState<Domain>>(belief_tracker.sample_current_hypothesis(), params);
     state->add_hypothesis(AgentPolicyCrossingState<Domain>({5,5}, params));

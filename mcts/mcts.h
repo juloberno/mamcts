@@ -40,7 +40,7 @@ public:
     Mcts(const MctsParameters& mcts_parameters) : root_(),
                                                   num_iterations_(0),
                                                   mcts_parameters_(mcts_parameters), 
-                                                  heuristic_(mcts_parameters),
+                                                  heuristic_(mcts_parameters_),
                                                   parallel_mcts_()
                                                   {}
 
@@ -211,12 +211,14 @@ Mcts<S, SE, SO, H>::parallel_search(const S& current_state, HypothesisBeliefTrac
     }
 
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
-        const auto& cloned_state = current_state.clone();
-        cloned_state->choose_random_seed(i);
-        threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state, const HypothesisBeliefTracker& belief_tracker){ 
+        threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state, 
+               const HypothesisBeliefTracker& belief_tracker, const unsigned& mcts_idx){ 
             HypothesisBeliefTracker local_belief_tracker = belief_tracker;
-            mcts.single_search(state, local_belief_tracker);
-        }, std::ref(parallel_mcts_.at(i)), *cloned_state, belief_tracker));
+            const auto& cloned_state = 
+                state.change_belief_reference(local_belief_tracker.sample_current_hypothesis());
+            cloned_state->choose_random_seed(mcts_idx);
+            mcts.single_search(*cloned_state, local_belief_tracker);
+        }, std::ref(parallel_mcts_.at(i)), current_state, belief_tracker, i));
     }
     bool all_joined = false;
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
@@ -231,7 +233,7 @@ std::shared_ptr<StageNode<S, SE, SO, H>> Mcts<S, SE, SO, H>::merge_searched_tree
                                             const std::vector<Mcts<S, SE, SO, H>>& searched_trees) const {
 
     auto root = std::make_shared<StageNode<S,SE, SO, H>, StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
-            const unsigned int&> (nullptr, nullptr, JointAction(), 0, this->mcts_parameters_);
+            const unsigned int&> (nullptr, searched_trees.begin()->get_root().get_state()->clone(), JointAction(), 0, this->mcts_parameters_);
     root->merge_node_statistics([&]() {
         std::vector<StageNode<S,SE,SO, H>> root_nodes;
         for(const auto& tree : searched_trees) {
