@@ -37,7 +37,7 @@ namespace mcts {
         Implementation& impl() const;
 
     protected:
-        const MctsParameters& mcts_parameters_;
+        const MctsParameters mcts_parameters_;
     };
 
 
