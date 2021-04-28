@@ -173,6 +173,7 @@ void Mcts<S,SE,SO,H>::single_search(const S& current_state)
 
 template<class S, class SE, class SO, class H>
 void Mcts<S, SE, SO, H>::parallel_search(const S& current_state) {
+    auto start = std::chrono::high_resolution_clock::now();
     std::vector<std::thread> threads;
     parallel_mcts_.clear();
 
@@ -195,12 +196,14 @@ void Mcts<S, SE, SO, H>::parallel_search(const S& current_state) {
     }
 
     this->root_ = merge_searched_trees(parallel_mcts_);
+    search_time_ = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count();
 }
 
 template<class S, class SE, class SO, class H>
 template<class Q>
 typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
 Mcts<S, SE, SO, H>::parallel_search(const S& current_state, HypothesisBeliefTracker& belief_tracker) {
+    auto start = std::chrono::high_resolution_clock::now();
     std::vector<std::thread> threads;
     parallel_mcts_.clear();
 
@@ -226,6 +229,7 @@ Mcts<S, SE, SO, H>::parallel_search(const S& current_state, HypothesisBeliefTrac
     }
 
     this->root_ = merge_searched_trees(parallel_mcts_);
+    search_time_ = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count();
 }
 
 template<class S, class SE, class SO, class H>
