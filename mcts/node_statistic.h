@@ -52,6 +52,8 @@ public:
                                             const Implementation& root_statistic,
                                             const unsigned int& current_iteration);
 
+    static MctsParameters merge_mcts_parameters(std::vector<MctsParameters> parameters);
+
     void merge_node_statistics(const std::vector<Implementation>& statistics);
     
 
@@ -134,6 +136,11 @@ void NodeStatistic<Implementation>::update_statistic_parameters(MctsParameters& 
                                             const Implementation& root_statistic,
                                             const unsigned int& current_iteration) {
   return;
+}
+
+template <class Implementation>
+MctsParameters NodeStatistic<Implementation>::merge_mcts_parameters(std::vector<MctsParameters> parameters) {
+  return *parameters.begin(); // Default: no merging applied
 }
 
 template <class Implementation>

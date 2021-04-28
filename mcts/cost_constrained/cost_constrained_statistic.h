@@ -499,6 +499,23 @@ inline void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters
   }
 }
 
+template <>
+inline MctsParameters NodeStatistic<CostConstrainedStatistic>::merge_mcts_parameters(std::vector<MctsParameters> parameters) {
+  MctsParameters merged_parameters = *parameters.begin(); 
+  // only lambda must be merged (being the only parameter changed iteratively)
+  const auto num_lambdas = merged_parameters.cost_constrained_statistic.LAMBDAS.size();
+  std::vector<double> merged_lambdas(num_lambdas, 0.0);
+  for(std::size_t cost_idx = 0; cost_idx < num_lambdas; ++cost_idx) {
+    for (const auto& mcts_params : parameters) {
+      merged_lambdas[cost_idx] += mcts_params.cost_constrained_statistic.LAMBDAS[cost_idx];
+    }
+    merged_lambdas[cost_idx] /= parameters.size();
+  }
+  
+  merged_parameters.cost_constrained_statistic.LAMBDAS = merged_lambdas;
+  return merged_parameters;
+}
+
 } // namespace mcts
 
 #endif

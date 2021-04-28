@@ -165,16 +165,19 @@ public:
     void merge_node_statistics(const std::vector<UctStatistic>& statistics) {
         ucb_statistics_.clear();
         // Sum over all actions for statistics
+        std::unordered_map<ActionIdx, unsigned> action_occurences;
         for (const auto& stat : statistics) {
             for (const auto& action_value : stat.get_ucb_statistics()) {
                 ucb_statistics_[action_value.first].action_value_ += action_value.second.action_value_;
-                ucb_statistics_[action_value.first].action_count_ += 1;
+                ucb_statistics_[action_value.first].action_count_ += action_value.second.action_count_;
+                action_occurences[action_value.first] += 1;
             }
+            total_node_visits_ += stat.total_node_visits_;
         }
         // Average action values and node value
         value_ = 0.0;
         for (auto& action_value : ucb_statistics_) {
-                action_value.second.action_value_ /= action_value.second.action_count_;
+                action_value.second.action_value_ /= action_occurences[action_value.first];
                 value_ += action_value.second.action_value_;
         }
         value_ /= ucb_statistics_.size();

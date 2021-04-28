@@ -100,7 +100,7 @@ protected:
         const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
         std::vector<MctsEdgeInfo<StateTransitionInfo>>& edge_infos, unsigned int max_depth);
 
-    StageNodeSPtr merge_searched_trees(const std::vector<Mcts<S, SE, SO, H>>& searched_trees) const;
+    StageNodeSPtr merge_searched_trees(const std::vector<Mcts<S, SE, SO, H>>& searched_trees);
 
     MCTS_TEST
 };
@@ -230,10 +230,18 @@ Mcts<S, SE, SO, H>::parallel_search(const S& current_state, HypothesisBeliefTrac
 
 template<class S, class SE, class SO, class H>
 std::shared_ptr<StageNode<S, SE, SO, H>> Mcts<S, SE, SO, H>::merge_searched_trees(
-                                            const std::vector<Mcts<S, SE, SO, H>>& searched_trees) const {
+                                            const std::vector<Mcts<S, SE, SO, H>>& searched_trees) {
+
+    iteration_parameters_ = NodeStatistic<SE>::merge_mcts_parameters([&](){
+        std::vector<MctsParameters> parameters;
+        for (const auto mcts : searched_trees) {
+            parameters.push_back(mcts.iteration_parameters_);
+        }
+        return parameters;
+    }());
 
     auto root = std::make_shared<StageNode<S,SE, SO, H>, StageNodeSPtr, std::shared_ptr<S>, const JointAction&,
-            const unsigned int&> (nullptr, searched_trees.begin()->get_root().get_state()->clone(), JointAction(), 0, this->mcts_parameters_);
+            const unsigned int&> (nullptr, searched_trees.begin()->get_root().get_state()->clone(), JointAction(), 0, iteration_parameters_);
     root->merge_node_statistics([&]() {
         std::vector<StageNode<S,SE,SO, H>> root_nodes;
         for(const auto& tree : searched_trees) {
