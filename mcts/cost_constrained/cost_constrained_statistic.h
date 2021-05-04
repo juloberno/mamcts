@@ -84,10 +84,14 @@ public:
         return PolicySampled(action, Policy({{action, 1.0}}));
       }
   
-      std::unordered_map<ActionIdx, double> ucb_values;
-      calculate_ucb_values_with_lambda(ucb_values, kappa_local, allowed_actions);
+      std::unordered_map<ActionIdx, double> ucb_values_with_exploration;
+      std::unordered_map<ActionIdx, double> ucb_values_without_exploration;
+      calculate_ucb_values_with_lambda(ucb_values_with_exploration, ucb_values_without_exploration,
+                                     kappa_local, allowed_actions);
       
-      const auto feasible_actions = filter_feasible_actions(ucb_values, action_filter_factor_local);
+      const auto feasible_actions = filter_feasible_actions(ucb_values_with_exploration,
+                                                            ucb_values_without_exploration,
+                                                             action_filter_factor_local);
       auto policy = solve_LP_and_sample(feasible_actions);
       return policy;
     }
@@ -130,13 +134,16 @@ public:
       return maximizing_action;
     }
 
-    void calculate_ucb_values_with_lambda(std::unordered_map<ActionIdx, double>& values, const double& kappa_local,
+    void calculate_ucb_values_with_lambda(std::unordered_map<ActionIdx, double>& values_with_exploration,
+                            std::unordered_map<ActionIdx, double>& values_without_exploration,
+                            const double& kappa_local,
                             std::vector<ActionIdx> allowed_actions = std::vector<ActionIdx>()) const {
       const auto& reward_stats = reward_statistic_.ucb_statistics_;
       const auto& cost_stats = cost_statistics_.at(0).ucb_statistics_;
       MCTS_EXPECT_TRUE(reward_stats.size() ==  cost_stats.size());
 
-      values.reserve(reward_statistic_.ucb_statistics_.size());
+      values_with_exploration.reserve(reward_statistic_.ucb_statistics_.size());
+      values_without_exploration.reserve(reward_statistic_.ucb_statistics_.size());
       if(allowed_actions.empty()) {
         allowed_actions.resize(reward_statistic_.ucb_statistics_.size());
         std::transform(reward_statistic_.ucb_statistics_.begin(), reward_statistic_.ucb_statistics_.end(), 
@@ -154,8 +161,9 @@ public:
             cost_lambda_term += cost_statistics_.at(cost_idx).get_ucb_statistics().at(action_idx).action_value_ * 
                   mcts_parameters_.cost_constrained_statistic.LAMBDAS.at(cost_idx);
           }
-          values[action_idx] = reward_value_normalized - cost_lambda_term
-                 + (std::isnan(exploration_term) ? std::numeric_limits<double>::max() : exploration_term);
+          values_without_exploration[action_idx] = reward_value_normalized - cost_lambda_term;
+          values_with_exploration[action_idx] = values_without_exploration[action_idx]
+                                         + (std::isnan(exploration_term) ? std::numeric_limits<double>::max() : exploration_term);
       }
     }
 
@@ -178,17 +186,18 @@ public:
           cost_constraints_.at(CONSTRAINT_COST_IDX), random_generator_);
     }
 
-    std::vector<ActionIdx> filter_feasible_actions(const std::unordered_map<ActionIdx, double>& values,
+    std::vector<ActionIdx> filter_feasible_actions(const std::unordered_map<ActionIdx, double>& values_with_exploration,
+                                          const std::unordered_map<ActionIdx, double>& values_without_exploration,
                                            const double& action_filter_factor_local) const {
       std::vector<ActionIdx> filtered_actions;
-      const auto maximizing_action_it = std::max_element(values.begin(), values.end(), [](const auto& p1, const auto& p2){
+      const auto maximizing_action_it = std::max_element(values_with_exploration.begin(), values_with_exploration.end(), [](const auto& p1, const auto& p2){
                  return p1.second < p2.second; });
       const ActionIdx maximizing_action = maximizing_action_it->first;
-      const Reward max_val = maximizing_action_it->second;
+      const Reward max_val = values_without_exploration.at(maximizing_action);
       const double node_counts_maximizing = (reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_ == 0) ? std::numeric_limits<double>::max() :
                                  sqrt( log( reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_) /
                                                   ( reward_statistic_.ucb_statistics_.at(maximizing_action).action_count_) );
-      for (const auto action_value : values) {
+      for (const auto action_value : values_without_exploration) {
           const double value_difference = std::abs(action_value.second - max_val);
           const double node_count_relations = ( reward_statistic_.ucb_statistics_.at(action_value.first).action_count_ == 0) ? std::numeric_limits<double>::max() :
                                  sqrt( log( reward_statistic_.ucb_statistics_.at(action_value.first).action_count_) /
@@ -365,8 +374,10 @@ public:
 
     std::string print_edge_information(const ActionIdx& action) const {
         const auto& reward_stats = reward_statistic_.ucb_statistics_;
-        std::unordered_map<ActionIdx, double> ucb_values;
-        calculate_ucb_values_with_lambda(ucb_values, 0.0f);
+        std::unordered_map<ActionIdx, double> ucb_values_with_exploration;
+        std::unordered_map<ActionIdx, double> ucb_values_without_exploration;
+        calculate_ucb_values_with_lambda(ucb_values_with_exploration, 
+                          ucb_values_without_exploration, 0.0f);
         std::stringstream ss;
         ss  << "Reward stats: " << reward_statistic_.sprintf() << "\n"
             << "Cost stats: ";
@@ -374,7 +385,7 @@ public:
               ss << cost_stat_idx <<  ") [" << cost_statistics_.at(cost_stat_idx).sprintf() << "]  ";
             } 
             ss << "\n" << "Lambdas:" << mcts_parameters_.cost_constrained_statistic.LAMBDAS << "\n"
-            << "Ucb values: " << ucb_values << "\n"
+            << "Ucb values: " << ucb_values_with_exploration << "\n"
             << "Mean step cost: C(a=" << action << ") = " << mean_step_costs_.at(action) << "\n";
         return ss.str();
     }

@@ -291,7 +291,8 @@ struct container_hash {
 
         if(!joint_action_.empty())
         {
-            ss << ", Joint Action " << joint_action_;
+            ss << ", Joint Action ";
+            mcts::operator<<(ss, joint_action_);
         }
         ss << ", " << state_->sprintf() << ", Stats: { (0) " << ego_int_node_.sprintf();
         for (int i = 0; i < other_int_nodes_.size(); ++i)

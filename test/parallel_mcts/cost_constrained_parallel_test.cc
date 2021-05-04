@@ -51,7 +51,7 @@ struct CostConstrainedTest : public ::testing::Test {
             mcts_parameters_.cost_constrained_statistic.KAPPA = 10.0f;
             mcts_parameters_.cost_constrained_statistic.GRADIENT_UPDATE_STEP = 1.5f;
             mcts_parameters_.cost_constrained_statistic.TAU_GRADIENT_CLIP = 1.0f;
-            mcts_parameters_.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0.2f;
+            mcts_parameters_.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0.5f;
             mcts_parameters_.cost_constrained_statistic.USE_LAMBDA_POLICY = true;
             mcts_parameters_.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES = {false, true};
             mcts_parameters_.DISCOUNT_FACTOR = 0.9;
@@ -97,7 +97,7 @@ struct CostConstrainedNStepTest : public CostConstrainedTest {
 
 
 TEST_F(CostConstrainedTest, allow_collision_and_safety_violation) {
-  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, {0.4f, 0.82f}, 2.2f, false, 30);
+  SetUp(1, 2.0f, 0.5f, 0.8f, 0.3f, {0.4f, 0.8f}, 2.2f, false, 30);
 
   mcts_->search(*state_);
   auto best_action = mcts_->returnBestAction();
@@ -109,18 +109,18 @@ TEST_F(CostConstrainedTest, allow_collision_and_safety_violation) {
   // Cost statistics desired
   EXPECT_NEAR(cost_stats1.at(0).action_value_, 0.0, 0.0);
   EXPECT_NEAR(cost_stats1.at(1).action_value_, 0.0, 0.05);
-  EXPECT_NEAR(cost_stats1.at(2).action_value_, 0.3, 0.05);
+  EXPECT_NEAR(cost_stats1.at(2).action_value_, 0.3, 0.06);
 
   EXPECT_NEAR(cost_stats2.at(0).action_value_, 0.0, 0.0);
   EXPECT_NEAR(cost_stats2.at(1).action_value_, 0.8, 0.05);
   EXPECT_NEAR(cost_stats2.at(2).action_value_, 0.0, 0.00);
 
   // Reward statistics desired
-  EXPECT_NEAR(reward_stats.at(2).action_value_, (1-risk_action2_)*goal_reward2_, 0.08);
+  EXPECT_NEAR(reward_stats.at(2).action_value_, (1-risk_action2_)*goal_reward2_, 0.09);
   EXPECT_NEAR(reward_stats.at(1).action_value_, (1-risk_action1_)*goal_reward1_, 0.08);
   EXPECT_NEAR(reward_stats.at(0).action_value_, 0, 0.00);
 
-  EXPECT_EQ(best_action, 1);
+  EXPECT_EQ(best_action, 2);
 
   LOG(INFO) << "\n"  << root.get_ego_int_node().print_edge_information(0);
 }
