@@ -42,8 +42,8 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   const auto ucb_stats =stat_parent.get_ucb_statistics();
   const auto node_counts = stat_parent.get_total_node_visits();
 
-  EXPECT_NEAR(ucb_stats.at(0).at(action_idx).action_ego_cost_, 5.0f
-                    +mcts_default_parameters().DISCOUNT_FACTOR*(1.2323f), 0.001);
+  EXPECT_NEAR(ucb_stats.at(0).at(action_idx).action_ego_cost_, (5.0f+2.3f)/2.0
+                    +mcts_default_parameters().DISCOUNT_FACTOR*(1.2323f+20.0f)/2.0, 0.001);
   EXPECT_EQ(ucb_stats.at(0).at(action_idx).action_count_, 1);
   EXPECT_EQ(node_counts.at(0), 1);
 
@@ -61,9 +61,9 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   const auto ucb_stats2 =stat_parent.get_ucb_statistics();
   const auto node_counts2 = stat_parent.get_total_node_visits();
 
-  EXPECT_NEAR(ucb_stats2.at(0).at(action_idx2).action_ego_cost_, (5.0f+4.0
-                    +mcts_default_parameters().DISCOUNT_FACTOR*(1.2323f)+
-                    mcts_default_parameters().DISCOUNT_FACTOR*23.0f)/2, 0.001);
+  EXPECT_NEAR(ucb_stats2.at(0).at(action_idx2).action_ego_cost_, ((5.0f+4.0+4.3f+2.3f)/2.0
+                    +mcts_default_parameters().DISCOUNT_FACTOR*(1.2323f+20.0f)/2.0+
+                    mcts_default_parameters().DISCOUNT_FACTOR*(23.0f+24.5)/2.0)/2.0, 0.001);
   EXPECT_EQ(ucb_stats2.at(0).at(action_idx2).action_count_, 2);
   EXPECT_EQ(node_counts2.at(0), 2);
 
@@ -82,8 +82,8 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   const auto ucb_stats3 =stat_parent.get_ucb_statistics();
   const auto node_counts3 = stat_parent.get_total_node_visits();
 
-  EXPECT_NEAR(ucb_stats3.at(0).at(action_idx3).action_ego_cost_, 1000.0f +
-                           mcts_default_parameters().DISCOUNT_FACTOR*450.0f, 0.001);
+  EXPECT_NEAR(ucb_stats3.at(0).at(action_idx3).action_ego_cost_, (1000.0f+1000.3f)/2.0 +
+                           mcts_default_parameters().DISCOUNT_FACTOR*(450.0f+450.5f)/2.0, 0.001);
   EXPECT_EQ(ucb_stats3.at(0).at(action_idx3).action_count_, 1);
   EXPECT_EQ(node_counts3.at(0), 3);
 
@@ -105,8 +105,8 @@ TEST(hypothesis_statistic, backprop_hypothesis_action_selection) {
   const auto ucb_stats4 =stat_parent.get_ucb_statistics();
   const auto node_counts4 = stat_parent.get_total_node_visits();
 
-  EXPECT_NEAR(ucb_stats4.at(1).at(action_idx4).action_ego_cost_, 10.0f +
-                           mcts_default_parameters().DISCOUNT_FACTOR*45.0f, 0.001);
+  EXPECT_NEAR(ucb_stats4.at(1).at(action_idx4).action_ego_cost_, (10.0f + 10.3f)/2.0 +
+                           mcts_default_parameters().DISCOUNT_FACTOR*(45.0f+45.5f)/2.0, 0.001);
   EXPECT_EQ(ucb_stats4.at(1).at(action_idx4).action_count_, 1);
   EXPECT_EQ(node_counts4.at(1), 1);
 
@@ -133,8 +133,8 @@ TEST(hypothesis_statistic, backprop_heuristic_hyp1) {
   const auto ucb_stats =stat_parent.get_ucb_statistics();
   const auto node_counts = stat_parent.get_total_node_visits();
 
-  EXPECT_NEAR(ucb_stats.at(1).at(action_idx).action_ego_cost_, 6.0f
-                    +mcts_default_parameters().DISCOUNT_FACTOR*20.0f, 0.001);
+  EXPECT_NEAR(ucb_stats.at(1).at(action_idx).action_ego_cost_, (6.0f + 5.3f)/2.0
+                    +mcts_default_parameters().DISCOUNT_FACTOR*(20.0f+22.0f)/2.0, 0.001);
   EXPECT_EQ(ucb_stats.at(1).at(action_idx).action_count_, 1);
   EXPECT_EQ(node_counts.at(1), 1);
 }

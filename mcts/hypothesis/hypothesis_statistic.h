@@ -122,7 +122,7 @@ public:
         UcbPair& ucb_pair = ucb_statistics_[hypothesis_id_current_iteration_][collected_cost_.first]; // we remembered for which action we got the reward, must be the same as during backprop, if we linked parents and childs correctly
         //action value: Q'(s,a) = Q(s,a) + (latest_return - Q(s,a))/N =  1/(N+1 ( latest_return + N*Q(s,a))
         bool chance_update = !use_chance_constrained_updates_.empty() && use_chance_constrained_updates_.at(0);
-        auto collected_cost_worst_case = collected_cost_.second.back(); // assume last cost element is the worst case indicator
+        auto collected_cost_worst_case = std::accumulate(collected_cost_.second.begin(), collected_cost_.second.end(), 0.0) / collected_cost_.second.size();
         latest_ego_cost_ = chance_update ? (std::max( collected_cost_worst_case, changed_uct_statistic.latest_ego_cost_)) :
                          ( collected_cost_worst_case + k_discount_factor * changed_uct_statistic.latest_ego_cost_);
         ucb_pair.action_count_ += 1;
@@ -155,7 +155,7 @@ public:
     }
 
     void set_heuristic_estimate(const Reward& accum_rewards, const EgoCosts& accum_ego_cost) {
-        auto collected_cost_worst_case = accum_ego_cost.back();
+        auto collected_cost_worst_case = std::accumulate(accum_ego_cost.begin(), accum_ego_cost.end(), 0.0) / accum_ego_cost.size();
         ego_cost_value_ = collected_cost_worst_case;
     };
 
