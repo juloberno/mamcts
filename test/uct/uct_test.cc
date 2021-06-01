@@ -71,7 +71,7 @@ TEST(test_mcts, generate_dot_file )
     mcts.printTreeToDotFile("test_tree");
 }
 
-TEST(test_mcts, vist_edges )
+TEST(test_mcts, visit_edges )
 {
     Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts(default_uct_params());
     SimpleState state(4);
@@ -85,6 +85,18 @@ TEST(test_mcts, vist_edges )
       return start_state.get_state_length() - end_state.get_state_length();
     };
     const auto edge_info = mcts.visit_mcts_tree_edges(edge_info_extractor);
+}
+
+TEST(test_mcts, visit_nodes )
+{
+    Mcts<SimpleState, UctStatistic, UctStatistic, RandomHeuristic> mcts(default_uct_params());
+    SimpleState state(4);
+    
+    mcts.search(state);
+    const std::function<int(const SimpleState&)> state_info_extractor = [](const SimpleState& state) {
+      return state.get_state_length();
+    };
+    const auto state_info = mcts.visit_mcts_tree_nodes(state_info_extractor);
 }
 
 

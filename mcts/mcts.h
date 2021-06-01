@@ -22,6 +22,9 @@ namespace mcts {
 
 template<class StateTransitionInfo> 
 using MctsEdgeInfo = std::tuple<AgentIdx, unsigned int, ActionIdx, ActionWeight, StateTransitionInfo>;
+template<class StateInfo> 
+// node depth, node visit count and state type specific info
+using MctsStateInfo = std::tuple<unsigned int, unsigned int, StateInfo>;
 
 /*
  * @tparam S State Interface
@@ -66,6 +69,11 @@ public:
         const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
                     unsigned int max_depth = 100);
 
+    template<class StateInfo> 
+    std::vector<MctsStateInfo<StateInfo>> visit_mcts_tree_nodes(
+        const std::function<StateInfo(const S& state)>& state_info_extractor,
+                    unsigned int max_depth = 100);
+
 protected:
 
     void iterate(const StageNodeSPtr& root_node);
@@ -99,6 +107,11 @@ protected:
     void visit_stage_node_edges(const StageNodeSPtr& root_node,
         const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor,
         std::vector<MctsEdgeInfo<StateTransitionInfo>>& edge_infos, unsigned int max_depth);
+
+    template<class StateInfo> 
+    void visit_stage_nodes(const StageNodeSPtr& root_node,
+        const std::function<StateInfo(const S& state)>& state_info_extractor,
+        std::vector<MctsStateInfo<StateInfo>>& state_infos, unsigned int max_depth);
 
     StageNodeSPtr merge_searched_trees(const std::vector<Mcts<S, SE, SO, H>>& searched_trees);
 
@@ -334,10 +347,21 @@ void Mcts<S,SE,SO,H>::printTreeToDotFile(std::string filename){
 template<class S, class SE, class SO, class H>
 template<class StateTransitionInfo> 
 std::vector<MctsEdgeInfo<StateTransitionInfo>> Mcts<S,SE,SO,H>::visit_mcts_tree_edges(
-        const std::function<StateTransitionInfo(const S& start_state, const S& end_state, const AgentIdx& agent_idx)>& edge_info_extractor, unsigned int max_depth) {
+        const std::function<StateTransitionInfo(const S& start_state, const S& end_state,
+                 const AgentIdx& agent_idx)>& edge_info_extractor, unsigned int max_depth) {
     std::vector<MctsEdgeInfo<StateTransitionInfo>> edge_infos;
     visit_stage_node_edges(root_, edge_info_extractor, edge_infos, max_depth);
     return edge_infos;
+}
+
+template<class S, class SE, class SO, class H>
+template<class StateInfo> 
+std::vector<MctsStateInfo<StateInfo>> Mcts<S,SE,SO,H>::visit_mcts_tree_nodes(
+    const std::function<StateInfo(const S& state)>& state_info_extractor,
+                    unsigned int max_depth) {
+    std::vector<MctsStateInfo<StateInfo>> state_infos;
+    visit_stage_nodes(root_, state_info_extractor, state_infos, max_depth);
+    return state_infos;
 }
 
 template<class S, class SE, class SO, class H>
@@ -375,6 +399,27 @@ void Mcts<S,SE,SO,H>::visit_stage_node_edges(const StageNodeSPtr& root_node,
         visit_stage_node_edges(child_node_pair.second, edge_info_extractor, edge_infos, max_depth);
     }
 
+}
+
+template<class S, class SE, class SO, class H>
+template<class StateInfo> 
+void Mcts<S,SE,SO,H>::visit_stage_nodes(const StageNodeSPtr& root_node,
+    const std::function<StateInfo(const S& state)>& state_info_extractor,
+    std::vector<MctsStateInfo<StateInfo>>& state_infos, unsigned int max_depth) {
+    const auto depth = root_node->get_depth();
+    const auto visit_count = root_node->get_visit_count();
+    const auto& state_info = state_info_extractor(*root_node->get_state());
+    state_infos.push_back(std::make_tuple(depth, visit_count, state_info));
+    if(root_node->get_children().empty()) {
+        return;
+    }
+    if(depth > max_depth) {
+        return;
+    }
+
+    for (auto& child_node_pair : root_node->get_children()) {
+        visit_stage_nodes(child_node_pair.second, state_info_extractor, state_infos, max_depth);
+    }
 }
 
 

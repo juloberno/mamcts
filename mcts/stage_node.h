@@ -72,6 +72,7 @@ struct container_hash {
         const unsigned int max_num_joint_actions_;
         const unsigned int id_;
         const unsigned int depth_;
+        unsigned int visit_count_;
         
         static unsigned int num_nodes_;
 
@@ -101,6 +102,7 @@ struct container_hash {
         void printTree(std::string filename, const unsigned int& max_depth = 5);
         void printLayer(std::string filename, const unsigned int& max_depth);
         unsigned int get_depth() const;
+        unsigned int get_visit_count() const;
 
         static void reset_counter();
 
@@ -144,6 +146,7 @@ struct container_hash {
         }
         return num_actions; }() ),
     id_(++num_nodes_),
+    visit_count_(0),
     depth_(depth),
     mcts_parameters_(mcts_parameters)
     {
@@ -170,6 +173,9 @@ struct container_hash {
                 other_int_nodes_[ai-1].collect(reward_list[ai], ego_cost, ja[ai], std::pair<unsigned int, unsigned int>{});
             }
         };
+
+        // Increase visit count
+        visit_count_++;
 
         // First check if state of node is terminal
         if(this->get_state()->is_terminal() || depth_ == mcts_parameters_.MAX_SEARCH_DEPTH) {
@@ -328,6 +334,11 @@ struct container_hash {
     template<class S, class SE, class SO, class H>
     unsigned int StageNode<S,SE, SO, H>::get_depth() const {
       return depth_;
+    }
+
+    template<class S, class SE, class SO, class H>
+    unsigned int StageNode<S,SE, SO, H>::get_visit_count() const {
+      return visit_count_;
     }
 
     template<class S, class SE, class SO, class H>
