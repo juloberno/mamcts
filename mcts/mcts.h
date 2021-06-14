@@ -187,7 +187,6 @@ void Mcts<S,SE,SO,H>::single_search(const S& current_state)
 template<class S, class SE, class SO, class H>
 void Mcts<S, SE, SO, H>::parallel_search(const S& current_state) {
     auto start = std::chrono::high_resolution_clock::now();
-    std::vector<std::thread> threads;
     parallel_mcts_.clear();
 
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
@@ -196,17 +195,27 @@ void Mcts<S, SE, SO, H>::parallel_search(const S& current_state) {
         parallel_mcts_.push_back(Mcts<S, SE, SO, H>(mcts_parameters_parallel_mcts));
     }
 
-    for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
-        const auto& cloned_state = current_state.clone();
-        cloned_state->choose_random_seed(i);
-        threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state){ 
-            mcts.single_search(state);
-        }, std::ref(parallel_mcts_.at(i)), *cloned_state));
+    if (this->mcts_parameters_.USE_MULTI_THREADING) {
+        std::vector<std::thread> threads;
+        for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
+            const auto& cloned_state = current_state.clone();
+            cloned_state->choose_random_seed(i);
+            threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state){ 
+                mcts.single_search(state);
+            }, std::ref(parallel_mcts_.at(i)), *cloned_state));
+        }
+        bool all_joined = false;
+        for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
+            threads.at(i).join();
+        }
+    } else  {
+        for (unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
+            const auto& cloned_state = current_state.clone();
+            cloned_state->choose_random_seed(i);
+            parallel_mcts_[i].single_search(*cloned_state);
+        }
     }
-    bool all_joined = false;
-    for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
-        threads.at(i).join();
-    }
+    
 
     this->root_ = merge_searched_trees(parallel_mcts_);
     search_time_ = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count();

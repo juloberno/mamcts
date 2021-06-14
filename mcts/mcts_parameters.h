@@ -24,6 +24,7 @@ struct MctsParameters{
   unsigned int MAX_SEARCH_DEPTH;
   bool USE_BOUND_ESTIMATION;
   unsigned int NUM_PARALLEL_MCTS;
+  bool USE_MULTI_THREADING;
 
   struct RandomHeuristicParameters {
       double MAX_SEARCH_TIME;
@@ -96,6 +97,7 @@ inline MctsParameters mcts_default_parameters() {
   parameters.MAX_SEARCH_DEPTH = 1000;
   parameters.USE_BOUND_ESTIMATION = true;
   parameters.NUM_PARALLEL_MCTS = 1;
+  parameters.USE_MULTI_THREADING = false;
   
   parameters.random_heuristic.MAX_SEARCH_TIME = 10;
   parameters.random_heuristic.MAX_NUMBER_OF_ITERATIONS = 1000;
