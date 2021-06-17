@@ -191,8 +191,7 @@ void Mcts<S, SE, SO, H>::parallel_search(const S& current_state) {
 
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
         auto mcts_parameters_parallel_mcts = this->mcts_parameters_;
-       // mcts_parameters_parallel_mcts.RANDOM_SEED = this->mcts_parameters_.RANDOM_SEED*(i+1);
-        parallel_mcts_.push_back(Mcts<S, SE, SO, H>(mcts_parameters_parallel_mcts));
+        parallel_mcts_.push_back(Mcts<S, SE, SO, H>(this->mcts_parameters_));
     }
 
     if (this->mcts_parameters_.USE_MULTI_THREADING) {
@@ -208,7 +207,7 @@ void Mcts<S, SE, SO, H>::parallel_search(const S& current_state) {
         for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
             threads.at(i).join();
         }
-    } else  {
+    } else  { 
         for (unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
             const auto& cloned_state = current_state.clone();
             cloned_state->choose_random_seed(i);
@@ -216,7 +215,6 @@ void Mcts<S, SE, SO, H>::parallel_search(const S& current_state) {
         }
     }
     
-
     this->root_ = merge_searched_trees(parallel_mcts_);
     search_time_ = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::high_resolution_clock::now() - start ).count();
 }
@@ -230,9 +228,7 @@ Mcts<S, SE, SO, H>::parallel_search(const S& current_state, HypothesisBeliefTrac
     parallel_mcts_.clear();
 
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
-        auto mcts_parameters_parallel_mcts = this->mcts_parameters_;
-        //mcts_parameters_parallel_mcts.RANDOM_SEED = this->mcts_parameters_.RANDOM_SEED*(i+1);
-        parallel_mcts_.push_back(Mcts<S, SE, SO, H>(mcts_parameters_parallel_mcts));
+        parallel_mcts_.push_back(Mcts<S, SE, SO, H>(this->mcts_parameters_));
     }
 
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
