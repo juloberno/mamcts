@@ -72,7 +72,7 @@ public:
     template<class StateInfo> 
     std::vector<MctsStateInfo<StateInfo>> visit_mcts_tree_nodes(
         const std::function<StateInfo(const S& state)>& state_info_extractor,
-                    unsigned int max_depth = 100);
+                    unsigned int max_depth = 100, bool visit_terminal_states = false);
 
 protected:
 
@@ -111,7 +111,7 @@ protected:
     template<class StateInfo> 
     void visit_stage_nodes(const StageNodeSPtr& root_node,
         const std::function<StateInfo(const S& state)>& state_info_extractor,
-        std::vector<MctsStateInfo<StateInfo>>& state_infos, unsigned int max_depth);
+        std::vector<MctsStateInfo<StateInfo>>& state_infos, unsigned int max_depth, bool visit_terminal_states);
 
     StageNodeSPtr merge_searched_trees(const std::vector<Mcts<S, SE, SO, H>>& searched_trees);
 
@@ -363,9 +363,9 @@ template<class S, class SE, class SO, class H>
 template<class StateInfo> 
 std::vector<MctsStateInfo<StateInfo>> Mcts<S,SE,SO,H>::visit_mcts_tree_nodes(
     const std::function<StateInfo(const S& state)>& state_info_extractor,
-                    unsigned int max_depth) {
+                    unsigned int max_depth, bool visits_terminal_states) {
     std::vector<MctsStateInfo<StateInfo>> state_infos;
-    visit_stage_nodes(root_, state_info_extractor, state_infos, max_depth);
+    visit_stage_nodes(root_, state_info_extractor, state_infos, max_depth, visits_terminal_states);
     return state_infos;
 }
 
@@ -410,7 +410,10 @@ template<class S, class SE, class SO, class H>
 template<class StateInfo> 
 void Mcts<S,SE,SO,H>::visit_stage_nodes(const StageNodeSPtr& root_node,
     const std::function<StateInfo(const S& state)>& state_info_extractor,
-    std::vector<MctsStateInfo<StateInfo>>& state_infos, unsigned int max_depth) {
+    std::vector<MctsStateInfo<StateInfo>>& state_infos, unsigned int max_depth, bool visit_terminal_states) {
+    if (root_node->get_state()->is_terminal() && !visit_terminal_states) {
+        return;
+    }
     const auto depth = root_node->get_depth();
     const auto visit_count = root_node->get_visit_count();
     const auto& state_info = state_info_extractor(*root_node->get_state());
@@ -423,7 +426,7 @@ void Mcts<S,SE,SO,H>::visit_stage_nodes(const StageNodeSPtr& root_node,
     }
 
     for (auto& child_node_pair : root_node->get_children()) {
-        visit_stage_nodes(child_node_pair.second, state_info_extractor, state_infos, max_depth);
+        visit_stage_nodes(child_node_pair.second, state_info_extractor, state_infos, max_depth, visit_terminal_states);
     }
 }
 
