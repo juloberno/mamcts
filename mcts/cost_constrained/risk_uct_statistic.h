@@ -71,19 +71,13 @@ public:
 
     void set_heuristic_estimate_from_backpropagated(const std::unordered_map<ActionIdx, Reward>& action_returns,
                                                    const std::unordered_map<ActionIdx, double>& action_step_lengths) {
-        double val = 0.0;
-        double step = 0.0;
         for(const auto action_value : action_returns) {
             // Initialize statistics with step normalized returns, 
             // if step normalized returns are empty, we assume that action returns are already risk-based
             auto step_normalized_return = action_step_lengths.empty() ? action_value.second :
                                                action_value.second / action_step_lengths.at(action_value.first);
             ucb_statistics_[action_value.first] = UcbPair(1, step_normalized_return, step_normalized_return);
-            val += action_value.second;
-            step += action_step_lengths.at(action_value.first);
         }
-        value_ = val / action_returns.size();
-        backpropagated_step_length_ = step / action_returns.size();
     }
 
     void set_step_length(double step_length) {

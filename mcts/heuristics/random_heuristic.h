@@ -14,6 +14,7 @@
 
  namespace mcts {
 class CostConstrainedStatistic;
+class NeuralCostConstrainedStatistic;
 
 // assumes all agents have equal number of actions and the same node statistic
 class RandomHeuristic :  public mcts::Heuristic<RandomHeuristic>, mcts::RandomGenerator
@@ -114,7 +115,7 @@ public:
 
         // generate an extra node statistic for each agent
         SE ego_heuristic(0, node->get_state()->get_ego_agent_idx(), mcts_parameters_);
-        if constexpr(std::is_same<SE, CostConstrainedStatistic>::value) {
+        if constexpr(std::is_same<SE, CostConstrainedStatistic>::value || std::is_same<SE, NeuralCostConstrainedStatistic>::value) {
           ego_heuristic.set_heuristic_estimate(ego_accum_reward, accum_cost, executed_step_length);
           VLOG_EVERY_N(6, 10) << "accum cost = " << accum_cost << ", heuristic_step_length = " << executed_step_length;
          } else {

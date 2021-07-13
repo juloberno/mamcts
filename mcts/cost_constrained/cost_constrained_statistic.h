@@ -20,7 +20,6 @@ namespace mcts {
 
 #define CONSTRAINT_COST_IDX 0 // 1D linear program only over this cost idx calculated
 
-// A upper confidence bound implementation
 class CostConstrainedStatistic : public mcts::NodeStatistic<CostConstrainedStatistic>, mcts::RandomGenerator
 {
 public:
@@ -33,6 +32,7 @@ public:
              cost_statistics_(),
              unexpanded_actions_(num_actions),
              mean_step_costs_(),
+             exploration_policy_(),
              kappa(mcts_parameters.cost_constrained_statistic.KAPPA),
              action_filter_factor(mcts_parameters.cost_constrained_statistic.ACTION_FILTER_FACTOR),
              cost_constraints_(mcts_parameters.cost_constrained_statistic.COST_CONSTRAINTS),
@@ -41,9 +41,12 @@ public:
              cost_tresholds_(mcts_parameters.cost_constrained_statistic.COST_THRESHOLDS),
              use_lambda_policy_(mcts_parameters.cost_constrained_statistic.USE_LAMBDA_POLICY)
              {
-                 // initialize action indexes from 0 to (number of actions -1)
-                 std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
-             }
+               // initialize action indexes from 0 to (number of actions -1)
+                std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
+                for(const auto action : unexpanded_actions_) {
+                  exploration_policy_[action] = 1.0; // default does not affect standard exploration
+                }
+              }
 
     ~CostConstrainedStatistic() {};
 
@@ -153,7 +156,7 @@ public:
       for (const auto& action_idx  : allowed_actions) {
           double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(action_idx);
           
-          const auto exploration_term = kappa_local * 
+          const auto exploration_term = kappa_local * exploration_policy_.at(action_idx) *
               sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(action_idx).action_count_));
           
           double cost_lambda_term = 0.0;
@@ -461,6 +464,14 @@ public:
       }
     }
 
+    void set_exploration_policy(const Policy& policy) {
+      exploration_policy_ = policy;
+    }
+
+
+    double get_action_filter_factor() const { return action_filter_factor; }
+    double get_kappa() const { return kappa; }
+
 
 private:
 
@@ -468,6 +479,7 @@ private:
     std::vector<RiskUctStatistic> cost_statistics_;
     std::vector<ActionIdx> unexpanded_actions_;
     std::unordered_map<ActionIdx, std::vector<Cost>> mean_step_costs_;
+    Policy exploration_policy_;
     double step_length_;
 
     const double kappa;
