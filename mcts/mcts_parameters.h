@@ -49,6 +49,7 @@ struct MctsParameters{
       double EXPLORATION_REDUCTION_FACTOR;
       double EXPLORATION_REDUCTION_CONSTANT_OFFSET;
       double EXPLORATION_REDUCTION_INIT;
+      unsigned MIN_VISITS_POLICY_READY;
       double KAPPA;
       double GRADIENT_UPDATE_STEP;
       double TAU_GRADIENT_CLIP;

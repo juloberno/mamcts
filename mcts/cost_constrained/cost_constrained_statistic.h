@@ -46,7 +46,7 @@ public:
              RandomGenerator(mcts_parameters.RANDOM_SEED),
              reward_statistic_(num_actions, agent_idx,  make_reward_statistic_parameters(mcts_parameters)),
              cost_statistics_(),
-             unexpanded_actions_(num_actions),
+             unexpanded_actions_(),
              mean_step_costs_(),
              exploration_policy_(),
              kappa(mcts_parameters.cost_constrained_statistic.KAPPA),
@@ -55,15 +55,18 @@ public:
              exploration_reduction_factor_(mcts_parameters.cost_constrained_statistic.EXPLORATION_REDUCTION_FACTOR),
              exploration_constant_offset_(mcts_parameters.cost_constrained_statistic.EXPLORATION_REDUCTION_CONSTANT_OFFSET),
              exploration_reduction_init_(mcts_parameters.cost_constrained_statistic.EXPLORATION_REDUCTION_INIT),
+             min_visits_policy_ready_(mcts_parameters.cost_constrained_statistic.MIN_VISITS_POLICY_READY),
              use_cost_thresholding_(mcts_parameters.cost_constrained_statistic.USE_COST_THRESHOLDING),
              use_chance_constrained_updates_(mcts_parameters.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES),
              cost_tresholds_(mcts_parameters.cost_constrained_statistic.COST_THRESHOLDS),
              use_lambda_policy_(mcts_parameters.cost_constrained_statistic.USE_LAMBDA_POLICY)
              {
                // initialize action indexes from 0 to (number of actions -1)
-                std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
+                for(auto action_idx = 0; action_idx < num_actions; ++action_idx) {
+                  unexpanded_actions_.emplace(action_idx);
+                }
                 for(const auto action : unexpanded_actions_) {
-                  exploration_policy_[action] = 0.0; // default does not affect standard exploration
+                  exploration_policy_[action] = 1/unexpanded_actions_.size(); // default uniform exploration across actions
                 }
               }
 
@@ -72,17 +75,15 @@ public:
     template <class S>
     ActionIdx choose_next_action(const S& state) {
        step_length_ = state.get_execution_step_length();
-       if(unexpanded_actions_.empty())
+       if( policy_is_ready())
         {
           // Expansion policy does consider node counts
           return greedy_policy(kappa, action_filter_factor).first;
         } else {
             // Select randomly an unexpanded action
-            std::uniform_int_distribution<ActionIdx> random_action_selection(0,unexpanded_actions_.size()-1);
-            ActionIdx array_idx = random_action_selection(random_generator_);
-            ActionIdx selected_action = unexpanded_actions_[array_idx];
-            unexpanded_actions_.erase(unexpanded_actions_.begin()+array_idx);
-            return selected_action;
+            auto sampled_action = sample_policy(exploration_policy_, random_generator_).first;
+            unexpanded_actions_.erase(sampled_action);
+            return sampled_action;
         }
     }
 
@@ -95,7 +96,11 @@ public:
     }
 
     bool policy_is_ready() const {
-      return unexpanded_actions_.empty();
+      if (min_visits_policy_ready_ > 0 && reward_statistic_.total_node_visits_ > min_visits_policy_ready_) {
+        return true;
+      } else {
+        return unexpanded_actions_.empty();
+      }
     }
 
     PolicySampled greedy_policy(const double kappa_local, const double action_filter_factor_local) const {
@@ -519,7 +524,7 @@ private:
 
     UctStatistic reward_statistic_;
     std::vector<RiskUctStatistic> cost_statistics_;
-    std::vector<ActionIdx> unexpanded_actions_;
+    std::set<ActionIdx> unexpanded_actions_;
     std::unordered_map<ActionIdx, std::vector<Cost>> mean_step_costs_;
     Policy exploration_policy_;
     double step_length_;
@@ -530,6 +535,7 @@ private:
     const double exploration_reduction_factor_;
     const double exploration_constant_offset_;
     const double exploration_reduction_init_;
+    const unsigned min_visits_policy_ready_;
 
     const std::vector<bool> use_cost_thresholding_;
     const std::vector<bool> use_chance_constrained_updates_;
