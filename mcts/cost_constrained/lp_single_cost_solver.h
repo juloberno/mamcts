@@ -11,7 +11,7 @@
 
 namespace mcts{
 
-inline PolicySampled lp_single_cost_solver(const std::vector<ActionIdx>& feasible_actions,
+inline Policy lp_single_cost_solver(const std::vector<ActionIdx>& feasible_actions,
            const UctStatistic& cost_statistic, const Cost cost_constraint,
            std::mt19937& random_generator) {
       // Solved for K=1
@@ -36,7 +36,7 @@ inline PolicySampled lp_single_cost_solver(const std::vector<ActionIdx>& feasibl
       }
       if(minimizing_action == maximizing_action) {
         stochastic_policy[minimizing_action] = 1.0f;
-        return std::make_pair(minimizing_action, stochastic_policy);
+        return stochastic_policy;
       }
 
       // Three cases
@@ -45,22 +45,17 @@ inline PolicySampled lp_single_cost_solver(const std::vector<ActionIdx>& feasibl
       if( min_val >= cost_constraint) {
           // amin gets probability one, amax gets probability zero
           stochastic_policy[minimizing_action] = 1.0f;
-          return std::make_pair(minimizing_action, stochastic_policy);
+          return stochastic_policy;
       } else if( max_val <= cost_constraint) {
          // amax gets probability one, amin gets probability zero
          stochastic_policy[maximizing_action] = 1.0f;
-         return std::make_pair(maximizing_action, stochastic_policy);
+         return stochastic_policy;
       } else {
          const double probability_maximizer = (cost_constraint - min_val) / (max_val - min_val);
          std::uniform_real_distribution<double> unif(0, 1);
          stochastic_policy[maximizing_action] = probability_maximizer;
          stochastic_policy[minimizing_action] = 1 - probability_maximizer;
-         double sample = unif(random_generator);
-         if(sample <= probability_maximizer) {
-           return std::make_pair(maximizing_action, stochastic_policy);
-         } else {
-           return std::make_pair(minimizing_action, stochastic_policy);
-         }
+         return stochastic_policy;
       }
     }
 

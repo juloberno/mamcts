@@ -46,6 +46,9 @@ struct MctsParameters{
       double REWARD_UPPER_BOUND;
       double REWARD_LOWER_BOUND;
       std::vector<double> COST_CONSTRAINTS;
+      double EXPLORATION_REDUCTION_FACTOR;
+      double EXPLORATION_REDUCTION_CONSTANT_OFFSET;
+      double EXPLORATION_REDUCTION_INIT;
       double KAPPA;
       double GRADIENT_UPDATE_STEP;
       double TAU_GRADIENT_CLIP;

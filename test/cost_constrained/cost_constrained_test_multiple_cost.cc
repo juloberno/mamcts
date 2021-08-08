@@ -138,7 +138,8 @@ TEST(lp_multiple_cost_solver, one_is_one) {
   cost_statistics[1].SetUcbStatistics(ucb_stats2);
 
   auto random_generator = std::mt19937();
-  auto policy_sampled = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.2, 0.1}, {0.1, 0.1}, random_generator);
+  auto policy = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.2, 0.1}, {0.1, 0.1}, random_generator);
+  auto policy_sampled = sample_policy(policy, random_generator);
   EXPECT_EQ(policy_sampled.first, 2);
   EXPECT_EQ(policy_sampled.second.at(1), 0.0);
   EXPECT_EQ(policy_sampled.second.at(2), 1.0);
@@ -164,7 +165,8 @@ TEST(lp_multiple_cost_solver, two_are_half) {
   cost_statistics[1].SetUcbStatistics(ucb_stats2);
 
   auto random_generator = std::mt19937();
-  auto policy_sampled = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.2, 0.2}, {0.1, 0.1}, random_generator);
+  auto policy = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.2, 0.2}, {0.1, 0.1}, random_generator);
+  auto policy_sampled = sample_policy(policy, random_generator);
   EXPECT_TRUE(policy_sampled.first == 2 || policy_sampled.first == 4);
   EXPECT_EQ(policy_sampled.second.at(1), 0.0);
   EXPECT_NEAR(policy_sampled.second.at(2), 0.5, 0.001);
@@ -187,7 +189,8 @@ TEST(lp_multiple_cost_solver, use_error_one_is_one) {
   cost_statistics[1].SetUcbStatistics(ucb_stats2);
 
   auto random_generator = std::mt19937();
-  auto policy_sampled = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.2, 0.0}, {0.1, 0.1}, random_generator);
+  auto policy = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.2, 0.0}, {0.1, 0.1}, random_generator);
+  auto policy_sampled = sample_policy(policy, random_generator);
   EXPECT_EQ(policy_sampled.first, 4);
   EXPECT_EQ(policy_sampled.second.at(1), 0.0);
   EXPECT_NEAR(policy_sampled.second.at(2), 0.0, 0.000);
@@ -213,7 +216,8 @@ TEST(lp_multiple_cost_solver, no_solution) {
   cost_statistics[1].SetUcbStatistics(ucb_stats2);
 
   auto random_generator = std::mt19937();
-  auto policy_sampled = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.8, 0.01}, {0.5, 0.5}, random_generator, 0.05);
+  auto policy = lp_multiple_cost_solver({2, 4, 5}, cost_statistics, {0.8, 0.01}, {0.5, 0.5}, random_generator, 0.05);
+  auto policy_sampled = sample_policy(policy, random_generator);
   EXPECT_EQ(policy_sampled.first, 5);
   EXPECT_EQ(policy_sampled.second.at(1), 0.0);
   EXPECT_NEAR(policy_sampled.second.at(2), 0.0, 0.000);

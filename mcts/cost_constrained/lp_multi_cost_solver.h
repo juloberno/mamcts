@@ -15,7 +15,7 @@
 
 namespace mcts{ 
 
-inline PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_actions,
+inline Policy lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_actions,
            const std::vector<RiskUctStatistic>& cost_statistics, const std::vector<Cost> cost_constraints,
             std::vector<double> lambdas,
            std::mt19937& random_generator, double max_errors = 1.0) {
@@ -106,20 +106,15 @@ inline PolicySampled lp_multiple_cost_solver(const std::vector<ActionIdx>& feasi
         LOG_EVERY_N(WARNING, 100) << "MultiCostSolver status " << solver_status << " for costs: " << ss.str() << " and lambdas " << lambdas <<
          ". Returning lowest cost action " << min_action;
         policy[min_action] = 1.0;
-        return std::make_pair(min_action, policy);
+        return policy;
     }
 
     std::vector<int> discrete_probability_weights;
     for (std::size_t action_idx = 0; action_idx < action_weights.size(); ++action_idx) {
         policy[feasible_actions.at(action_idx)] = action_weights[action_idx]->solution_value();
-        discrete_probability_weights.push_back(std::nearbyint(
-                    action_weights[action_idx]->solution_value()*1000.0));
     }
 
-    std::discrete_distribution<> action_dist(discrete_probability_weights.begin(),
-                                        discrete_probability_weights.end());
-    const auto sampled_action = feasible_actions.at(action_dist(random_generator));
-    return std::make_pair(sampled_action, policy);
+    return policy;
 }
 
 

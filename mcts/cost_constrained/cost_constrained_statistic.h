@@ -20,6 +20,22 @@ namespace mcts {
 
 #define CONSTRAINT_COST_IDX 0 // 1D linear program only over this cost idx calculated
 
+PolicySampled sample_policy(const Policy& policy,
+           std::mt19937& random_generator) {
+      std::vector<int> discrete_probability_weights;
+      std::vector<ActionIdx> action_order;
+      for (const auto actions : policy) {
+          discrete_probability_weights.push_back(std::nearbyint(
+                      actions.second*1000.0));
+          action_order.push_back(actions.first);
+      }
+
+      std::discrete_distribution<> action_dist(discrete_probability_weights.begin(),
+                                          discrete_probability_weights.end());
+      const auto sampled_action = action_order.at(action_dist(random_generator));
+      return std::make_pair(sampled_action, policy);
+    }
+
 class CostConstrainedStatistic : public mcts::NodeStatistic<CostConstrainedStatistic>, mcts::RandomGenerator
 {
 public:
@@ -36,6 +52,9 @@ public:
              kappa(mcts_parameters.cost_constrained_statistic.KAPPA),
              action_filter_factor(mcts_parameters.cost_constrained_statistic.ACTION_FILTER_FACTOR),
              cost_constraints_(mcts_parameters.cost_constrained_statistic.COST_CONSTRAINTS),
+             exploration_reduction_factor_(mcts_parameters.cost_constrained_statistic.EXPLORATION_REDUCTION_FACTOR),
+             exploration_constant_offset_(mcts_parameters.cost_constrained_statistic.EXPLORATION_REDUCTION_CONSTANT_OFFSET),
+             exploration_reduction_init_(mcts_parameters.cost_constrained_statistic.EXPLORATION_REDUCTION_INIT),
              use_cost_thresholding_(mcts_parameters.cost_constrained_statistic.USE_COST_THRESHOLDING),
              use_chance_constrained_updates_(mcts_parameters.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES),
              cost_tresholds_(mcts_parameters.cost_constrained_statistic.COST_THRESHOLDS),
@@ -44,7 +63,7 @@ public:
                // initialize action indexes from 0 to (number of actions -1)
                 std::iota(unexpanded_actions_.begin(), unexpanded_actions_.end(), 0);
                 for(const auto action : unexpanded_actions_) {
-                  exploration_policy_[action] = 1.0; // default does not affect standard exploration
+                  exploration_policy_[action] = 0.0; // default does not affect standard exploration
                 }
               }
 
@@ -156,7 +175,7 @@ public:
       for (const auto& action_idx  : allowed_actions) {
           double reward_value_normalized = reward_statistic_.get_normalized_ucb_value(action_idx);
           
-          const auto exploration_term = kappa_local * exploration_policy_.at(action_idx) *
+          const auto exploration_term = kappa_local * 
               sqrt( log(reward_statistic_.total_node_visits_) / ( reward_statistic_.ucb_statistics_.at(action_idx).action_count_));
           
           double cost_lambda_term = 0.0;
@@ -170,7 +189,22 @@ public:
       }
     }
 
+    Policy consider_exploration_policy(const Policy& search_policy) const {
+      const auto node_visits = cost_statistics_.at(0).total_node_visits_;
+      const auto mix_prob = get_exploration_mixture_probability(node_visits);
+      Policy combined_policy;
+      for(auto& action : exploration_policy_) {
+        if (search_policy.find(action.first) != search_policy.end()) {
+          combined_policy[action.first] = (1-mix_prob)*search_policy.at(action.first) + mix_prob * exploration_policy_.at(action.first);
+        } else {
+          combined_policy[action.first] = exploration_policy_.at(action.first);
+        }
+      }
+      return combined_policy;
+    }
+
     PolicySampled solve_LP_and_sample(const std::vector<ActionIdx>& feasible_actions) const {
+      Policy search_policy;
       if (feasible_actions.size() == 1) {
           Policy policy;
           const auto& cost_stats = cost_statistics_.at(0).get_ucb_statistics();
@@ -178,15 +212,18 @@ public:
               policy[action.first] = 0.0;
           }
           policy[feasible_actions.at(0)] = 1.0;
-          return PolicySampled(feasible_actions.at(0), policy);
+          search_policy = policy;
       } else if (cost_statistics_.size() > 1) {
-          return lp_multiple_cost_solver(feasible_actions, cost_statistics_, cost_constraints_,
+          search_policy = lp_multiple_cost_solver(feasible_actions, cost_statistics_, cost_constraints_,
            mcts_parameters_.cost_constrained_statistic.LAMBDAS, random_generator_,
               std::max(*std::max_element(cost_constraints_.begin(), cost_constraints_.end()), 1.0));
-      }
-      return lp_single_cost_solver(
-          feasible_actions, cost_statistics_.at(CONSTRAINT_COST_IDX),
+          
+      } else {
+              lp_single_cost_solver(feasible_actions, cost_statistics_.at(CONSTRAINT_COST_IDX),
           cost_constraints_.at(CONSTRAINT_COST_IDX), random_generator_);
+      }
+      const auto combined_policy = consider_exploration_policy(search_policy);
+      return sample_policy(combined_policy, random_generator_);
     }
 
     std::vector<ActionIdx> filter_feasible_actions(const std::unordered_map<ActionIdx, double>& values_with_exploration,
@@ -471,6 +508,11 @@ public:
 
     double get_action_filter_factor() const { return action_filter_factor; }
     double get_kappa() const { return kappa; }
+    double get_exploration_mixture_probability(const unsigned& total_node_visits) const {
+      return std::max(std::min(exploration_reduction_init_ - 
+            exploration_reduction_factor_*(total_node_visits - exploration_constant_offset_), 1.0), 0.0);
+
+    }
 
 
 private:
@@ -485,6 +527,9 @@ private:
     const double kappa;
     const double action_filter_factor;
     const std::vector<double> cost_constraints_;
+    const double exploration_reduction_factor_;
+    const double exploration_constant_offset_;
+    const double exploration_reduction_init_;
 
     const std::vector<bool> use_cost_thresholding_;
     const std::vector<bool> use_chance_constrained_updates_;
