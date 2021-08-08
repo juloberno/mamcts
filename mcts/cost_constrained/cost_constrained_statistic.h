@@ -63,7 +63,7 @@ public:
              {
                // initialize action indexes from 0 to (number of actions -1)
                 for(auto action_idx = 0; action_idx < num_actions; ++action_idx) {
-                  unexpanded_actions_.emplace(action_idx);
+                  unexpanded_actions_.push_back(action_idx);
                 }
                 for(const auto action : unexpanded_actions_) {
                   exploration_policy_[action] = 1/unexpanded_actions_.size(); // default uniform exploration across actions
@@ -81,9 +81,11 @@ public:
           return greedy_policy(kappa, action_filter_factor).first;
         } else {
             // Select randomly an unexpanded action
-            auto sampled_action = sample_policy(exploration_policy_, random_generator_).first;
-            unexpanded_actions_.erase(sampled_action);
-            return sampled_action;
+            std::uniform_int_distribution<ActionIdx> random_action_selection(0,unexpanded_actions_.size()-1);
+            ActionIdx array_idx = random_action_selection(random_generator_);
+            ActionIdx selected_action = unexpanded_actions_[array_idx];
+            unexpanded_actions_.erase(unexpanded_actions_.begin()+array_idx);
+            return selected_action;
         }
     }
 
@@ -524,7 +526,7 @@ private:
 
     UctStatistic reward_statistic_;
     std::vector<RiskUctStatistic> cost_statistics_;
-    std::set<ActionIdx> unexpanded_actions_;
+    std::vector<ActionIdx> unexpanded_actions_;
     std::unordered_map<ActionIdx, std::vector<Cost>> mean_step_costs_;
     Policy exploration_policy_;
     double step_length_;
