@@ -20,7 +20,7 @@ namespace mcts {
 
 #define CONSTRAINT_COST_IDX 0 // 1D linear program only over this cost idx calculated
 
-PolicySampled sample_policy(const Policy& policy,
+inline PolicySampled sample_policy(const Policy& policy,
            std::mt19937& random_generator) {
       std::vector<int> discrete_probability_weights;
       std::vector<ActionIdx> action_order;
@@ -74,11 +74,11 @@ public:
 
     template <class S>
     ActionIdx choose_next_action(const S& state) {
-       step_length_ = state.get_execution_step_length();
+       set_step_length(state.get_execution_step_length());
        if( policy_is_ready())
         {
           // Expansion policy does consider node counts
-          return greedy_policy(kappa, action_filter_factor).first;
+          return greedy_policy(kappa, action_filter_factor, false).first;
         } else {
             // Select randomly an unexpanded action
             std::uniform_int_distribution<ActionIdx> random_action_selection(0,unexpanded_actions_.size()-1);
@@ -90,11 +90,11 @@ public:
     }
 
     Policy get_policy() const {
-      return greedy_policy(0.0f, action_filter_factor).second;
+      return greedy_policy(0.0f, action_filter_factor, false).second;
     }
 
     ActionIdx get_best_action() const {
-      return greedy_policy(0.0f, action_filter_factor).first;
+      return greedy_policy(0.0f, action_filter_factor, false).first;
     }
 
     bool policy_is_ready() const {
@@ -105,7 +105,11 @@ public:
       }
     }
 
-    PolicySampled greedy_policy(const double kappa_local, const double action_filter_factor_local) const {
+    void set_step_length(const double& step_length) {
+      step_length_ = step_length;
+    }
+
+    PolicySampled greedy_policy(const double kappa_local, const double action_filter_factor_local, bool combined_must_be_in_search_policy) const {
       const auto allowed_actions = cost_thresholding_action_selection();
 
       if(!use_lambda_policy_) {
@@ -121,7 +125,7 @@ public:
       const auto feasible_actions = filter_feasible_actions(ucb_values_with_exploration,
                                                             ucb_values_without_exploration,
                                                              action_filter_factor_local);
-      auto policy = solve_LP_and_sample(feasible_actions);
+      auto policy = solve_LP_and_sample(feasible_actions, combined_must_be_in_search_policy);
       return policy;
     }
 
@@ -196,21 +200,21 @@ public:
       }
     }
 
-    Policy consider_exploration_policy(const Policy& search_policy) const {
+    Policy consider_exploration_policy(const Policy& search_policy, bool must_be_in_search_policy) const {
       const auto node_visits = cost_statistics_.at(0).total_node_visits_;
       const auto mix_prob = get_exploration_mixture_probability(node_visits);
       Policy combined_policy;
       for(auto& action : exploration_policy_) {
         if (search_policy.find(action.first) != search_policy.end()) {
           combined_policy[action.first] = (1-mix_prob)*search_policy.at(action.first) + mix_prob * exploration_policy_.at(action.first);
-        } else {
-          combined_policy[action.first] = exploration_policy_.at(action.first);
+        } else if(!must_be_in_search_policy) {
+          combined_policy[action.first] = mix_prob * exploration_policy_.at(action.first);
         }
       }
       return combined_policy;
     }
 
-    PolicySampled solve_LP_and_sample(const std::vector<ActionIdx>& feasible_actions) const {
+    PolicySampled solve_LP_and_sample(const std::vector<ActionIdx>& feasible_actions, bool combined_must_be_in_search_policy) const {
       Policy search_policy;
       if (feasible_actions.size() == 1) {
           Policy policy;
@@ -229,7 +233,7 @@ public:
               lp_single_cost_solver(feasible_actions, cost_statistics_.at(CONSTRAINT_COST_IDX),
           cost_constraints_.at(CONSTRAINT_COST_IDX), random_generator_);
       }
-      const auto combined_policy = consider_exploration_policy(search_policy);
+      const auto combined_policy = consider_exploration_policy(search_policy, combined_must_be_in_search_policy);
       return sample_policy(combined_policy, random_generator_);
     }
 
@@ -512,6 +516,10 @@ public:
       exploration_policy_ = policy;
     }
 
+    Policy get_exploration_policy() const {
+      return exploration_policy_;
+    }
+
 
     double get_action_filter_factor() const { return action_filter_factor; }
     double get_kappa() const { return kappa; }
@@ -558,7 +566,7 @@ inline void NodeStatistic<CostConstrainedStatistic>::update_statistic_parameters
   MCTS_EXPECT_TRUE(cost_constraints.size() == parameters.cost_constrained_statistic.LAMBDAS.size());
   for (std::size_t cost_idx = 0; cost_idx < parameters.cost_constrained_statistic.LAMBDAS.size(); ++cost_idx) {
     const double current_lambda = parameters.cost_constrained_statistic.LAMBDAS.at(cost_idx);
-    const ActionIdx policy_sampled_action = root_statistic.greedy_policy(0.0f, 0.0f).first;
+    const ActionIdx policy_sampled_action = root_statistic.greedy_policy(0.0f, 0.0f, true).first;
     const double normalized_cost_sampled_action = root_statistic.get_cost_statistic(cost_idx).
                     get_ucb_statistics().at(policy_sampled_action).action_value_;
     const double new_lambda =  CostConstrainedStatistic::calculate_next_lambda(current_lambda,
