@@ -224,26 +224,37 @@ template<class Q>
 typename std::enable_if<std::is_base_of<RequiresHypothesis, Q>::value>::type
 Mcts<S, SE, SO, H>::parallel_search(const S& current_state, HypothesisBeliefTracker& belief_tracker) {
     auto start = std::chrono::high_resolution_clock::now();
-    std::vector<std::thread> threads;
+    
     parallel_mcts_.clear();
 
     for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
         parallel_mcts_.push_back(Mcts<S, SE, SO, H>(this->mcts_parameters_));
     }
 
-    for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
-        threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state, 
-               const HypothesisBeliefTracker& belief_tracker, const unsigned& mcts_idx){ 
+    if (this->mcts_parameters_.USE_MULTI_THREADING) {
+        std::vector<std::thread> threads;
+        for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
+            threads.push_back(std::thread([](Mcts<S, SE, SO, H>& mcts, const S& state, 
+                const HypothesisBeliefTracker& belief_tracker, const unsigned& mcts_idx){ 
+                HypothesisBeliefTracker local_belief_tracker = belief_tracker;
+                const auto& cloned_state = 
+                    state.change_belief_reference(local_belief_tracker.sample_current_hypothesis());
+                cloned_state->choose_random_seed(mcts_idx);
+                mcts.single_search(*cloned_state, local_belief_tracker);
+            }, std::ref(parallel_mcts_.at(i)), current_state, belief_tracker, i));
+        }
+        bool all_joined = false;
+        for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
+            threads.at(i).join();
+        }
+    } else  { 
+        for (unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
             HypothesisBeliefTracker local_belief_tracker = belief_tracker;
             const auto& cloned_state = 
-                state.change_belief_reference(local_belief_tracker.sample_current_hypothesis());
-            cloned_state->choose_random_seed(mcts_idx);
-            mcts.single_search(*cloned_state, local_belief_tracker);
-        }, std::ref(parallel_mcts_.at(i)), current_state, belief_tracker, i));
-    }
-    bool all_joined = false;
-    for(unsigned i = 0; i < this->mcts_parameters_.NUM_PARALLEL_MCTS; ++i) {
-        threads.at(i).join();
+                current_state.change_belief_reference(local_belief_tracker.sample_current_hypothesis());
+            cloned_state->choose_random_seed(i);
+            parallel_mcts_[i].single_search(*cloned_state);
+        }
     }
 
     this->root_ = merge_searched_trees(parallel_mcts_);
