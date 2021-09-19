@@ -179,7 +179,8 @@ struct container_hash {
         visit_count_++;
 
         // First check if state of node is terminal
-        if(this->get_state()->is_terminal() || depth_ == mcts_parameters_.MAX_SEARCH_DEPTH) {
+        if(this->get_state()->is_terminal() || depth_ == mcts_parameters_.MAX_SEARCH_DEPTH ||
+           num_nodes_ > mcts_parameters_.MAX_NUMBER_OF_NODES ) {
             next_node = get_shared();
             return std::make_pair(false, false);
         }
@@ -202,7 +203,7 @@ struct container_hash {
                          {ego_transition_counts_[joint_action[S::ego_agent_idx]],
                         ego_transition_counts_[joint_action[S::ego_agent_idx]]});
             return std::make_pair(true, true);
-        }  else if(num_nodes_ < mcts_parameters_.MAX_NUMBER_OF_NODES ) {  
+        }  else {  
              // EXPAND NEW NODE BASED ON NEW JOINT ACTION
             std::vector<Reward> rewards;
             EgoCosts ego_cost;
@@ -226,8 +227,6 @@ struct container_hash {
             ego_costs_[joint_action] = ego_cost;
             
             return std::make_pair(false, true); //< second boolean: only exapand heuristic if not terminal
-        }  else {
-            return std::make_pair(false, false); //< max node count reached, do not further expand or apply heuristic
         }
     }
 
