@@ -26,6 +26,7 @@ MctsParameters default_uct_params() {
   parameters.MAX_NUMBER_OF_ITERATIONS = 10000;
   parameters.MAX_SEARCH_TIME = 1000;
   parameters.MAX_SEARCH_DEPTH = 1000;
+  parameters.MAX_NUMBER_OF_NODES = 100;
   parameters.NUM_PARALLEL_MCTS = 1;
   
   parameters.random_heuristic.MAX_SEARCH_TIME = 10;
