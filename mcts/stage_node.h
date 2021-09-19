@@ -103,6 +103,7 @@ struct container_hash {
         void printLayer(std::string filename, const unsigned int& max_depth);
         unsigned int get_depth() const;
         unsigned int get_visit_count() const;
+        unsigned int get_num_nodes() const;
 
         static void reset_counter();
 
@@ -201,9 +202,8 @@ struct container_hash {
                          {ego_transition_counts_[joint_action[S::ego_agent_idx]],
                         ego_transition_counts_[joint_action[S::ego_agent_idx]]});
             return std::make_pair(true, true);
-        }
-        else
-        {   // EXPAND NEW NODE BASED ON NEW JOINT ACTION
+        }  else if(num_nodes_ < mcts_parameters_.MAX_NUMBER_OF_NODES ) {  
+             // EXPAND NEW NODE BASED ON NEW JOINT ACTION
             std::vector<Reward> rewards;
             EgoCosts ego_cost;
             next_node = std::make_shared<StageNode<S,SE, SO, H>,StageNodeSPtr, std::shared_ptr<S>,
@@ -226,6 +226,8 @@ struct container_hash {
             ego_costs_[joint_action] = ego_cost;
             
             return std::make_pair(false, true); //< second boolean: only exapand heuristic if not terminal
+        }  else {
+            return std::make_pair(false, false); //< max node count reached, do not further expand or apply heuristic
         }
     }
 
@@ -334,6 +336,11 @@ struct container_hash {
     template<class S, class SE, class SO, class H>
     unsigned int StageNode<S,SE, SO, H>::get_depth() const {
       return depth_;
+    }
+
+    template<class S, class SE, class SO, class H>
+    unsigned int StageNode<S,SE, SO, H>::get_num_nodes() const {
+      return num_nodes_;
     }
 
     template<class S, class SE, class SO, class H>

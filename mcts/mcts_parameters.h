@@ -22,6 +22,7 @@ struct MctsParameters{
   unsigned int MAX_NUMBER_OF_ITERATIONS;
   unsigned int MAX_SEARCH_TIME;
   unsigned int MAX_SEARCH_DEPTH;
+  unsigned int MAX_NUMBER_OF_NODES;
   bool USE_BOUND_ESTIMATION;
   unsigned int NUM_PARALLEL_MCTS;
   bool USE_MULTI_THREADING;
@@ -97,6 +98,7 @@ inline MctsParameters mcts_default_parameters() {
   parameters.DISCOUNT_FACTOR = 0.9;
   parameters.RANDOM_SEED = 1000;
   parameters.MAX_NUMBER_OF_ITERATIONS = 10000;
+  parameters.MAX_NUMBER_OF_NODES = 10000;
   parameters.MAX_SEARCH_TIME = 1000;
   parameters.MAX_SEARCH_DEPTH = 1000;
   parameters.USE_BOUND_ESTIMATION = true;

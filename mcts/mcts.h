@@ -56,6 +56,7 @@ public:
     void search(const S& current_state);
 
     unsigned int numIterations();
+    unsigned int numNodes();
     unsigned int searchTime();
     std::string nodeInfo();
     ActionIdx returnBestAction();
@@ -337,6 +338,11 @@ std::string Mcts<S,SE,SO,H>::sprintf(const StageNodeSPtr& root_node) const
 template<class S, class SE, class SO, class H>
 unsigned int Mcts<S,SE,SO,H>::numIterations(){
     return this->num_iterations_;
+}
+
+template<class S, class SE, class SO, class H>
+unsigned int Mcts<S,SE,SO,H>::numNodes(){
+    return this->root_->get_num_nodes();
 }
 
 template<class S, class SE, class SO, class H>

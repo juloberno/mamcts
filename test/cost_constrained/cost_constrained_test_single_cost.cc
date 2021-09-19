@@ -193,7 +193,7 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
                         RandomActionsStatistic, RandomHeuristic> mcts(mcts_parameters_local);
       mcts.search(*state_);
       auto sampled_policy = mcts.get_root().get_ego_int_node().greedy_policy(
-              0, mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR);
+              0, mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR, true);
       VLOG(5) << "Constraint: " << mcts_parameters_local.cost_constrained_statistic.COST_CONSTRAINTS.at(0) << ", Action: " << sampled_policy.first << "\n" <<
                 mcts.get_root().get_ego_int_node().print_edge_information(0);
       state = state->execute(JointAction{sampled_policy.first}, rewards, ego_cost);
@@ -239,7 +239,7 @@ TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
                         RandomActionsStatistic, RandomHeuristic> mcts(mcts_parameters_local);
       mcts.search(*state_);
       auto sampled_policy = mcts.get_root().get_ego_int_node().greedy_policy(
-              0, mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR);
+              0, mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR, true);
       VLOG(4) << "Action: " << sampled_policy.first << "\n" <<
                 mcts.get_root().get_ego_int_node().print_edge_information(0);
       state = state->execute(JointAction{sampled_policy.first}, rewards, ego_cost);

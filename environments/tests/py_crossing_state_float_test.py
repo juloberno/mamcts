@@ -24,6 +24,7 @@ def default_mcts_parameters():
     parameters.MAX_SEARCH_TIME = 1000
     parameters.MAX_NUMBER_OF_ITERATIONS = 10000
     parameters.MAX_SEARCH_DEPTH = 1000
+    parameters.MAX_NUMBER_OF_NODES = 10000
 
     parameters.random_heuristic.MAX_SEARCH_TIME = 10
     parameters.random_heuristic.MAX_NUMBER_OF_ITERATIONS = 1000
