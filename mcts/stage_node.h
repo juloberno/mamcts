@@ -104,6 +104,7 @@ struct container_hash {
         unsigned int get_depth() const;
         unsigned int get_visit_count() const;
         unsigned int get_num_nodes() const;
+        void set_num_nodes(unsigned num_nodes);
 
         static void reset_counter();
 
@@ -340,6 +341,11 @@ struct container_hash {
     template<class S, class SE, class SO, class H>
     unsigned int StageNode<S,SE, SO, H>::get_num_nodes() const {
       return num_nodes_;
+    }
+
+    template<class S, class SE, class SO, class H>
+    void StageNode<S,SE, SO, H>::set_num_nodes(unsigned num_nodes)  {
+      num_nodes_ = num_nodes;
     }
 
     template<class S, class SE, class SO, class H>
