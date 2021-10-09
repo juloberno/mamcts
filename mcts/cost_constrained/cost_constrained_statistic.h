@@ -59,7 +59,8 @@ public:
              use_cost_thresholding_(mcts_parameters.cost_constrained_statistic.USE_COST_THRESHOLDING),
              use_chance_constrained_updates_(mcts_parameters.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES),
              cost_tresholds_(mcts_parameters.cost_constrained_statistic.COST_THRESHOLDS),
-             use_lambda_policy_(mcts_parameters.cost_constrained_statistic.USE_LAMBDA_POLICY)
+             use_lambda_policy_(mcts_parameters.cost_constrained_statistic.USE_LAMBDA_POLICY),
+             max_solver_time_(mcts_parameters.cost_constrained_statistic.MAX_SOLVER_TIME)
              {
                // initialize action indexes from 0 to (number of actions -1)
                 for(auto action_idx = 0; action_idx < num_actions; ++action_idx) {
@@ -227,7 +228,7 @@ public:
       } else if (cost_statistics_.size() > 1) {
           search_policy = lp_multiple_cost_solver(feasible_actions, cost_statistics_, cost_constraints_,
            mcts_parameters_.cost_constrained_statistic.LAMBDAS, random_generator_,
-              std::max(*std::max_element(cost_constraints_.begin(), cost_constraints_.end()), 1.0));
+              std::max(*std::max_element(cost_constraints_.begin(), cost_constraints_.end()), 1.0), max_solver_time_);
           
       } else {
               lp_single_cost_solver(feasible_actions, cost_statistics_.at(CONSTRAINT_COST_IDX),
@@ -551,6 +552,7 @@ private:
     const std::vector<bool> use_chance_constrained_updates_;
     const std::vector<double> cost_tresholds_;
     const bool use_lambda_policy_;
+    const int max_solver_time_;
 };
 
 template <>

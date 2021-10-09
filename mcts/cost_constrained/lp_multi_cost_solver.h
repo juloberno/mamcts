@@ -18,7 +18,7 @@ namespace mcts{
 inline Policy lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_actions,
            const std::vector<RiskUctStatistic>& cost_statistics, const std::vector<Cost> cost_constraints,
             std::vector<double> lambdas,
-           std::mt19937& random_generator, double max_errors = 1.0) {
+           std::mt19937& random_generator, double max_errors = 1.0, int max_solver_time = -1.0) {
 
     std::vector<std::vector<Cost>> action_values;
     for (std::size_t cost_idx = 0; cost_idx < cost_statistics.size(); ++cost_idx) {
@@ -87,6 +87,9 @@ inline Policy lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_act
     }
     objective->SetMinimization();
     
+    if (max_solver_time > 0) {
+        solver.SetTimeLimit(absl::Microseconds(max_solver_time));
+    }
     const auto solver_status = solver.Solve();
 
     Policy policy;

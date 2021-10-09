@@ -59,6 +59,7 @@ struct MctsParameters{
       std::vector<bool> USE_CHANCE_CONSTRAINED_UPDATES;
       std::vector<double> COST_THRESHOLDS;
       bool USE_LAMBDA_POLICY;
+      int MAX_SOLVER_TIME;
   };
 
   struct RandomActionsStatisticParameters {
@@ -127,6 +128,8 @@ inline MctsParameters mcts_default_parameters() {
   parameters.hypothesis_belief_tracker.PROBABILITY_DISCOUNT = 1.0f;
   parameters.hypothesis_belief_tracker.POSTERIOR_TYPE = 0; // = HypothesisBeliefTracker::PRODUCT;
   parameters.hypothesis_belief_tracker.FIXED_HYPOTHESIS_SET = {};
+
+  parameters.cost_constrained_statistic.MAX_SOLVER_TIME = 500;
 
   return parameters;
 }
