@@ -98,7 +98,8 @@ inline Policy lp_multiple_cost_solver(const std::vector<ActionIdx>& feasible_act
         policy[action.first] = 0.0f;
     }
     if(solver_status == operations_research::MPSolverResponseStatus::MPSOLVER_INFEASIBLE || 
-      solver_status == operations_research::MPSolverResponseStatus::MPSOLVER_ABNORMAL ) {
+      solver_status == operations_research::MPSolverResponseStatus::MPSOLVER_ABNORMAL ||
+      solver_status == operations_research::MPSolverResponseStatus::MPSOLVER_NOT_SOLVED)  {
         std::stringstream ss;
         for (std::size_t cost_idx = 0; cost_idx < cost_statistics.size(); ++cost_idx) {
             ss << "Cost stat " << cost_idx << ": " <<cost_statistics.at(cost_idx).sprintf() << ", ";
