@@ -1,0 +1,17 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: docker://barksim/bark:latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setting up virtual environment
+        run: bash ./python/setup_venv.sh
+      - name: Getting into venv
+        run: bash ./python/into_venv.sh
+      - name: Runing bazel test
+        run: bazel test //...
