@@ -49,9 +49,9 @@ struct CostConstrainedTest : public ::testing::Test {
             mcts_parameters_.cost_constrained_statistic.COST_LOWER_BOUND = 0.0f;
             mcts_parameters_.cost_constrained_statistic.COST_UPPER_BOUND = 1.0f;
             mcts_parameters_.cost_constrained_statistic.KAPPA = 10.0f;
-            mcts_parameters_.cost_constrained_statistic.GRADIENT_UPDATE_STEP = 1.5f;
+            mcts_parameters_.cost_constrained_statistic.GRADIENT_UPDATE_STEP = 1.0f;
             mcts_parameters_.cost_constrained_statistic.TAU_GRADIENT_CLIP = 1.0f;
-            mcts_parameters_.cost_constrained_statistic.ACTION_FILTER_FACTOR = 1.0f;
+            mcts_parameters_.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0.2f;
             mcts_parameters_.cost_constrained_statistic.USE_LAMBDA_POLICY = true;
             mcts_parameters_.cost_constrained_statistic.USE_CHANCE_CONSTRAINED_UPDATES = {false, true};
             mcts_parameters_.cost_constrained_statistic.MIN_VISITS_POLICY_READY = -1;
@@ -172,9 +172,10 @@ TEST_F(CostConstrainedTest, one_step_higher_reward_eq_risk_constraint_higher) {
 
 
 TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq) {
-  SetUp(3, 1.0f, 1.0f, 0.4f, 0.3f, 0.35f, 2.0f, true, 8000);
+  SetUp(3, 1.0f, 1.0f, 0.4f, 0.3f, 0.35f, 2.0f, true, 1000);
 
   int num_samples = 100;
+  int max_steps = 10;
   int num_collisions = 0;
   int num_goal_reached = 0;
 
@@ -184,11 +185,12 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
 
     auto mcts_parameters_local = mcts_parameters_;
     mcts_parameters_local.cost_constrained_statistic.KAPPA = 10.0;
-    mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0;
+    mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0.0;
 
     auto state = make_initial_state(i);
     VLOG(4) << "------------------------ Next sample -------------------------";
-    while(!state->is_terminal()) {
+    int step = 0;
+    while(!state->is_terminal() && step < max_steps) {
       Mcts<CostConstrainedStatisticTestStateSingleCost, CostConstrainedStatistic,
                         RandomActionsStatistic, RandomHeuristic> mcts(mcts_parameters_local);
       mcts.search(*state_);
@@ -200,6 +202,7 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
       const auto& current_constraints = mcts_parameters_local.cost_constrained_statistic.COST_CONSTRAINTS;
       mcts_parameters_local.cost_constrained_statistic.COST_CONSTRAINTS =
       mcts.get_root().get_ego_int_node().calc_updated_constraints_based_on_policy(sampled_policy, current_constraints);
+      step++;
     }
     if(ego_cost[0] > 0.0f) {
       num_collisions++;
@@ -215,9 +218,10 @@ TEST_F(CostConstrainedNStepTest, n_step_higher_reward_higher_risk_constraint_eq)
 }
 
 TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
-  SetUp(3, 1.0f, 1.0f, 0.4f, 0.3f, 0.1f, 2.0f, true, 8000);
+  SetUp(3, 1.0f, 1.0f, 0.4f, 0.3f, 0.1f, 2.0f, true, 1000);
 
   int num_samples = 100;
+  int max_steps = 10;
   int num_collisions = 0;
   int num_goal_reached = 0;
 
@@ -227,14 +231,15 @@ TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
 
     auto mcts_parameters_local = mcts_parameters_;
     mcts_parameters_local.cost_constrained_statistic.KAPPA = 10.0;
-    mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR = 0;
+    mcts_parameters_local.cost_constrained_statistic.ACTION_FILTER_FACTOR = 3.5;
     mcts_parameters_local.cost_constrained_statistic.USE_LAMBDA_POLICY = false;
     mcts_parameters_local.cost_constrained_statistic.USE_COST_THRESHOLDING = {true};
     mcts_parameters_local.cost_constrained_statistic.COST_THRESHOLDS = {0.5};
 
     auto state = make_initial_state(i);
     VLOG(4) << "------------------------ Next sample -------------------------";
-    while(!state->is_terminal()) {
+    int step = 0;
+    while(!state->is_terminal() && step < max_steps) {
       Mcts<CostConstrainedStatisticTestStateSingleCost, CostConstrainedStatistic,
                         RandomActionsStatistic, RandomHeuristic> mcts(mcts_parameters_local);
       mcts.search(*state_);
@@ -243,6 +248,7 @@ TEST_F(CostConstrainedNStepTest, n_step_thresholding) {
       VLOG(4) << "Action: " << sampled_policy.first << "\n" <<
                 mcts.get_root().get_ego_int_node().print_edge_information(0);
       state = state->execute(JointAction{sampled_policy.first}, rewards, ego_cost);
+      step++;
     }
     if(ego_cost[0] > 0.0f) {
       num_collisions++;

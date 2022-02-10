@@ -231,7 +231,7 @@ public:
               std::max(*std::max_element(cost_constraints_.begin(), cost_constraints_.end()), 1.0), max_solver_time_);
           
       } else {
-              lp_single_cost_solver(feasible_actions, cost_statistics_.at(CONSTRAINT_COST_IDX),
+          search_policy = lp_single_cost_solver(feasible_actions, cost_statistics_.at(CONSTRAINT_COST_IDX),
           cost_constraints_.at(CONSTRAINT_COST_IDX), random_generator_);
       }
       const auto combined_policy = consider_exploration_policy(search_policy, combined_must_be_in_search_policy);
